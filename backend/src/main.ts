@@ -1,95 +1,70 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
+import compression from 'compression';
 import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
-import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as compression from 'compression';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-  });
-  const configService = app.get(ConfigService);
-  const isProduction = configService.get<string>('NODE_ENV') === 'production';
+  const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
+  const reflector = app.get(Reflector);
+
+  // Graceful shutdown (cierra conexiones Prisma en SIGTERM/SIGINT)
+  app.enableShutdownHooks();
+
+  // Security headers
+  app.use(helmet());
+
+  // Compresión gzip para respuestas
+  app.use(compression());
+
+  // CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  });
 
   // Global prefix
-  const apiPrefix = configService.get<string>('API_PREFIX') || 'api';
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix('api');
 
-  // Enable CORS
-  app.enableCors({
-    origin: true, // Allow all origins temporarily for debugging
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  });
-
-  // Enable compression
-  app.use(compression());
+  // Global guards
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Global transform interceptor
+  // Global interceptors
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Global validation pipe
+  // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: {
-        enableImplicitConversion: true,
+        enableImplicitConversion: false,
       },
     }),
   );
 
-  // Swagger documentation (only in development)
-  if (!isProduction) {
-    const config = new DocumentBuilder()
-      .setTitle('TechRepair Pro API')
-      .setDescription('API para sistema de gestión de servicio técnico')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-    logger.log(`Swagger documentation available at /${apiPrefix}/docs`);
-  }
+  // Swagger documentation
+  const config = new DocumentBuilder()
+    .setTitle('ovelix API')
+    .setDescription('API para sistema de gestión de servicio técnico')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
-  // Railway uses PORT environment variable automatically
-  const port = configService.get<number>('PORT') || 3000;
-  
-  // Listen on all interfaces (required for Railway)
-  await app.listen(port, '0.0.0.0');
-
-  if (isProduction) {
-    logger.log(`Application is running in production mode`);
-    const domain = configService.get<string>('RAILWAY_PUBLIC_DOMAIN') || 'overlix-demo-backend-production.up.railway.app';
-    logger.log(`API endpoint: https://${domain}/${apiPrefix}`);
-    logger.log(`Health check: https://${domain}/${apiPrefix}/health`);
-  } else {
-    logger.log(`Application is running in development mode`);
-    logger.log(`API endpoint: http://localhost:${port}/${apiPrefix}`);
-    logger.log(`Health check: http://localhost:${port}/${apiPrefix}/health`);
-  }
-
-  // Graceful shutdown
-  process.on('SIGTERM', async () => {
-    logger.log('SIGTERM received, closing application...', 'Bootstrap');
-    await app.close();
-    process.exit(0);
-  });
-
-  process.on('SIGINT', async () => {
-    logger.log('SIGINT received, closing application...', 'Bootstrap');
-    await app.close();
-    process.exit(0);
-  });
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
 }
-
 bootstrap();

@@ -1,74 +1,93 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
-import * as Joi from 'joi';
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
+import { z } from 'zod';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { PermissionsGuard } from './modules/permissions/permissions.guard';
+import { PrismaModule } from './database/prisma.module';
+import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { CompaniesModule } from './modules/companies/companies.module';
 import { ClientsModule } from './modules/clients/clients.module';
-import { SalesModule } from './modules/sales/sales.module';
 import { RepairsModule } from './modules/repairs/repairs.module';
-import { ProductsModule } from './modules/products/products.module';
-import { ExpensesModule } from './modules/expenses/expenses.module';
-import { AppointmentsModule } from './modules/appointments/appointments.module';
-import { RolesModule } from './modules/roles/roles.module';
+import { BudgetsModule } from './modules/budgets/budgets.module';
+import { StockModule } from './modules/stock/stock.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { CashClosingModule } from './modules/cash-closing/cash-closing.module';
 import { BusinessInfoModule } from './modules/business-info/business-info.module';
-import { ShipmentsModule } from './modules/shipments/shipments.module';
-import { SocialMediaModule } from './modules/social-media/social-media.module';
-import { BusinessHoursModule } from './modules/business-hours/business-hours.module';
-import { AuditLogModule } from './modules/audit-log/audit-log.module';
-import { HealthController } from './common/controllers/health.controller';
-import { DatabaseModule } from './database/database.module';
-import { SupabaseClientMiddleware } from './common/middlewares/supabase-client.middleware';
+import { RolesModule } from './modules/roles/roles.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { ServerLogsModule } from './modules/server-logs/server-logs.module';
+import { DatabaseModule } from './modules/database/database.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { BackupsModule } from './modules/backups/backups.module';
+import { TemplatesModule } from './modules/templates/templates.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BrandsModule } from './modules/brands/brands.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { SettingsModule } from './modules/settings/settings.module';
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().positive().optional(),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL es requerida'),
+  JWT_SECRET: z.string().min(1, 'JWT_SECRET es requerida'),
+  JWT_REFRESH_SECRET: z.string().min(1, 'JWT_REFRESH_SECRET es requerida'),
+  DEV_INVITE_TOKEN: z.string().optional(),
+  CORS_ORIGIN: z.string().optional(),
+});
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local'],
+      envFilePath: '.env',
+      validate: (config: Record<string, unknown>) => envSchema.parse(config),
     }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const isProduction = config.get<string>('NODE_ENV') === 'production';
-        return [
-          {
-            name: 'short',
-            ttl: config.get<number>('THROTTLE_TTL') || 60000,
-            limit: config.get<number>('THROTTLE_LIMIT') || 100,
-          },
-          {
-            name: 'long',
-            ttl: 3600000, // 1 hora
-            limit: 1000, // 1000 peticiones por hora
-          },
-          {
-            name: 'auth',
-            ttl: 300000, // 5 minutos
-            limit: 5, // 5 intentos de login por 5 minutos
-          },
-        ];
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute
       },
-    }),
-    DatabaseModule,
+    ]),
+    PrismaModule,
+    HealthModule,
     AuthModule,
+    UsersModule,
+    CompaniesModule,
     ClientsModule,
-    SalesModule,
     RepairsModule,
-    ProductsModule,
-    ExpensesModule,
-    AppointmentsModule,
-    RolesModule,
+    BudgetsModule,
+    StockModule,
+    SalesModule,
+    CashClosingModule,
     BusinessInfoModule,
-    ShipmentsModule,
-    SocialMediaModule,
-    BusinessHoursModule,
-    AuditLogModule,
+    RolesModule,
+    AuditModule,
+    ServerLogsModule,
+    DatabaseModule,
+    AnalyticsModule,
+    BackupsModule,
+    TemplatesModule,
+    PermissionsModule,
+    WhatsappModule,
+    NotificationsModule,
+    BrandsModule,
+    ReviewsModule,
+    SettingsModule,
   ],
-  controllers: [HealthController],
-  providers: [SupabaseClientMiddleware],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
+  ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SupabaseClientMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

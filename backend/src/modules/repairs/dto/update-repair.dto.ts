@@ -1,0 +1,42 @@
+import { z } from 'zod';
+import { EstadoReparacion } from '../enums/estado-reparacion.enum';
+
+export const updateRepairSchema = z.object({
+  categoria_dispositivo: z.string().optional(),
+  dispositivo: z.string().min(1).optional(),
+  marca: z.string().optional(),
+  modelo: z.string().optional(),
+  numero_serie: z.string().optional(),
+  condicion_estetica: z.string().optional(),
+  accesorios_incluidos: z.array(z.string()).optional(),
+  tipo_seguridad: z.string().optional(),
+  pin_acceso: z.string().optional(),
+  patron_puntos: z.array(z.number()).optional(),
+  secuencia_patron: z.array(z.number()).optional(),
+  problema_reportado: z.string().min(1).optional(),
+  diagnosis: z.string().optional(),
+  reparacion_realizada: z.string().optional(),
+  chequeo_hardware: z.any().optional(),
+  estado: z.nativeEnum(EstadoReparacion).optional(),
+  prioridad: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  tecnico_asignado_id: z.string().uuid().optional(),
+  fecha_estimada_entrega: z.string().optional(),
+  tiempo_estimado_minutos: z.number().optional(),
+  fecha_entrega: z.string().optional(),
+  total_reparacion: z.number().optional(),
+  metodo_pago_id: z.string().optional(),
+  pagado: z.boolean().optional(),
+  costo_piezas: z.number().optional(),
+  costo_mano_obra: z.number().optional(),
+  garantia_meses: z.number().optional(),
+  tiene_garantia: z.boolean().optional(),
+  garantia_duracion: z.number().optional(),
+  garantia_unidad: z.enum(['DIAS', 'MESES']).optional(),
+  fecha_inicio_garantia: z.string().optional(),
+  fecha_fin_garantia: z.string().optional(),
+  notas: z.string().optional(),
+  fotos_antes: z.array(z.string()).optional(),
+  fotos_despues: z.array(z.string()).optional(),
+});
+
+export type UpdateRepairDto = z.infer<typeof updateRepairSchema>;

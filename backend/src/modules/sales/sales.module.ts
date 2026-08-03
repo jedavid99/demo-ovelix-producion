@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SalesService } from './services/sales.service';
-import { SalesController } from './controllers/sales.controller';
-import { DatabaseModule } from '../../database/database.module';
+import { SalesController } from './sales.controller';
+import { SalesService } from './sales.service';
+import { PrismaModule } from '../../database/prisma.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [PrismaModule],
   controllers: [SalesController],
   providers: [SalesService],
   exports: [SalesService],

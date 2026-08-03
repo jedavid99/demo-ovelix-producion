@@ -1,55 +1,17 @@
-import { IsEmail, IsString, IsNotEmpty, IsOptional, IsEnum, MinLength, Matches } from 'class-validator';
+import { z } from 'zod';
 
-export enum ClientType {
-  PARTICULAR = 'particular',
-  EMPRESA = 'empresa',
-  MAYORISTA = 'mayorista',
-}
+export const createClientSchema = z.object({
+  nombre_completo: z.string().min(2, 'El nombre completo es requerido'),
+  email: z.string().email('Email inválido').optional(),
+  telefono: z.string().min(1, 'El teléfono es requerido'),
+  dni: z.string().optional(),
+  direccion: z.string().optional(),
+  ciudad: z.string().optional(),
+  provincia: z.string().optional(),
+  codigo_postal: z.string().optional(),
+  notas: z.string().optional(),
+  limite_credito: z.number().min(0, 'El límite de crédito no puede ser negativo').optional(),
+  empresa_id: z.string().uuid('ID de empresa inválido').optional(),
+});
 
-export class CreateClientDto {
-  @IsNotEmpty()
-  @IsString()
-  nombre_completo: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(10, { message: 'El teléfono debe tener al menos 10 caracteres' })
-  telefono: string;
-
-  @IsOptional()
-  @IsString()
-  telefono_secundario?: string;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{7,11}$/, { message: 'DNI debe tener entre 7 y 11 dígitos' })
-  dni?: string;
-
-  @IsOptional()
-  @IsString()
-  direccion?: string;
-
-  @IsOptional()
-  @IsString()
-  ciudad?: string;
-
-  @IsOptional()
-  @IsString()
-  provincia?: string;
-
-  @IsOptional()
-  @IsString()
-  codigo_postal?: string;
-
-  @IsOptional()
-  @IsEnum(ClientType)
-  tipo_cliente?: ClientType;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
-}
+export type CreateClientDto = z.infer<typeof createClientSchema>;

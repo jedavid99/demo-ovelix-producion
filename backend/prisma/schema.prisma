@@ -1,0 +1,681 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  permissions String[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  users       User[]
+
+  @@index([name])
+}
+
+model Company {
+  id             String        @id @default(uuid())
+  codigo_empresa String        @unique
+  razon_social   String
+  email          String?
+  telefono       String?
+  direccion      String?
+  ciudad         String?
+  provincia      String?
+  codigo_postal  String?
+  activo         Boolean       @default(true)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  auditLogs      AuditLog[]
+  businessInfo   BusinessInfo?
+  cashClosings   CashClosing[]
+  categories     Category[]
+  clients        Client[]
+  repairs        Repair[]
+  sales          Sale[]
+  whatsappSessions WhatsAppSession[]
+  stockItems     StockItem[]
+  users          User[]
+  brands         Brand[]
+  paymentMethods PaymentMethod[]
+  taxRates       TaxRate[]
+  bankAccounts   BankAccount[]
+  notificationPreferences NotificationPreference[]
+  integrations   Integration[]
+  planSubscription PlanSubscription?
+  repairStateRequests RepairStateRequest[]
+
+  @@index([codigo_empresa])
+  @@index([activo])
+}
+
+model User {
+  id              String              @id @default(uuid())
+  email           String
+  password        String
+  nombre          String
+  apellido        String
+  dni             String?
+  telefono        String?
+  activo          Boolean             @default(true)
+  empresa_id      String?
+  created_at      DateTime            @default(now())
+  updated_at      DateTime            @updatedAt
+  permissions     String[]            @default([])
+  rol_id          String
+  auditLogs       AuditLog[]
+  cashClosings    CashClosing[]
+  refreshTokens   RefreshToken[]
+  repairsAssigned Repair[]            @relation("TechnicianRepairs")
+  sales           Sale[]
+  notifications   Notification[]
+  whatsappSessions WhatsAppSession[]
+  stateHistory    RepairStateHistory[]
+  repairStateRequests RepairStateRequest[]
+  empresa         Company?            @relation(fields: [empresa_id], references: [id])
+  rol             Role                @relation(fields: [rol_id], references: [id])
+
+  @@unique([email, empresa_id])
+  @@index([empresa_id])
+  @@index([rol_id])
+  @@index([activo])
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String
+  usuario_id String
+  expires_at DateTime
+  created_at DateTime @default(now())
+  usuario    User     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([token])
+}
+
+model Client {
+  id                  String    @id @default(uuid())
+  nombre_completo     String
+  email               String?
+  telefono            String
+  dni                 String?
+  direccion           String?
+  ciudad              String?
+  provincia           String?
+  codigo_postal       String?
+  estado              String    @default("activo")
+  deuda_actual        Decimal   @default(0) @db.Decimal(10, 2)
+  limite_credito      Decimal?  @db.Decimal(10, 2)
+  notas               String?
+  fecha_registro      DateTime  @default(now())
+  fecha_actualizacion DateTime?
+  empresa_id          String
+  empresa             Company   @relation(fields: [empresa_id], references: [id])
+  repairs             Repair[]
+  sales               Sale[]
+  mensajesWhatsapp    MensajeWhatsapp[]
+  reviews             Review[]
+
+  @@index([empresa_id])
+  @@index([telefono])
+  @@index([estado])
+}
+
+model Repair {
+  id                      String              @id @default(uuid())
+  numero_reparacion       String?             @unique
+  cliente_id              String
+  categoria_dispositivo   String?
+  dispositivo             String
+  marca                   String?
+  modelo                  String?
+  numero_serie            String?
+  condicion_estetica      String?
+  accesorios_incluidos    String[]
+  tipo_seguridad          String?
+  pin_acceso              String?
+  patron_puntos           Int[]
+  secuencia_patron        Int[]
+  problema_reportado      String
+  diagnosis               String?
+  reparacion_realizada    String?
+  chequeo_hardware        Json?
+  estado                  EstadoReparacion   @default(INGRESADO)
+  prioridad               String?
+  tecnico_asignado_id     String?
+  fecha_ingreso           DateTime
+  hora_ingreso            String?
+  fecha_estimada_entrega  DateTime?
+  tiempo_estimado_minutos Int?
+  fecha_entrega           DateTime?
+  total_reparacion        Decimal?            @db.Decimal(10, 2)
+  metodo_pago_id          String?
+  pagado                  Boolean             @default(false)
+  costo_piezas            Decimal?            @db.Decimal(10, 2)
+  costo_mano_obra         Decimal?            @db.Decimal(10, 2)
+  garantia_meses          Int?
+  tiene_garantia          Boolean             @default(false)
+  garantia_duracion       Int?
+  garantia_unidad         String?
+  fecha_inicio_garantia   DateTime?
+  fecha_fin_garantia      DateTime?
+  notas                   String?
+  fotos_antes             String[]
+  fotos_despues           String[]
+  reparacion_origen_id    String?
+  whatsapp_notificado     Boolean             @default(false)
+  empresa_id              String
+  created_at              DateTime            @default(now())
+  updated_at              DateTime            @updatedAt
+  abono                   Decimal?            @db.Decimal(10, 2)
+  costo_estimado          Decimal?            @db.Decimal(10, 2)
+  forma_pago              String?
+  margen_porcentaje       Int?
+  budgets                 Budget[]
+  cliente                 Client              @relation(fields: [cliente_id], references: [id])
+  empresa                 Company             @relation(fields: [empresa_id], references: [id])
+  tecnico_asignado        User?               @relation("TechnicianRepairs", fields: [tecnico_asignado_id], references: [id])
+  partsUsed               RepairPart[]
+  estado_historial        RepairStateHistory[]
+
+  @@index([empresa_id])
+  @@index([cliente_id])
+  @@index([tecnico_asignado_id])
+  @@index([estado])
+  @@index([fecha_ingreso])
+}
+
+model RepairStateHistory {
+  id          String           @id @default(uuid())
+  repair_id   String
+  repair      Repair           @relation(fields: [repair_id], references: [id], onDelete: Cascade)
+  estado      EstadoReparacion
+  usuario_id  String?          @map("usuario_id")
+  usuario     User?            @relation(fields: [usuario_id], references: [id])
+  nota        String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([repair_id, createdAt])
+  @@map("repair_state_history")
+}
+
+model Budget {
+  id              String       @id @default(uuid())
+  numero          String       @unique
+  reparacion_id   String
+  items           Json
+  total           Decimal      @db.Decimal(10, 2)
+  estado          BudgetStatus @default(PENDING)
+  fecha_envio     DateTime     @default(now())
+  fecha_respuesta DateTime?
+  notas           String?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+  reparacion      Repair       @relation(fields: [reparacion_id], references: [id])
+
+  @@index([reparacion_id])
+  @@index([estado])
+}
+
+model RepairPart {
+  id             String    @id @default(uuid())
+  reparacion_id  String
+  repuesto_id    String
+  nombre         String
+  cantidad       Int
+  costo_unitario Decimal   @db.Decimal(10, 2)
+  reparacion     Repair    @relation(fields: [reparacion_id], references: [id], onDelete: Cascade)
+  stockItem      StockItem @relation(fields: [repuesto_id], references: [id])
+
+  @@index([reparacion_id])
+}
+
+model StockItem {
+  id                  String          @id @default(uuid())
+  codigo              String
+  nombre              String
+  descripcion         String?
+  categoria           String
+  marca               String?
+  modelo              String?
+  stock_actual        Int             @default(0)
+  stock_minimo        Int             @default(0)
+  stock_maximo        Int?
+  costo_unitario      Decimal         @db.Decimal(10, 2)
+  precio_venta        Decimal         @db.Decimal(10, 2)
+  proveedor_id        String?
+  ubicacion_almacen   String?
+  estado              String          @default("activo")
+  empresa_id          String
+  fecha_ingreso       DateTime        @default(now())
+  fecha_actualizacion DateTime?
+  ultima_compra       DateTime?
+  notas               String?
+  partsUsed           RepairPart[]
+  saleItems           SaleItem[]
+  empresa             Company         @relation(fields: [empresa_id], references: [id])
+  proveedor           Supplier?       @relation(fields: [proveedor_id], references: [id])
+  movements           StockMovement[]
+
+  @@unique([codigo, empresa_id])
+  @@index([empresa_id])
+  @@index([categoria])
+  @@index([estado])
+  @@index([stock_actual])
+}
+
+model Supplier {
+  id         String      @id @default(uuid())
+  nombre     String
+  contacto   String?
+  telefono   String?
+  email      String?
+  direccion  String?
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  stockItems StockItem[]
+}
+
+model StockMovement {
+  id            String    @id @default(uuid())
+  item_id       String
+  item_nombre   String
+  cantidad      Int
+  tipo          String
+  motivo        String
+  referencia_id String?
+  usuario_id    String?
+  fecha         DateTime  @default(now())
+  item          StockItem @relation(fields: [item_id], references: [id])
+
+  @@index([item_id])
+  @@index([fecha])
+  @@index([tipo])
+}
+
+model Sale {
+  id                 String     @id @default(uuid())
+  fecha              DateTime   @default(now())
+  cliente_id         String?
+  empresa_id         String
+  total              Decimal    @db.Decimal(10, 2)
+  metodo_pago        String
+  monto_recibido     Decimal    @db.Decimal(10, 2)
+  cambio             Decimal    @default(0) @db.Decimal(10, 2)
+  numero_comprobante String?
+  vendedor_id        String
+  estado             String     @default("completada")
+  reparacion_id      String?
+  cierre_id          String?
+  created_at         DateTime   @default(now())
+  cliente            Client?    @relation(fields: [cliente_id], references: [id])
+  empresa            Company    @relation(fields: [empresa_id], references: [id])
+  vendedor           User       @relation(fields: [vendedor_id], references: [id])
+  items              SaleItem[]
+
+  @@index([empresa_id])
+  @@index([cliente_id])
+  @@index([vendedor_id])
+  @@index([fecha])
+  @@index([estado])
+}
+
+model SaleItem {
+  id              String    @id @default(uuid())
+  sale_id         String
+  producto_id     String
+  producto_nombre String
+  cantidad        Int
+  precio_unitario Decimal   @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  stockItem       StockItem @relation(fields: [producto_id], references: [id])
+  sale            Sale      @relation(fields: [sale_id], references: [id], onDelete: Cascade)
+
+  @@index([sale_id])
+}
+
+model CashClosing {
+  id                 String   @id @default(uuid())
+  date               DateTime
+  store_id           String
+  cashier            String
+  expected_balance   Decimal  @db.Decimal(10, 2)
+  actual_balance     Decimal  @db.Decimal(10, 2)
+  discrepancy        Decimal  @db.Decimal(10, 2)
+  transactions_count Int
+  bills_count        Json
+  notes              String?
+  estado             String   @default("abierto")
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+  cashier_user       User     @relation(fields: [cashier], references: [id])
+  store              Company  @relation(fields: [store_id], references: [id])
+
+  @@index([store_id])
+  @@index([date])
+  @@index([estado])
+}
+
+model BusinessInfo {
+  id                  String   @id @default(uuid())
+  empresa_id          String   @unique
+  nombre_negocio      String
+  propietario_nombre  String
+  telefono            String
+  email               String
+  direccion           String
+  ciudad              String
+  provincia           String
+  codigo_postal       String
+  sitio_web           String?
+  logo_url            String?
+  descripcion         String
+  horarios            Json
+  moneda              String   @default("ARS")
+  formato_fecha       String   @default("DD/MM/YYYY")
+  zona_horaria        String   @default("America/Argentina/Buenos_Aires")
+  fecha_creacion      DateTime @default(now())
+  fecha_actualizacion DateTime @updatedAt
+  empresa             Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String?
+  empresa_id  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company? @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([nombre])
+}
+
+model Brand {
+  id          String   @id @default(uuid())
+  nombre      String
+  empresa_id  String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@unique([nombre, empresa_id])
+  @@index([empresa_id])
+  @@index([nombre])
+}
+
+model ServerLog {
+  id        String   @id @default(uuid())
+  level     String
+  message   String
+  module    String
+  details   Json?
+  timestamp DateTime @default(now())
+
+  @@index([level])
+  @@index([module])
+  @@index([timestamp])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  usuario_id     String?
+  accion         String
+  entidad        String
+  entidad_id     String?
+  datos_antiguos Json?
+  datos_nuevos   Json?
+  fecha          DateTime @default(now())
+  empresa_id     String
+  empresa        Company  @relation(fields: [empresa_id], references: [id])
+  usuario        User?    @relation(fields: [usuario_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([usuario_id])
+  @@index([entidad])
+  @@index([fecha])
+}
+
+model EmailTemplate {
+  id         String   @id @default(uuid())
+  name       String
+  subject    String
+  body       String
+  type       String
+  variables  Json?
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+}
+
+model WhatsAppTemplate {
+  id         String   @id @default(uuid())
+  name       String
+  message    String
+  type       String
+  variables  Json?
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+}
+
+enum EstadoReparacion {
+  INGRESADO
+  EN_COLA_DIAGNOSTICO
+  EN_DIAGNOSTICO
+  PRESUPUESTADO_ESPERANDO_OK
+  PRESUPUESTO_RECHAZADO
+  RESPALDO_DE_DATOS
+  EN_REPARACION
+  ESPERANDO_REPUESTO_LOCAL
+  ESPERANDO_REPUESTO_IMPORTACION
+  EN_PRUEBAS_CONTROL_CALIDAD
+  REPARADO_PENDIENTE_PAGO
+  LISTO_PARA_RETIRAR
+  ENTREGADO_AL_CLIENTE
+  CERRADO_FACTURADO
+  IRREPARABLE_PARA_RETIRAR
+  IRREPARABLE_ENTREGADO
+  EN_GARANTIA_REINGRESO
+  GARANTIA_ENTREGADO
+  ABANDONADO_POR_CLIENTE
+  CANCELADO_POR_CLIENTE
+}
+
+enum BudgetStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model MensajeWhatsapp {
+  id                  String   @id @default(uuid())
+  cliente_id          String
+  numero_telefono     String
+  direccion           String   // 'sent' or 'received'
+  mensaje             String
+  tipo                String   // 'text', 'image', 'pdf', 'video'
+  archivo_url         String?
+  whatsapp_message_id String?
+  fecha_envio         DateTime
+  created_at          DateTime @default(now())
+  cliente             Client   @relation(fields: [cliente_id], references: [id])
+
+  @@index([cliente_id])
+  @@index([fecha_envio])
+}
+
+model WhatsAppSession {
+  id              String   @id @default(uuid())
+  usuario_id      String?
+  empresa_id      String   @unique
+  telefono        String?
+  estado          String   @default("disconnected")
+  qr_code         String?
+  qr_expires_at   DateTime?
+  last_activity   DateTime @default(now())
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  usuario         User?    @relation(fields: [usuario_id], references: [id])
+  empresa         Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([estado])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  cliente_id  String
+  entidad     String   // 'REPAIR' or 'SALE'
+  entidad_id  String
+  puntuacion  Int      // 1-5
+  comentario  String?
+  created_at  DateTime @default(now())
+  cliente     Client   @relation(fields: [cliente_id], references: [id])
+
+  @@index([cliente_id])
+  @@index([entidad, entidad_id])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  usuario_id  String
+  tipo        String   // 'whatsapp', 'stock_bajo', 'reparacion_completada', 'reparacion_recibida', 'venta_realizada', 'cierre_caja'
+  titulo      String
+  mensaje     String
+  leida       Boolean  @default(false)
+  entidad_id  String?  // ID de la entidad relacionada (reparación, venta, etc.)
+  entidad_tipo String? // 'repair', 'sale', 'stock_item', etc.
+  metadata     Json?    // Datos adicionales
+  created_at  DateTime @default(now())
+  usuario     User     @relation(fields: [usuario_id], references: [id])
+
+  @@index([usuario_id])
+  @@index([leida])
+  @@index([tipo])
+  @@index([created_at])
+}
+
+model PaymentMethod {
+  id          String   @id @default(uuid())
+  empresa_id  String
+  nombre      String
+  descripcion String?
+  activo      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([activo])
+}
+
+model TaxRate {
+  id          String   @id @default(uuid())
+  empresa_id  String
+  nombre      String
+  porcentaje  Decimal  @db.Decimal(5, 2)
+  seccion     String?  // seccion del sistema a la que afecta (ej: 'reparaciones', 'ventas')
+  descripcion String?
+  activo      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([activo])
+}
+
+model BankAccount {
+  id             String   @id @default(uuid())
+  empresa_id     String
+  alias          String?
+  cbu            String?
+  numero_cuenta  String?
+  banco          String?
+  titular        String?
+  activo         Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  empresa        Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+}
+
+model NotificationPreference {
+  id          String   @id @default(uuid())
+  empresa_id  String
+  evento      String
+  titulo      String
+  descripcion String?
+  activo      Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@unique([empresa_id, evento])
+  @@index([empresa_id])
+}
+
+model Integration {
+  id          String   @id @default(uuid())
+  empresa_id  String
+  nombre      String   // 'whatsapp', 'arca', 'mobbex'
+  descripcion String?
+  conectado   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@unique([empresa_id, nombre])
+  @@index([empresa_id])
+}
+
+model PlanSubscription {
+  id               String   @id @default(uuid())
+  empresa_id       String   @unique
+  plan             String   // 'DEMO', 'BASICO', 'PRO', 'PLATINO'
+  meses            Int      @default(1)
+  fecha_inicio     DateTime @default(now())
+  fecha_vencimiento DateTime
+  activo           Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  empresa          Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([plan])
+  @@index([activo])
+}
+
+model RepairStateRequest {
+  id              String   @id @default(uuid())
+  empresa_id      String
+  usuario_id      String?
+  estado_nombre   String
+  mensaje         String?
+  estado          String   @default("pendiente")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  empresa         Company  @relation(fields: [empresa_id], references: [id])
+  usuario         User?    @relation(fields: [usuario_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([estado])
+}

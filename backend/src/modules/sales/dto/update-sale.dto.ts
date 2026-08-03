@@ -1,25 +1,11 @@
-import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
-import { CreateSaleDto } from './create-sale.dto';
+import { z } from 'zod';
 
-export enum SaleStatus {
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  PENDING = 'pending',
-}
+export const updateSaleSchema = z.object({
+  metodo_pago: z.enum(['efectivo', 'tarjeta', 'transferencia', 'multiple']).optional(),
+  monto_recibido: z.number().positive().optional(),
+  cambio: z.number().optional(),
+  numero_comprobante: z.string().optional(),
+  notas: z.string().optional(),
+});
 
-export class UpdateSaleDto {
-  @IsOptional()
-  @IsEnum(SaleStatus)
-  estado?: SaleStatus;
-
-  @IsOptional()
-  @IsString()
-  direccion_entrega?: string;
-
-  @IsOptional()
-  @IsString()
-  notas?: string;
-
-  [key: string]: any;
-}
+export type UpdateSaleDto = z.infer<typeof updateSaleSchema>;

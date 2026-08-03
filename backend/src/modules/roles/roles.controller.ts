@@ -1,64 +1,50 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { PermissionsGuard } from '../../common/guards/permissions.guard';
-import { RequirePermission } from '../../common/decorators/require-permission.decorator';
-import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
-import { CacheInterceptor } from '../../common/interceptors/cache.interceptor';
-
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+@ApiTags('Roles')
+@ApiBearerAuth()
 @Controller('roles')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class RolesController {
-  constructor(private readonly rolesService: RolesService) {}
+  constructor(private rolesService: RolesService) {}
 
-  @Post()
-  @RequirePermission('roles', 'crear')
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createRoleDto: CreateRoleDto, @CurrentUser() user: CurrentUserData) {
-    return this.rolesService.create(createRoleDto, user);
-  }
-
+  @ApiOperation({ summary: 'Listar todos los roles' })
   @Get()
-  @RequirePermission('roles', 'leer')
-  @UseInterceptors(CacheInterceptor)
-  async findAll(@CurrentUser() user: CurrentUserData) {
-    return this.rolesService.findAll(user);
+  @Roles('DESARROLLADOR')
+  async findAll() {
+    return this.rolesService.findAll();
   }
 
+  @ApiOperation({ summary: 'Obtener un rol por ID' })
   @Get(':id')
-  @RequirePermission('roles', 'leer')
-  @UseInterceptors(CacheInterceptor)
-  async findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.rolesService.findOne(id, user);
+  @Roles('DESARROLLADOR')
+  async findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.rolesService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Crear un nuevo rol' })
+  @Post()
+  @Roles('DESARROLLADOR')
+  async create(@Body() createRoleDto: CreateRoleDto) {
+    return this.rolesService.create(createRoleDto);
+  }
+
+  @ApiOperation({ summary: 'Actualizar un rol existente' })
   @Put(':id')
-  @RequirePermission('roles', 'actualizar')
-  async update(
-    @Param('id') id: string,
-    @Body() updateRoleDto: UpdateRoleDto,
-    @CurrentUser() user: CurrentUserData,
-  ) {
-    return this.rolesService.update(id, updateRoleDto, user);
+  @Roles('DESARROLLADOR')
+  async update(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() updateRoleDto: UpdateRoleDto) {
+    return this.rolesService.update(id, updateRoleDto);
   }
 
+  @ApiOperation({ summary: 'Eliminar un rol' })
   @Delete(':id')
-  @RequirePermission('roles', 'eliminar')
-  @HttpCode(HttpStatus.OK)
-  async remove(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
-    return this.rolesService.remove(id, user);
-  }
-
-  @Post('assign/:userId/:roleId')
-  @RequirePermission('roles', 'asignar')
-  @HttpCode(HttpStatus.OK)
-  async assignRole(
-    @Param('userId') userId: string,
-    @Param('roleId') roleId: string,
-    @CurrentUser() user: CurrentUserData,
-  ) {
-    return this.rolesService.assignRoleToUser(userId, roleId, user);
+  @Roles('DESARROLLADOR')
+  async delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.rolesService.delete(id);
   }
 }

@@ -1,96 +1,20 @@
-import { IsEmail, IsString, IsNotEmpty, IsNumber, IsArray, IsEnum, IsOptional, IsDate, Min, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { z } from 'zod';
 
-export class SaleItemDto {
-  @IsNotEmpty()
-  @IsString()
-  producto_id: string;
+export const createSaleSchema = z.object({
+  cliente_id: z.string().uuid().optional(),
+  items: z.array(z.object({
+    producto_id: z.string().uuid('ID de producto inválido'),
+    producto_nombre: z.string().min(1, 'El nombre del producto es requerido'),
+    cantidad: z.number().int().positive('La cantidad debe ser positiva'),
+    precio_unitario: z.number().positive('El precio unitario debe ser positivo'),
+    subtotal: z.number().positive('El subtotal debe ser positivo'),
+  })).min(1, 'Debe haber al menos un item'),
+  total: z.number().positive('El total debe ser positivo'),
+  metodo_pago: z.enum(['efectivo', 'tarjeta', 'transferencia', 'multiple']),
+  monto_recibido: z.number().positive('El monto recibido debe ser positivo'),
+  cambio: z.number().default(0),
+  numero_comprobante: z.string().optional(),
+  reparacion_id: z.string().uuid().optional(),
+});
 
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(1)
-  cantidad: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  precio_unitario: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  descuento_linea?: number;
-}
-
-export enum SaleStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum SalesChannel {
-  LOCAL = 'local',
-  WEB = 'web',
-  MERCADOLIBRE = 'mercadolibre',
-}
-
-export class CreateSaleDto {
-  @IsNotEmpty()
-  @IsString()
-  cliente_id: string;
-
-  @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
-  fecha_venta: Date;
-
-  @IsNotEmpty()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SaleItemDto)
-  items: SaleItemDto[];
-
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  subtotal: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  impuestos?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  descuento?: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  total: number;
-
-  @IsNotEmpty()
-  @IsString()
-  metodo_pago_id: string;
-
-  @IsOptional()
-  @IsString()
-  metodo_entrega_id?: string;
-
-  @IsOptional()
-  @IsString()
-  direccion_entrega?: string;
-
-  @IsOptional()
-  @IsEnum(SalesChannel)
-  canal_venta?: SalesChannel;
-
-  @IsOptional()
-  @IsString()
-  referencia_externa?: string;
-
-  @IsOptional()
-  @IsString()
-  notas?: string;
-}
+export type CreateSaleDto = z.infer<typeof createSaleSchema>;

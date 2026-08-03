@@ -1,53 +1,21 @@
-import { IsString, IsOptional, IsNotEmpty, IsObject, IsEmail } from 'class-validator';
+import { z } from 'zod';
 
-export class UpdateBusinessInfoDto {
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  nombre_negocio?: string;
+export const updateBusinessInfoSchema = z.object({
+  nombre_negocio: z.string().min(2).optional(),
+  propietario_nombre: z.string().min(2).optional(),
+  telefono: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  direccion: z.string().min(1).optional(),
+  ciudad: z.string().optional(),
+  provincia: z.string().optional(),
+  codigo_postal: z.string().optional(),
+  sitio_web: z.string().url().optional().or(z.literal('')),
+  logo_url: z.string().optional(),
+  descripcion: z.string().optional(),
+  horarios: z.any().optional(),
+  moneda: z.string().optional(),
+  formato_fecha: z.string().optional(),
+  zona_horaria: z.string().optional(),
+});
 
-  @IsOptional()
-  @IsString()
-  propietario_nombre?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  telefono?: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsOptional()
-  @IsString()
-  direccion?: string;
-
-  @IsOptional()
-  @IsString()
-  ciudad?: string;
-
-  @IsOptional()
-  @IsString()
-  provincia?: string;
-
-  @IsOptional()
-  @IsString()
-  codigo_postal?: string;
-
-  @IsOptional()
-  @IsString()
-  sitio_web?: string;
-
-  @IsOptional()
-  @IsString()
-  logo_url?: string;
-
-  @IsOptional()
-  @IsString()
-  descripcion?: string;
-
-  @IsOptional()
-  @IsObject()
-  horarios?: Record<string, any>;
-}
+export type UpdateBusinessInfoDto = z.infer<typeof updateBusinessInfoSchema>;
