@@ -2,7 +2,9 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MdReceipt, MdVisibility, MdEdit, MdDelete } from 'react-icons/md';
+import { Receipt } from 'lucide-react';
+import { MdVisibility, MdEdit, MdDelete } from 'react-icons/md';
+import { EmptyState } from '@/shared/components/async/EmptyState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
@@ -16,6 +18,7 @@ interface BudgetsTableProps {
   onPageChange: (page: number) => void;
   itemsPerPage: number;
   totalFiltered: number;
+  onDelete?: (budgetId: string) => void;
 }
 
 export const BudgetsTable: React.FC<BudgetsTableProps> = ({
@@ -25,6 +28,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
   onPageChange,
   itemsPerPage,
   totalFiltered,
+  onDelete,
 }) => {
   const navigate = useNavigate();
 
@@ -35,10 +39,10 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
           <CardTitle>Lista de presupuestos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground">
-            <MdReceipt size={48} className="mx-auto mb-4 text-muted-foreground/40" />
-            <p>No hay presupuestos que coincidan con los filtros</p>
-          </div>
+          <EmptyState
+            icon={Receipt}
+            title="No hay presupuestos que coincidan con los filtros"
+          />
         </CardContent>
       </Card>
     );
@@ -105,11 +109,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
                         variant="ghost"
                         size="icon-sm"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          if (confirm('¿Eliminar este presupuesto?')) {
-                            // Lógica de eliminación
-                          }
-                        }}
+                        onClick={() => onDelete?.(budget.id)}
                       >
                         <MdDelete size={16} />
                       </Button>

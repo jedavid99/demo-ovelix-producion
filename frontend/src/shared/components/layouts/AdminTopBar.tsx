@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, Bell, User, ChevronDown, ArrowRightToLine, LogOut } from 'lucide-react'
+import { Menu, Bell, User, ChevronDown, ArrowRightToLine, LogOut, Camera, MessageSquare, Package, Wrench, ShoppingCart, Calendar } from 'lucide-react'
 import { MdSearch, MdSettings, MdBarChart, MdInventory2, MdAttachMoney, MdReceipt, MdLocalShipping } from 'react-icons/md'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
@@ -13,19 +13,11 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu'
 import { SimpleNotifications, SimpleNotification } from '../notifications/SimpleNotifications'
-const categories = [
-  { value: 'all', label: 'Todo', placeholder: 'Buscar en Overlix...', route: '/dashboard', icon: <MdSearch size={16} /> },
-  { value: 'sales', label: 'Ventas', placeholder: 'Buscar venta...', route: '/sales', icon: <MdReceipt size={16} /> },
-  { value: 'repairs', label: 'Reparaciones', placeholder: 'Buscar reparación...', route: '/reparaciones/list', icon: <MdSettings size={16} /> },
-  { value: 'clients', label: 'Clientes', placeholder: 'Buscar cliente...', route: '/clients', icon: <User size={16} /> },
-  { value: 'expenses', label: 'Gastos', placeholder: 'Buscar gasto...', route: '/expenses' , icon: <MdAttachMoney size={16} /> },
-  { value: 'stock', label: 'Stock', placeholder: 'Buscar producto...', route: '/stock' , icon: <MdInventory2 size={16} /> },
-  { value: 'shipments', label: 'Envíos', placeholder: 'Buscar envío...', route: '/envios/tracking'  , icon: <MdLocalShipping size={16} />  },
-  { value: 'orders', label: 'Órdenes de Compra', placeholder: 'Buscar orden de compra...', route: '/providers/orders', icon: <MdReceipt size={16} /> },
-  { value: 'reports-sales', label: 'Reporte Ventas', placeholder: 'Buscar en reporte de ventas...', route: '/reports/sales', icon: <MdBarChart size={16} /> },
-  { value: 'reports-stock', label: 'Reporte Stock', placeholder: 'Buscar en reporte de stock...', route: '/reports/stock', icon: <MdInventory2 size={16} /> },
-  { value: 'reports-financial', label: 'Reporte Financiero', placeholder: 'Buscar en reporte financiero...', route: '/reports/financial', icon: <MdAttachMoney size={16} /> },
-]
+import { SearchModal } from '../SearchModal'
+import { QuickVerificationButton, QuickVerificationDialog } from '@/features/quickVerifications'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '../../components/ui/use-toast'
+import { notificationService, Notification } from '@/services/notificationService'
 export const AdminTopBar = ({
   onMenuClick = () => {},
   onToggleCollapse = () => {},
@@ -35,28 +27,63 @@ export const AdminTopBar = ({
   onToggleCollapse?: () => void
   sidebarCollapsed?: boolean
 }) => {
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
+  const [verificationsOpen, setVerificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const notificationsRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const navigateL = useNavigate()
+  const { logout, user } = useAuth()
+  
   const handleLogout = () => {
-    navigateL('/')
+    logout()
   }
-  const currentCategory = categories.find(cat => cat.value === selectedCategory) || categories[0]
+
+  // Cargar notificaciones al montar
+  useEffect(() => {
+    loadNotifications()
+    loadUnreadCount()
+    
+    // Actualizar notificaciones cada 30 segundos
+    const interval = setInterval(() => {
+      loadNotifications()
+      loadUnreadCount()
+    }, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadNotifications = async () => {
+    try {
+      const data = await notificationService.getAll()
+      setNotifications(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Error loading notifications:', error)
+      setNotifications([])
+    }
+  }
+
+  const loadUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount()
+      setUnreadCount(count)
+    } catch (error) {
+      console.error('Error loading unread count:', error)
+    }
+  }
+  
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        searchInputRef.current?.focus()
+        setSearchModalOpen(true)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
+  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -70,81 +97,96 @@ export const AdminTopBar = ({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [notificationsOpen])
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      const route = currentCategory.route
-      navigate(`${route}?search=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
+  
+  // 📦 ESTADO DE NOTIFICACIONES – Conectado con API
+  const handleNotificationRead = async (id: number) => {
+    try {
+      await notificationService.markAsRead(id.toString())
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id.toString() ? { ...notif, leida: true } : notif
+        )
+      )
+      loadUnreadCount()
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+      toast({ title: 'Error', description: 'No se pudo marcar la notificación como leída.', variant: 'destructive' })
     }
   }
-  // 📦 ESTADO DE NOTIFICACIONES – VACÍO (conectar con API)
-  const [notifications, setNotifications] = useState<SimpleNotification[]>([])
-  const unreadCount = notifications.filter(n => !n.read).length
-  const handleNotificationRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
+
+  const handleNotificationDelete = async (id: number) => {
+    try {
+      await notificationService.delete(id.toString())
+      setNotifications(prev => prev.filter(notif => notif.id !== id.toString()))
+      loadUnreadCount()
+    } catch (error) {
+      console.error('Error deleting notification:', error)
+      toast({ title: 'Error', description: 'No se pudo eliminar la notificación.', variant: 'destructive' })
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead()
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, leida: true }))
       )
-    )
+      loadUnreadCount()
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+      toast({ title: 'Error', description: 'No se pudieron marcar todas las notificaciones como leídas.', variant: 'destructive' })
+    }
   }
-  const handleNotificationDelete = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id))
-  }
-  const handleMarkAllRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    )
-  }
+
+  // Convertir notificaciones del backend al formato del componente
+  const simpleNotifications: SimpleNotification[] = notifications.map(notif => {
+    const iconMap: Record<string, React.ReactNode> = {
+      whatsapp: <MessageSquare size={16} className="text-green-500" />,
+      stock_bajo: <Package size={16} className="text-orange-500" />,
+      reparacion_completada: <Wrench size={16} className="text-green-500" />,
+      reparacion_recibida: <Wrench size={16} className="text-blue-500" />,
+      venta_realizada: <ShoppingCart size={16} className="text-green-500" />,
+      cierre_caja: <Calendar size={16} className="text-purple-500" />,
+    }
+
+    return {
+      id: parseInt(notif.id),
+      title: notif.titulo,
+      description: notif.mensaje,
+      icon: iconMap[notif.tipo] || <Bell size={16} />,
+      read: notif.leida,
+      time: new Date(notif.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    }
+  })
   return (
     <header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-card/80 backdrop-blur-md border-b border-border z-30 sticky top-0">
       <div className="flex items-center gap-3">
-        <Button onClick={onMenuClick} variant="ghost" size="icon-sm" className="lg:hidden">
+        <Button onClick={onMenuClick} variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Abrir menú">
           <Menu size={18} />
         </Button>
-        <Button onClick={onToggleCollapse} variant="ghost" size="icon-sm" className="hidden lg:inline-flex">
+        <Button onClick={onToggleCollapse} variant="ghost" size="icon-sm" className="hidden lg:inline-flex" aria-label="Colapsar sidebar">
           <ArrowRightToLine size={18} className={`transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
         </Button>
       </div>
       <div className="flex items-center gap-3">
-        {/* Global Search */}
-        <div className="hidden md:flex items-center gap-0 w-64">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 h-9 px-3 rounded-l-full border border-input border-r-0 bg-muted/50 text-sm text-muted-foreground hover:bg-muted transition-colors">
-                {currentCategory.label}
-                <ChevronDown size={14} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
-              {categories.map(cat => (
-                <DropdownMenuItem
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
-                  className={selectedCategory === cat.value ? 'bg-muted' : ''}
-                >
-                  <div className="flex items-center gap-2">
-                    {cat.icon}
-                    {cat.label}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <div className="relative flex-1">
-            <MdSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder={currentCategory.placeholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className={`h-9 w-full rounded-r-full border border-input bg-muted/50 pl-9 pr-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none transition-all duration-150 ${searchFocused ? 'ring-1 ring-primary/20 border-primary' : ''}`}
-            />
-          </div>
-        </div>
+        {/* Global Search Button */}
+        <button
+          onClick={() => setSearchModalOpen(true)}
+          className="hidden md:flex items-center gap-2 h-9 px-3 rounded-lg border border-input bg-muted/50 text-sm text-muted-foreground hover:bg-muted transition-colors w-64"
+        >
+          <MdSearch size={16} />
+          <span className="flex-1 text-left">Buscar...</span>
+          <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">⌘K</kbd>
+        </button>
+        
+        {/* Mobile Search Button */}
+        <button
+          onClick={() => setSearchModalOpen(true)}
+          className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+        >
+          <MdSearch size={20} className="text-muted-foreground" />
+        </button>
+
         {/* 🪟 Notificaciones – vacías por defecto */}
         <div className="relative" ref={notificationsRef}>
           <Button 
@@ -152,6 +194,7 @@ export const AdminTopBar = ({
             size="icon-sm" 
             className="relative"
             onClick={() => setNotificationsOpen(!notificationsOpen)}
+            aria-label="Notificaciones"
           >
             <Bell size={18} className="text-muted-foreground" />
             {unreadCount > 0 && (
@@ -164,7 +207,7 @@ export const AdminTopBar = ({
           {notificationsOpen && (
             <div className="absolute right-0 top-full mt-2 z-50">
               <SimpleNotifications
-                notifications={notifications}
+                notifications={simpleNotifications}
                 onRead={handleNotificationRead}
                 onDelete={handleNotificationDelete}
                 onMarkAllRead={handleMarkAllRead}
@@ -173,12 +216,33 @@ export const AdminTopBar = ({
             </div>
           )}
         </div>
+
+        {/* QR Scanner Button */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => navigate('/reparaciones/qr-scanner')}
+          title="Escanear QR"
+          aria-label="Escáner QR"
+        >
+          <Camera size={18} className="text-muted-foreground" />
+        </Button>
+        {/* Verificaciones rápidas */}
+        <QuickVerificationButton onClick={() => setVerificationsOpen(true)} />
         {/* Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                D
+                {user?.nombre?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="hidden sm:block text-left">
+                <div className="text-sm font-medium text-foreground">
+                  {user?.nombre || 'Usuario'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {user?.apellido || ''}
+                </div>
               </div>
               <ChevronDown size={14} className="hidden sm:block text-muted-foreground" />
             </button>
@@ -207,6 +271,9 @@ export const AdminTopBar = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      <SearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen} />
+      <QuickVerificationDialog open={verificationsOpen} onOpenChange={setVerificationsOpen} />
     </header>
   )
 }

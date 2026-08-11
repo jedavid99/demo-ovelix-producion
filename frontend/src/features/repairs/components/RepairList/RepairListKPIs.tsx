@@ -46,8 +46,8 @@ export const RepairListKPIs: React.FC<RepairListKPIsProps> = ({
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Listos para Recoger</p>
-            <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+            <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-success" />
             </div>
           </div>
           <p className="text-3xl font-bold text-foreground mb-2">{readyToPickup}</p>

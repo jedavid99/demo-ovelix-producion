@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Textarea } from '@/shared/components/ui/textarea';
 import type { FormData } from './RepairEdit.types';
 
@@ -13,18 +12,14 @@ export const EditNotesForm: React.FC<EditNotesFormProps> = ({
   setFormData,
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Notas Adicionales</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Textarea
-          value={formData.notas}
-          onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
-          placeholder="Notas adicionales sobre la reparación..."
-          rows={4}
-        />
-      </CardContent>
-    </Card>
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">Notas Adicionales</label>
+      <Textarea
+        value={formData.notas}
+        onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
+        placeholder="Notas adicionales sobre la reparación..."
+        rows={4}
+      />
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRepairList } from './useRepairList';
+import { useRepairList } from '../../hooks/useRepairList';
 import { RepairListHeader } from './RepairListHeader';
 import { RepairListKPIs } from './RepairListKPIs';
 import { RepairListFilters } from './RepairListFilters';
@@ -8,6 +8,7 @@ import { RepairListTable } from './RepairListTable';
 import { MarkDeliveredModal } from './MarkDeliveredModal';
 import { EditStatusModal } from './EditStatusModal';
 import RepairPreviewModal from '../../RepairPreviewModal';
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 
 export default function RepairsList() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function RepairsList() {
     searchQuery,
     setSearchQuery,
     loading,
+    error,
     activeDropdown,
     setActiveDropdown,
     previewModalOpen,
@@ -43,12 +45,16 @@ export default function RepairsList() {
     totalPages,
     totalFiltered,
     handleDelete,
+    confirmDelete,
+    deleteConfirmOpen,
+    setDeleteConfirmOpen,
     handleMarkAsDelivered,
     openMarkDeliveredModal,
     openEditStatusModal,
     openPreviewModal,
     navigateToEdit,
     navigateToPDF,
+    navigateToThermalPrint,
     loadRepairs,
   } = useRepairList();
 
@@ -84,6 +90,8 @@ export default function RepairsList() {
       {/* Tabla */}
       <RepairListTable
         loading={loading}
+        error={error}
+        onRetry={loadRepairs}
         paginatedRepairs={paginatedRepairs}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -95,6 +103,7 @@ export default function RepairsList() {
         onEdit={navigateToEdit}
         onEditStatus={openEditStatusModal}
         onPDF={navigateToPDF}
+        onThermalPrint={navigateToThermalPrint}
         onMarkDelivered={openMarkDeliveredModal}
         onDelete={handleDelete}
         onPageChange={handlePageChange}
@@ -140,6 +149,15 @@ export default function RepairsList() {
           repairId={selectedRepairId}
         />
       )}
+
+      {/* Modal de confirmación de eliminación */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Eliminar reparación"
+        description="¿Estás seguro de que deseas eliminar esta reparación?"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

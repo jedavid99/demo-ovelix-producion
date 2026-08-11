@@ -143,7 +143,7 @@ export const RepairSecurityForm: React.FC<RepairSecurityFormProps> = ({
               <div className="flex flex-col items-start gap-3">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">Dibuja el patrón (3x3)</p>
                 <div className="relative bg-card p-4 rounded-2xl border-2 border-primary/20 shadow-md" style={{ width: '200px', height: '200px' }}>
-                  <div className="grid grid-cols-3 gap-4 w-full h-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full h-full">
                     {Array.from({ length: 9 }).map((_, i) => (
                       <div key={i} className="w-full h-full bg-muted rounded-full hover:bg-primary/20 transition-colors" />
                     ))}

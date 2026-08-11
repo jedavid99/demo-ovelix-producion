@@ -1,12 +1,21 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Download, Plus, Smartphone, TrendingUp, TrendingDown, Wallet, Filter } from 'lucide-react'
+import { Download, Plus, Smartphone, TrendingDown, Wallet, Filter } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import DataTable from '@/shared/components/data-table'
+type CanjeOperation = {
+  id: string
+  date: string
+  device: string
+  model: string
+  status: string
+  amount: number
+}
 export default function IphoneCanje() {
   const navigate = useNavigate()
+  const [currentPage, setCurrentPage] = useState(1)
   
   // Datos mock eliminados - conectar con API real
   return (
@@ -17,7 +26,7 @@ export default function IphoneCanje() {
           <p className="text-muted-foreground">Gestión del plan canje para iPhone</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          <Button variant="outline" disabled title="La exportación estará disponible próximamente">
             <Download size={16} className="mr-2" />
             Exportar
           </Button>
@@ -36,11 +45,8 @@ export default function IphoneCanje() {
                 <Smartphone className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground"></p>
-            <div className="flex items-center gap-1 text-green-600 text-sm mt-2">
-              <TrendingUp size={16} />
-              <span>% vs mes anterior</span>
-            </div>
+            <p className="text-3xl font-bold text-foreground">—</p>
+            <p className="text-sm text-muted-foreground mt-2">Sin operaciones registradas</p>
           </CardContent>
         </Card>
         <Card variant="interactive" className="hover:shadow-md hover:-translate-y-1 transition-all duration-200">
@@ -51,11 +57,8 @@ export default function IphoneCanje() {
                 <TrendingDown className="h-5 w-5 text-orange-500" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">$</p>
-            <div className="flex items-center gap-1 text-red-500 text-sm mt-2">
-              <TrendingDown size={16} />
-              <span>% vs mes anterior</span>
-            </div>
+            <p className="text-3xl font-bold text-foreground">—</p>
+            <p className="text-sm text-muted-foreground mt-2">Sin operaciones registradas</p>
           </CardContent>
         </Card>
         <Card variant="interactive" className="hover:shadow-md hover:-translate-y-1 transition-all duration-200">
@@ -66,11 +69,8 @@ export default function IphoneCanje() {
                 <Wallet className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-foreground">$</p>
-            <div className="flex items-center gap-1 text-green-600 text-sm mt-2">
-              <TrendingUp size={16} />
-              <span>% vs mes anterior</span>
-            </div>
+            <p className="text-3xl font-bold text-foreground">—</p>
+            <p className="text-sm text-muted-foreground mt-2">Sin operaciones registradas</p>
           </CardContent>
         </Card>
       </div>
@@ -83,7 +83,7 @@ export default function IphoneCanje() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rango de fechas</label>
-              <select className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20">
+              <select disabled title="Sin datos para filtrar" className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60">
                 <option>Últimos 30 días</option>
                 <option>Último trimestre</option>
                 <option>Este año</option>
@@ -92,7 +92,7 @@ export default function IphoneCanje() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Modelo usado</label>
-              <select className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20">
+              <select disabled title="Sin datos para filtrar" className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60">
                 <option>Todos los modelos</option>
                 <option>iPhone 13 Pro</option>
                 <option>iPhone 12</option>
@@ -101,7 +101,7 @@ export default function IphoneCanje() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Técnico</label>
-              <select className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20">
+              <select disabled title="Sin datos para filtrar" className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60">
                 <option>Todos los técnicos</option>
                 <option>Alex Rivera</option>
                 <option>Jordan Smith</option>
@@ -110,7 +110,7 @@ export default function IphoneCanje() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</label>
-              <select className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20">
+              <select disabled title="Sin datos para filtrar" className="w-full rounded border border-input bg-background text-foreground py-2 px-3 focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60">
                 <option>Todos los estados</option>
                 <option>Completado</option>
                 <option>En reacondicionamiento</option>
@@ -122,10 +122,18 @@ export default function IphoneCanje() {
       </Card>
       <DataTable
         // Conectar con API real: api.get('/iphone/canje')
-        data={[]}
-        currentPage={1}
+        data={[] as CanjeOperation[]}
+        columns={[
+          { key: 'date', header: 'Fecha' },
+          { key: 'device', header: 'Equipo' },
+          { key: 'model', header: 'Modelo' },
+          { key: 'status', header: 'Estado', render: (op) => <Badge variant="outline">{op.status}</Badge> },
+          { key: 'amount', header: 'Importe', align: 'right', render: (op) => `$${op.amount.toLocaleString('es-AR')}` },
+        ]}
+        rowKey={(op) => op.id}
+        currentPage={currentPage}
         totalPages={1}
-        onPageChange={() => {}}
+        onPageChange={setCurrentPage}
         loading={false}
         emptyMessage="No hay operaciones de canje"
       />

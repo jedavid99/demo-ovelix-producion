@@ -13,6 +13,7 @@ export interface RepairData {
   numero_reparacion?: string;
   cliente_nombre?: string;
   cliente_telefono?: string;
+  cliente_dni?: string;
   dispositivo: string;
   marca?: string;
   modelo?: string;

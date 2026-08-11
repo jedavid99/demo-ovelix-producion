@@ -73,6 +73,7 @@ export const ClientSelector: React.FC<ClientSelectorWithSearchProps> = ({
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Buscar cliente por nombre, teléfono..."
+              aria-label="Buscar cliente por nombre, teléfono"
               className="w-full pl-9 pr-4 py-2.5 bg-muted border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-foreground"
             />
           </div>
@@ -90,8 +91,9 @@ export const ClientSelector: React.FC<ClientSelectorWithSearchProps> = ({
         {/* Resultados de búsqueda */}
         {search && searchResults.length > 0 && (
           <div className="border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+              <thead className="bg-muted sticky top-0">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Nombre</th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Teléfono</th>
@@ -115,7 +117,8 @@ export const ClientSelector: React.FC<ClientSelectorWithSearchProps> = ({
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         )}
 

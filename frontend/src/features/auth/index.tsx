@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Building2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Building2, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '/ovelix-claro.png';
 import { motion } from 'framer-motion';
@@ -10,13 +10,15 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    contraseña: '',        // este valor se enviará como "contraseña"
-    codigoEmpresa: '',   // este valor se enviará como "codigo_empresa"
+    password: '',
+    codigoEmpresa: '',
     rememberMe: false
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, type, checked, value } = e.target;
+    if (errorMessage) setErrorMessage('');
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -32,7 +34,7 @@ export default function Login() {
       // Llamamos al login del AuthContext
       await login(
         formData.email,
-        formData.contraseña,
+        formData.password,
         formData.codigoEmpresa
       );
       console.log('Login exitoso, navegando al dashboard');
@@ -42,13 +44,13 @@ export default function Login() {
       
       // Mostrar mensaje detallado del backend
       const mensaje = error.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.';
-      alert(mensaje);
+      setErrorMessage(mensaje);
     } finally {
       setIsLoading(false);
     }
   };
   return (
-    <main className="flex min-h-screen flex-col lg:flex-row bg-[#f9f9ff] text-[#191b23] select-none">
+    <main className="flex min-h-screen flex-col lg:flex-row bg-background text-primary select-none">
       {/* Sección izquierda (branding) - la dejamos igual */}
       <section className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center p-12">
         <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1588515603140-81bd9f7d1db0?q=80&w=1469&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }} />
@@ -68,7 +70,7 @@ export default function Login() {
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
               <div className="p-[3px] rounded-full bg-gradient-to-br from-slate-400 via-blue-300 to-slate-600 shadow-2xl shadow-blue-900/40 transition-all duration-700 group-hover:shadow-blue-700/70">
-                <img src={logo} alt="Overlix" className="w-40 h-40 rounded-full object-cover border-4 border-white/80 bg-black/30" />
+                <img src={logo} alt="ovelix" loading="lazy" className="w-40 h-40 rounded-full object-cover border-4 border-white/80 bg-black/30" />
               </div>
               <motion.div
                 className="absolute inset-0 -z-10 rounded-full border border-white/10"
@@ -92,24 +94,24 @@ export default function Login() {
       <section className="flex-1 flex flex-col justify-between min-h-screen p-6 lg:p-12 relative pattern-bg">
         {/* Logo móvil */}
         <div className="w-full lg:hidden flex items-center justify-center py-4">
-          <img src={logo} alt="Overlix" className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-white/80 bg-black/30" />
+          <img src={logo} alt="ovelix" loading="lazy" className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-white/80 bg-black/30" />
         </div>
         <div className="flex-1 flex items-center justify-center py-8">
-          <div className="w-full max-w-[440px] bg-white rounded-2xl shadow-xl border border-[#c2c6d6]/60 p-8 lg:p-10">
+          <div className="w-full max-w-[440px] bg-card rounded-2xl shadow-xl border border-border/60 p-8 lg:p-10">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-[#191b23] tracking-tight mb-2">Bienvenido</h2>
-              <p className="text-sm text-[#424754]">Inicia sesión para acceder a tu panel de administración.</p>
+              <h2 className="text-2xl font-bold text-primary tracking-tight mb-2">Bienvenido</h2>
+              <p className="text-sm text-muted-foreground">Inicia sesión para acceder a tu panel de administración.</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#424754]" htmlFor="email">Correo</label>
+                <label className="text-xs font-semibold text-muted-foreground" htmlFor="email">Correo</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Mail className="w-5 h-5" />
                   </span>
                   <input
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#c2c6d6] rounded-xl text-sm placeholder-[#727785] focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-card  border border-border rounded-xl text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     id="email"
                     name="email"
                     type="email"
@@ -122,73 +124,78 @@ export default function Login() {
               </div>
               {/* Código de empresa (NUEVO) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-[#424754]" htmlFor="codigoEmpresa">
+                <label className="text-xs font-semibold text-muted-foreground" htmlFor="codigoEmpresa">
                   Código de empresa
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Building2 className="w-5 h-5" />
                   </span>
                   <input
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#c2c6d6] rounded-xl text-sm placeholder-[#727785] focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-card  border border-border rounded-xl text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     id="codigoEmpresa"
                     name="codigoEmpresa"
                     type="text"
-                    placeholder="Ej: 80YTE2"
+                    placeholder="Ej: 80YTE2 (opcional para desarrolladores)"
                     value={formData.codigoEmpresa}
                     onChange={handleChange}
-                    required
                   />
                 </div>
               </div>
               {/* Contraseña */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-[#424754]" htmlFor="password">
+                  <label className="text-xs font-semibold text-muted-foreground" htmlFor="password">
                     Contraseña
                   </label>
-                  <button type="button" className="text-xs font-medium text-[#0058be] hover:underline cursor-pointer">
+                  <button type="button" className="text-xs font-medium text-primary hover:underline cursor-pointer">
                     ¿Olvidaste la contraseña?
                   </button>
                 </div>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Lock className="w-5 h-5" />
                   </span>
                   <input
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-[#c2c6d6] rounded-xl text-sm placeholder-[#727785] focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 focus:border-[#0058be] transition-all"
-                    id="contraseña"
-                    name="contraseña"
-                    type={showPassword ? 'text' : 'contraseña'}
+                    className="w-full pl-11 pr-4 py-3 bg-card  border border-border rounded-xl text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    value={formData.contraseña}
+                    value={formData.password}
                     onChange={handleChange}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#727785] hover:text-[#191b23]"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
+              {errorMessage && (
+                <div className="flex items-start gap-2 text-sm text-destructive dark:text-destructive bg-destructive/10 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3.5 py-3 mt-1">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 py-3.5 px-4 bg-[#0058be] text-white hover:bg-[#2170e4] active:scale-[0.99] font-medium text-sm rounded-xl shadow-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full mt-2 py-3.5 px-4 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.99] font-medium text-sm rounded-xl shadow-md cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Iniciando...' : 'Iniciar sesión'}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
               </button>
             </form>
           <div className="text-center mt-6">
-              <p className="text-sm text-[#424754]">
+              <p className="text-sm text-muted-foreground">
                 ¿No tienes una cuenta?{' '}
                 <button
                   onClick={() => navigate('/register')}
-                  className="text-[#0058be] font-medium hover:underline cursor-pointer"
+                  className="text-primary font-medium hover:underline cursor-pointer"
                 >
                   Regístrate
                 </button>

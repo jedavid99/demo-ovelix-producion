@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Search,
   Download,
   Plus,
-  FileDown,
-  Mail,
-  Trash2,
-  RefreshCw,
-  Edit,
   Filter,
   TrendingUp,
   Clock,
@@ -17,8 +11,10 @@ import {
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge'
-import { Input } from '@/shared/components/ui/input'
 import DataTable from '@/shared/components/data-table'
+import { useSales } from '@/hooks/useSales'
+import type { Sale } from '@/types/sale.types'
+
 interface Invoice {
   id: string;
   number: string;
@@ -28,57 +24,84 @@ interface Invoice {
   amount: number;
   status: 'authorized' | 'pending' | 'error';
 }
+
+function mapSaleToInvoice(sale: Sale): Invoice {
+  const estado = String(sale.estado).toLowerCase();
+  const status = estado === 'anulada' ? 'error' : 'authorized';
+  return {
+    id: sale.id,
+    number: sale.numero_comprobante || `VTA-${sale.id.slice(0, 8)}`,
+    date: formatDate(sale.fecha),
+    customer: sale.cliente?.nombre_completo || 'Cliente mostrador',
+    cuit: '—',
+    amount: Number(sale.total) || 0,
+    status,
+  };
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function dateRangeToFilter(range: string): { fecha_desde?: string; fecha_hasta?: string } {
+  const now = new Date();
+  const to = now.toISOString();
+  if (range === 'Mes actual') {
+    return { fecha_desde: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), fecha_hasta: to };
+  }
+  if (range === 'Último trimestre') {
+    return { fecha_desde: new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString(), fecha_hasta: to };
+  }
+  return { fecha_desde: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), fecha_hasta: to };
+}
+
 export default function InvoicesList() {
-  const [dateRange, setDateRange] = useState('Last 30 Days');
-  const [invoiceType, setInvoiceType] = useState('All');
-  const [paymentStatus, setPaymentStatus] = useState('All Statuses');
-  const [arcaStatus, setArcaStatus] = useState('Any Status');
+  const [dateRange, setDateRange] = useState('Últimos 30 días');
+  const [invoiceType, setInvoiceType] = useState('Todas');
+  const [paymentStatus, setPaymentStatus] = useState('Todos los estados');
+  const [arcaStatus, setArcaStatus] = useState('Cualquier estado');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const invoices: Invoice[] = [
-    {
-      id: '1',
-      number: 'A-0001-00000123',
-      date: 'Oct 24, 2023',
-      customer: 'Global Tech Solutions',
-      cuit: '30-71234567-9',
-      amount: 1250.0,
-      status: 'authorized',
-    },
-    {
-      id: '2',
-      number: 'B-0001-00000124',
-      date: 'Oct 25, 2023',
-      customer: 'Individual Client',
-      cuit: '22.456.789',
-      amount: 420.0,
-      status: 'error',
-    },
-    {
-      id: '3',
-      number: 'A-0001-00000125',
-      date: 'Oct 26, 2023',
-      customer: 'Modern Retail Corp',
-      cuit: '30-55889911-2',
-      amount: 3800.0,
-      status: 'pending',
-    },
-    {
-      id: '4',
-      number: 'A-0001-00000126',
-      date: 'Oct 26, 2023',
-      customer: 'Software Lab SA',
-      cuit: '30-11223344-5',
-      amount: 5600.0,
-      status: 'authorized',
-    },
-  ];
+
+  const range = useMemo(() => dateRangeToFilter(dateRange), [dateRange]);
+
+  const { data, total, totalPages, loading, error, refetch } = useSales({
+    page: currentPage,
+    limit: 10,
+    ...range,
+    estado: arcaStatus === 'Error' ? 'anulada' : arcaStatus === 'Autorizada' ? 'completada' : undefined,
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateRange, arcaStatus]);
+
+  const invoices = useMemo(() => data.map(mapSaleToInvoice), [data]);
+
+  const filteredInvoices = useMemo(() => invoices.filter(invoice => {
+    const matchesSearch = !searchQuery ||
+      invoice.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.customer.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesArca = arcaStatus === 'Cualquier estado' ||
+      (arcaStatus === 'Autorizada' && invoice.status === 'authorized') ||
+      (arcaStatus === 'Pendiente' && invoice.status === 'pending') ||
+      (arcaStatus === 'Error' && invoice.status === 'error');
+    const matchesPayment = paymentStatus === 'Todos los estados' ||
+      (paymentStatus === 'Pagada' && invoice.status === 'authorized') ||
+      (paymentStatus === 'No pagada' && invoice.status === 'error');
+    return matchesSearch && matchesArca && matchesPayment;
+  }), [invoices, searchQuery, arcaStatus, paymentStatus]);
+
+  const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+  const pendingCount = invoices.filter(inv => inv.status === 'pending').length;
+  const unpaidAmount = invoices.filter(inv => inv.status !== 'authorized').reduce((sum, inv) => sum + inv.amount, 0);
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'authorized':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-            <span className="size-1.5 rounded-full bg-green-500"></span>
+            <span className="size-1.5 rounded-full bg-success"></span>
             Autorizada
           </span>
         );
@@ -91,8 +114,8 @@ export default function InvoicesList() {
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-            <span className="size-1.5 rounded-full bg-red-500"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-destructive">
+            <span className="size-1.5 rounded-full bg-destructive/100"></span>
             Error
           </span>
         );
@@ -100,18 +123,6 @@ export default function InvoicesList() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = invoice.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         invoice.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = arcaStatus === 'Any Status' || 
-                         (arcaStatus === 'Authorized (CAE Active)' && invoice.status === 'authorized') ||
-                         (arcaStatus === 'Pending' && invoice.status === 'pending') ||
-                         (arcaStatus === 'Error' && invoice.status === 'error');
-    return matchesSearch && matchesStatus;
-  });
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const pendingCount = invoices.filter(inv => inv.status === 'pending').length;
-  const unpaidAmount = 8120.50;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -120,11 +131,11 @@ export default function InvoicesList() {
           <p className="text-muted-foreground">Gestiona tus facturas electrónicas y estado ARCA</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          <Button variant="outline" disabled title="La exportación estará disponible próximamente">
             <Download size={16} className="mr-2" />
             Exportar
           </Button>
-          <Link to="/create-invoice">
+          <Link to="/billing/create">
             <Button>
               <Plus size={16} className="mr-2" />
               Nueva factura
@@ -139,10 +150,10 @@ export default function InvoicesList() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total facturado</p>
               <Wallet className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-3xl font-bold text-foreground">$</p>
-            <div className="flex items-center gap-1 text-green-600 text-sm mt-2">
+            <p className="text-3xl font-bold text-foreground">${totalAmount.toFixed(2)}</p>
+            <div className="flex items-center gap-1 text-success text-sm mt-2">
               <TrendingUp size={16} />
-              <span>% vs mes anterior</span>
+              <span>{total} facturas emitidas</span>
             </div>
           </CardContent>
         </Card>
@@ -152,7 +163,7 @@ export default function InvoicesList() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pendientes</p>
               <Clock className="h-5 w-5 text-orange-500" />
             </div>
-            <p className="text-3xl font-bold text-foreground"></p>
+            <p className="text-3xl font-bold text-foreground">{pendingCount}</p>
             <p className="text-sm text-muted-foreground mt-2">Requieren acción ARCA</p>
           </CardContent>
         </Card>
@@ -162,8 +173,8 @@ export default function InvoicesList() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Saldo pendiente</p>
               <Wallet className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-3xl font-bold text-foreground">$</p>
-            <p className="text-sm text-muted-foreground mt-2">facturas sin pagar</p>
+            <p className="text-3xl font-bold text-foreground">${unpaidAmount.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground mt-2">{invoices.filter(inv => inv.status !== 'authorized').length} facturas sin pagar</p>
           </CardContent>
         </Card>
       </div>
@@ -232,18 +243,31 @@ export default function InvoicesList() {
         </CardContent>
       </Card>
       <DataTable
-        data={filteredInvoices.map(inv => ({
-          id: inv.id,
-          number: inv.number,
-          date: inv.date,
-          customer: inv.customer,
-          amount: inv.amount,
-          status: inv.status,
-        }))}
-        currentPage={1}
-        totalPages={1}
-        onPageChange={() => {}}
-        loading={false}
+        data={filteredInvoices}
+        columns={[
+          { key: 'number', header: 'Número', render: (inv) => <span className="font-mono text-muted-foreground">{inv.number}</span> },
+          { key: 'date', header: 'Fecha' },
+          { key: 'customer', header: 'Cliente' },
+          { key: 'cuit', header: 'CUIT', render: (inv) => <span className="text-muted-foreground">{inv.cuit}</span> },
+          {
+            key: 'amount',
+            header: 'Monto',
+            align: 'right',
+            render: (inv) => (
+              <span className="font-medium text-foreground">
+                {inv.amount.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 })}
+              </span>
+            ),
+          },
+          { key: 'status', header: 'Estado ARCA', render: (inv) => getStatusBadge(inv.status) },
+        ]}
+        rowKey={(inv) => inv.id}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        loading={loading}
+        error={error || undefined}
+        onRetry={refetch}
         emptyMessage="No hay facturas registradas"
       />
     </div>

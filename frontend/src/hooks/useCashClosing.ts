@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { cashClosingService } from '@/services/cashClosingService';
 import { CashClosingData, CashClosingFilters } from '@/types/cashClosing.types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/shared/components/ui/use-toast';
 import { useLoading } from '@/contexts/LoadingContext';
 
 export const useCashClosing = (filters?: CashClosingFilters) => {

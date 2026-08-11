@@ -29,7 +29,12 @@ export const repairService = {
 
   // Cambiar estado de una reparación
   updateStatus: (id: string, data: RepairStatusUpdate): Promise<Repair> => {
-    return api.put(`/repairs/${id}/estado`, data).then(res => res.data);
+    // Convertir estado a mayúsculas para el backend
+    const backendData = {
+      ...data,
+      estado: data.estado.toUpperCase() as any
+    };
+    return api.patch(`/repairs/${id}/estado`, backendData).then(res => res.data);
   },
 
   // Completar una reparación

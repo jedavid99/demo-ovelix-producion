@@ -14,6 +14,7 @@ import { RepairsModule } from './modules/repairs/repairs.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { StockModule } from './modules/stock/stock.module';
 import { SalesModule } from './modules/sales/sales.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
 import { CashClosingModule } from './modules/cash-closing/cash-closing.module';
 import { BusinessInfoModule } from './modules/business-info/business-info.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -63,6 +64,7 @@ const envSchema = z.object({
     BudgetsModule,
     StockModule,
     SalesModule,
+    ExpensesModule,
     CashClosingModule,
     BusinessInfoModule,
     RolesModule,

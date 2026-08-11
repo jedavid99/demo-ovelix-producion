@@ -46,7 +46,7 @@ export const RepairDeviceForm: React.FC<RepairDeviceFormProps> = ({
           </div>
           <h2 className="text-base font-bold text-foreground">Categoría de Dispositivo</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-6">
           {deviceCategories.map((category) => {
             const Icon = category.icon;
             const isSelected = deviceType === category.id;
@@ -122,7 +122,7 @@ export const RepairDeviceForm: React.FC<RepairDeviceFormProps> = ({
               <CheckCircle2 size={16} className="text-muted-foreground" />
               Condición Estética
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {['Nuevo', 'Rayones Leves', 'Pantalla Rota', 'Desgaste Intenso'].map((condition) => (
                 <button
                   key={condition}

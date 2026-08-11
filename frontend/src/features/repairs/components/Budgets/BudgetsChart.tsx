@@ -1,6 +1,7 @@
 import React from 'react';
-import { MdBarChart } from 'react-icons/md';
+import { BarChart3 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { EmptyState } from '@/shared/components/async/EmptyState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { STATUS_COLORS } from './Budgets.types';
 
@@ -21,10 +22,7 @@ export const BudgetsChart: React.FC<BudgetsChartProps> = ({ statusData }) => {
           <CardTitle>Distribución por Estado</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground">
-            <MdBarChart size={48} className="mx-auto mb-4 text-muted-foreground/40" />
-            <p>Sin datos</p>
-          </div>
+          <EmptyState icon={BarChart3} title="Sin datos de presupuestos" />
         </CardContent>
       </Card>
     );

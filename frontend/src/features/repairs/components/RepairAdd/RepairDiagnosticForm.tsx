@@ -34,10 +34,11 @@ export const RepairDiagnosticForm: React.FC<RepairDiagnosticFormProps> = ({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+            <label htmlFor="rd-issue" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
               Descripción del Problema
             </label>
             <textarea
+              id="rd-issue"
               value={issueDescription}
               onChange={(e) => onIssueDescriptionChange(e.target.value)}
               placeholder="Pantalla rota, puerto de carga suelto..."
@@ -46,10 +47,11 @@ export const RepairDiagnosticForm: React.FC<RepairDiagnosticFormProps> = ({
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+            <label htmlFor="rd-notes" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
               Notas del Técnico
             </label>
             <textarea
+              id="rd-notes"
               value={technicianNotes}
               onChange={(e) => onTechnicianNotesChange(e.target.value)}
               placeholder="Observaciones adicionales..."
@@ -58,10 +60,11 @@ export const RepairDiagnosticForm: React.FC<RepairDiagnosticFormProps> = ({
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4">
           <div>
-            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Prioridad</label>
+            <label htmlFor="rd-priority" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Prioridad</label>
             <select
+              id="rd-priority"
               value={priority}
               onChange={(e) => onPriorityChange(e.target.value)}
               className="w-full bg-muted border border-border rounded-lg py-2 px-3 text-sm focus:ring-primary/10 focus:border-primary transition-all text-foreground"
@@ -72,8 +75,9 @@ export const RepairDiagnosticForm: React.FC<RepairDiagnosticFormProps> = ({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Días Estimados</label>
+            <label htmlFor="rd-days" className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Días Estimados</label>
             <input
+              id="rd-days"
               type="number"
               value={estimatedDays}
               onChange={(e) => onEstimatedDaysChange(parseInt(e.target.value))}

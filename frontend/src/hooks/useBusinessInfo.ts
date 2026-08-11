@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { businessInfoService } from '@/services/businessInfoService';
 import { BusinessInfo, BusinessInfoUpdate } from '@/types/businessInfo.types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/shared/components/ui/use-toast';
 import { useLoading } from '@/contexts/LoadingContext';
 
 export const useBusinessInfo = () => {

@@ -16,52 +16,39 @@ module.exports = {
           active: '#003D99',
         },
         secondary: {
-          DEFAULT: '#F4F4F5',
-          foreground: '#18181B',
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
         },
         destructive: {
           DEFAULT: '#EF4444',
           foreground: '#FFFFFF',
         },
         muted: {
-          DEFAULT: '#F4F4F5',
-          foreground: '#71717A',
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
         },
         accent: {
-          DEFAULT: '#F4F4F5',
-          foreground: '#18181B',
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
         },
-        background: {
-          light: '#FAFAFA',
-          dark: '#0A0A0A',
-          DEFAULT: '#FAFAFA',
-        },
-        foreground: {
-          DEFAULT: '#18181B',
-          light: '#18181B',
-          dark: '#FAFAFA',
-        },
-        'muted-foreground': {
-          DEFAULT: '#71717A',
-          light: '#71717A',
-          dark: '#A1A1AA',
-        },
-        card: {
-          light: '#FFFFFF',
-          dark: '#1A1A1A',
-          DEFAULT: '#FFFFFF',
-        },
-        border: {
-          light: '#E4E4E7',
-          dark: '#2A2A2A',
-          DEFAULT: '#E4E4E7',
-        },
-        input: {
-          light: '#E4E4E7',
-          dark: '#2A2A2A',
-          DEFAULT: '#E4E4E7',
-        },
-        ring: 'rgba(0,102,255,0.5)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: 'var(--card)',
+        'card-foreground': 'var(--card-foreground)',
+        popover: 'var(--popover)',
+        'popover-foreground': 'var(--popover-foreground)',
+        'muted-foreground': 'var(--muted-foreground)',
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+        sidebar: 'var(--sidebar)',
+        'sidebar-foreground': 'var(--sidebar-foreground)',
+        'sidebar-primary': 'var(--sidebar-primary)',
+        'sidebar-primary-foreground': 'var(--sidebar-primary-foreground)',
+        'sidebar-accent': 'var(--sidebar-accent)',
+        'sidebar-accent-foreground': 'var(--sidebar-accent-foreground)',
+        'sidebar-border': 'var(--sidebar-border)',
+        'sidebar-ring': 'var(--sidebar-ring)',
         success: {
           DEFAULT: '#16A34A',
           foreground: '#FFFFFF',
@@ -77,8 +64,8 @@ module.exports = {
       },
       // 🔤 Tipografía
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Geist Variable', 'Geist', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Geist Variable', 'Geist', 'system-ui', 'sans-serif'],
       },
       // 🌗 Sombras multicapa (modo claro)
       boxShadow: {

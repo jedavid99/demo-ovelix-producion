@@ -23,9 +23,9 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div className="bg-card  rounded-xl border border-border  overflow-hidden shadow-sm">
       {/* Header con logo y nombre */}
-      <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+      <div className="p-6 border-b border-border ">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
             {/* Logo o placeholder */}
@@ -33,7 +33,8 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
               <img
                 src={businessInfo.logo_url}
                 alt="Logo de la empresa"
-                className="w-20 h-20 object-contain border border-slate-200 dark:border-slate-700 rounded-lg"
+                loading="lazy"
+                className="w-20 h-20 object-contain border border-border dark:border-border rounded-lg"
               />
             ) : (
               <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
@@ -44,10 +45,10 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
             )}
             
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-foreground">
                 {businessInfo.nombre_negocio}
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-muted-foreground dark:text-muted-foreground mt-1">
                 {businessInfo.propietario_nombre}
               </p>
               <Badge className="mt-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
@@ -66,32 +67,32 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
       {/* Información de contacto */}
       <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-foreground dark:text-muted-foreground uppercase tracking-wider">
             Información de Contacto
           </h3>
           
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 text-slate-400 mt-0.5" />
+              <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Email</p>
-                <p className="text-slate-900 dark:text-white font-medium">{businessInfo.email}</p>
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">Email</p>
+                <p className="text-foreground font-medium">{businessInfo.email}</p>
               </div>
             </div>
             
             <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-slate-400 mt-0.5" />
+              <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Teléfono</p>
-                <p className="text-slate-900 dark:text-white font-medium">{businessInfo.telefono}</p>
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">Teléfono</p>
+                <p className="text-foreground font-medium">{businessInfo.telefono}</p>
               </div>
             </div>
             
             {businessInfo.sitio_web && (
               <div className="flex items-start gap-3">
-                <Globe className="w-5 h-5 text-slate-400 mt-0.5" />
+                <Globe className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Sitio Web</p>
+                  <p className="text-sm text-muted-foreground dark:text-muted-foreground">Sitio Web</p>
                   <a
                     href={businessInfo.sitio_web}
                     target="_blank"
@@ -107,20 +108,20 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-foreground dark:text-muted-foreground uppercase tracking-wider">
             Dirección
           </h3>
           
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
+              <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Dirección</p>
-                <p className="text-slate-900 dark:text-white font-medium">{businessInfo.direccion}</p>
-                <p className="text-slate-900 dark:text-white">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">Dirección</p>
+                <p className="text-foreground font-medium">{businessInfo.direccion}</p>
+                <p className="text-foreground">
                   {businessInfo.ciudad}, {businessInfo.provincia}
                 </p>
-                <p className="text-slate-900 dark:text-white">
+                <p className="text-foreground">
                   {businessInfo.codigo_postal}
                 </p>
               </div>
@@ -132,18 +133,18 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
       {/* Descripción */}
       {businessInfo.descripcion && (
         <div className="px-6 pb-6">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-semibold text-foreground dark:text-muted-foreground uppercase tracking-wider mb-3">
             Descripción
           </h3>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             {businessInfo.descripcion}
           </p>
         </div>
       )}
 
       {/* Horarios */}
-      <div className="px-6 pb-6 border-t border-slate-100 dark:border-slate-800 pt-6">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <div className="px-6 pb-6 border-t border-border  pt-6">
+        <h3 className="text-sm font-semibold text-foreground dark:text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
           <Clock className="w-4 h-4" />
           Horarios de Atención
         </h3>
@@ -160,12 +161,12 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           ].map((schedule) => (
             <div
               key={schedule.day}
-              className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 text-center"
+              className="bg-muted dark:bg-muted/50 rounded-lg p-3 text-center"
             >
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <p className="text-xs font-semibold text-foreground dark:text-muted-foreground mb-1">
                 {schedule.day}
               </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 {schedule.hours}
               </p>
             </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { toast } from '@/shared/components/ui/use-toast';
 import RepairAdd from './components/RepairAdd';
 import RepairTechnical from './Technical';
 import RepairFinalize from './Finalize';
@@ -75,9 +76,9 @@ export default function RepairFlow() {
     signaturePad: '',
     printOption: 'both',
   });
-  const updateData = (updates: Partial<RepairData>) => {
+  const updateData = useCallback((updates: Partial<RepairData>) => {
     setData(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
   const handleNext = () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
@@ -91,9 +92,7 @@ export default function RepairFlow() {
     }
   };
   const handleComplete = () => {
-    // Handle final submission
-    
-    alert('Reparaci�n completada e impresa!');
+    toast({ title: 'Éxito', description: 'Reparación completada e impresa!' });
   };
   return (
     <div>

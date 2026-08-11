@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { repairService } from '@/services/repairService';
-import { toast } from '@/hooks/use-toast';
+import { clientService } from '@/services/clientService';
+import { toast } from '@/shared/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import type { RepairData, FormData, RepairPart } from './RepairEdit.types';
 import { initialFormData } from './RepairEdit.types';
@@ -25,8 +26,29 @@ export const useRepairEdit = (id: string | undefined) => {
       setLoading(true);
       const response = await repairService.getById(repairId) as any;
       const orderData = response?.data?.data || response?.data || response;
-      setRepairData(orderData);
+      
+      
+      // Cargar datos del cliente para obtener nombre, DNI y teléfono
+      let clienteData = null;
+      if (orderData.cliente_id) {
+        try {
+          const clientResponse = await clientService.getById(orderData.cliente_id) as any;
+          clienteData = clientResponse?.data?.data || clientResponse?.data || clientResponse;
+        } catch (error) {
+          console.error('Error al cargar cliente:', error);
+        }
+      }
+      
+      setRepairData({
+        ...orderData,
+        cliente_nombre: clienteData?.nombre_completo || orderData.cliente_nombre || orderData.cliente?.nombre_completo || null,
+        cliente_telefono: clienteData?.telefono || orderData.cliente_telefono || orderData.cliente?.telefono || null,
+        cliente_dni: clienteData?.dni || orderData.dni || orderData.cliente?.dni || null,
+      });
 
+      const totalReparacionValue = parseFloat(orderData.total_reparacion) || parseFloat(orderData.costo_estimado) || 0;
+      console.log('Valor calculado para total_reparacion:', totalReparacionValue);
+      
       setFormData({
         problema_reportado: orderData.problema_reportado || '',
         diagnosis: orderData.diagnosis || '',
@@ -34,7 +56,7 @@ export const useRepairEdit = (id: string | undefined) => {
         estado: orderData.estado || 'diagnostic',
         costo_piezas: orderData.costo_piezas || 0,
         costo_mano_obra: orderData.costo_mano_obra || 0,
-        total_reparacion: orderData.total_reparacion || 0,
+        total_reparacion: totalReparacionValue,
         notas: orderData.notas || '',
         foto_evidencia: orderData.foto_evidencia || '',
         tecnico_asignado_id: orderData.tecnico_asignado_id || '',
@@ -80,23 +102,14 @@ export const useRepairEdit = (id: string | undefined) => {
     if (id) loadRepairData(id);
   }, [id, loadRepairData]);
 
-  // Efecto para recalcular total cuando cambian repuestos o mano de obra
+  // Efecto para actualizar costo_piezas cuando cambian repuestos
   useEffect(() => {
     const totalRepuestos = repuestos.reduce((sum, r) => sum + r.cantidad * r.costo_unitario, 0);
     setFormData((prev) => ({
       ...prev,
       costo_piezas: totalRepuestos,
-      total_reparacion: totalRepuestos + prev.costo_mano_obra,
     }));
   }, [repuestos]);
-
-  // Efecto para recalcular total cuando cambia mano de obra
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      total_reparacion: prev.costo_piezas + prev.costo_mano_obra,
-    }));
-  }, [formData.costo_mano_obra]);
 
   // Handlers para repuestos
   const agregarRepuesto = useCallback(() => {

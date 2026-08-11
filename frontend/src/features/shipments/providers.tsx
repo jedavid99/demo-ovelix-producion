@@ -45,7 +45,7 @@ export default function Providers() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-6"
+      className="min-h-screen bg-muted  p-4 md:p-6"
     >
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Encabezado compacto */}
@@ -63,8 +63,8 @@ export default function Providers() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Total', value: totalSuppliers, icon: Building2, color: 'text-primary', bg: 'bg-primary/10', sub: 'Proveedores activos' },
-            { label: 'Nacionales', value: localSuppliers, icon: Building2, color: 'text-green-600', bg: 'bg-green-500/10', sub: 'Socios domésticos' },
-            { label: 'Internacionales', value: internationalSuppliers, icon: Globe, color: 'text-blue-600', bg: 'bg-blue-500/10', sub: 'Proveedores globales' },
+            { label: 'Nacionales', value: localSuppliers, icon: Building2, color: 'text-success', bg: 'bg-success/10', sub: 'Socios domésticos' },
+            { label: 'Internacionales', value: internationalSuppliers, icon: Globe, color: 'text-primary', bg: 'bg-primary/10', sub: 'Proveedores globales' },
             { label: 'Tiempo Promedio', value: averageDeliveryDays === 0 ? '—' : averageDeliveryDays, icon: Package, color: 'text-orange-500', bg: 'bg-orange-500/10', sub: 'Días de entrega' },
           ].map((kpi, idx) => {
             const Icon = kpi.icon
@@ -100,6 +100,7 @@ export default function Providers() {
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Buscar por nombre, contacto o ubicación..."
+                  aria-label="Buscar por nombre, contacto o ubicación"
                   className="w-full pl-9 pr-4 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
                 />
               </div>
@@ -122,8 +123,18 @@ export default function Providers() {
         {/* Tabla de proveedores */}
         <DataTable
           data={filtered}
+          columns={[
+            { key: 'name', header: 'Nombre', render: (s) => <span className="font-medium text-foreground">{s.name}</span> },
+            { key: 'contact', header: 'Contacto', render: (s) => <span className="text-muted-foreground">{s.contact}</span> },
+            { key: 'category', header: 'Categoría' },
+            { key: 'phone', header: 'Teléfono', render: (s) => <span className="text-muted-foreground">{s.phone}</span> },
+            { key: 'email', header: 'Email', render: (s) => <span className="text-muted-foreground">{s.email}</span> },
+            { key: 'location', header: 'Ubicación' },
+            { key: 'type', header: 'Tipo', render: (s) => <Badge variant="outline">{s.type}</Badge> },
+          ]}
+          rowKey={(s) => s.id}
           currentPage={currentPage}
-          totalPages={1}
+          totalPages={Math.max(1, Math.ceil(filtered.length / 10))}
           onPageChange={setCurrentPage}
           loading={false}
           emptyMessage="No hay proveedores registrados"

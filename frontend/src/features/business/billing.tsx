@@ -32,8 +32,8 @@ export default function Billing() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Próximo pago</p>
-              <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-success" />
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground mb-2">Nov 15</p>
@@ -44,8 +44,8 @@ export default function Billing() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</p>
-              <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-green-600" />
+              <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-success" />
               </div>
             </div>
             <p className="text-3xl font-bold text-foreground mb-2">Activo</p>

@@ -23,6 +23,9 @@ export interface BusinessInfo {
     sabado: string;
     domingo: string;
   };
+  moneda: string;
+  formato_fecha: string;
+  zona_horaria: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
 }

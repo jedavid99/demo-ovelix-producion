@@ -179,6 +179,7 @@ export default function CreateInvoice() {
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => removeItem(item.id)}
+                    aria-label={`Eliminar ítem ${item.description || item.id}`}
                   >
                     <Trash2 size={16} className="text-destructive" />
                   </Button>

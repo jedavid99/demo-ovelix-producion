@@ -1,0 +1,1 @@
+export { QuickRepairForm, default } from './index';

@@ -1,6 +1,4 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { formatCurrency } from './RepairEdit.types';
 import type { FormData } from './RepairEdit.types';
@@ -15,64 +13,60 @@ export const EditCostsForm: React.FC<EditCostsFormProps> = ({
   setFormData,
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-          Costos
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Costo de Mano de Obra</label>
-          <Input
-            type="number"
-            value={formData.costo_mano_obra}
-            onChange={(e) => setFormData({ ...formData, costo_mano_obra: parseFloat(e.target.value) || 0 })}
-            placeholder="Costo de mano de obra"
-            min={0}
-            step={0.01}
-          />
+          <label className="block text-sm font-medium text-foreground mb-1">Mano de Obra</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+            <Input
+              type="number"
+              value={formData.costo_mano_obra}
+              onChange={(e) => setFormData({ ...formData, costo_mano_obra: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00"
+              min={0}
+              step={0.01}
+              className="pl-7"
+            />
+          </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">Costo de Piezas</label>
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Piezas</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
             <Input
               type="number"
               value={formData.costo_piezas}
-              onChange={(e) => setFormData({ ...formData, costo_piezas: parseFloat(e.target.value) || 0 })}
-              placeholder="Costo de piezas"
-              min={0}
-              step={0.01}
               disabled
-              className="bg-muted"
+              className="pl-7 bg-muted"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">Total Reparación</label>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Total</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
             <Input
               type="number"
               value={formData.total_reparacion}
               onChange={(e) => setFormData({ ...formData, total_reparacion: parseFloat(e.target.value) || 0 })}
-              placeholder="Total"
+              placeholder="0.00"
               min={0}
               step={0.01}
-              disabled
-              className="bg-muted"
+              className="pl-7 font-semibold"
             />
           </div>
         </div>
+      </div>
 
-        <div className="pt-4 border-t">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Total a cobrar</span>
-            <span className="text-lg font-bold text-foreground">
-              {formatCurrency(formData.total_reparacion)}
-            </span>
-          </div>
+      <div className="flex justify-end pt-2">
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Total a cobrar</p>
+          <p className="text-xl font-bold text-foreground">
+            {formatCurrency(formData.total_reparacion)}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

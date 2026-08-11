@@ -33,7 +33,7 @@ export interface Repair {
   chequeo_hardware?: Record<string, boolean>;
   
   // Estados
-  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled';
+  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled' | 'irreparable' | 'entregado';
   prioridad?: 'low' | 'medium' | 'high' | 'critical';
   tecnico_asignado_id?: string;
   tecnico_nombre?: string;
@@ -121,7 +121,7 @@ export interface RepairCreate {
 }
 
 export interface RepairUpdate extends Partial<RepairCreate> {
-  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled';
+  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled' | 'irreparable' | 'entregado';
   costo_final?: number;
   fecha_entrega?: string;
   repuestos_usados?: RepairPart[];
@@ -131,7 +131,7 @@ export interface RepairFilters {
   page?: number;
   limit?: number;
   search?: string;
-  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled';
+  estado?: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled' | 'irreparable' | 'entregado';
   prioridad?: 'low' | 'medium' | 'high' | 'critical';
   tecnico_id?: string;
   cliente_id?: string;
@@ -149,6 +149,6 @@ export interface PaginatedResponse<T> {
 }
 
 export interface RepairStatusUpdate {
-  estado: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled';
+  estado: 'pending' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'ready' | 'delivered' | 'cancelled' | 'irreparable' | 'entregado';
   notas?: string;
 }

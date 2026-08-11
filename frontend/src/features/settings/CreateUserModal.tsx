@@ -148,7 +148,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   <SelectTrigger 
     className={`
       w-full 
-      bg-white dark:bg-slate-800 
+      bg-card dark:bg-muted 
       border border-input 
       rounded-lg 
       px-3 py-2 
@@ -163,7 +163,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   </SelectTrigger>
   <SelectContent 
     className="
-      bg-white dark:bg-slate-800 
+      bg-card dark:bg-muted 
       border border-input 
       rounded-lg 
       shadow-lg 

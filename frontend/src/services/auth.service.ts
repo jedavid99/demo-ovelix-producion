@@ -1,12 +1,16 @@
 import api from './api';
 import { logger } from '@/utils/logger';
 
-export const login = async (email: string, contraseña: string, codigoEmpresa: string) => {
-  const payload = {
+export const login = async (email: string, password: string, codigoEmpresa: string) => {
+  const payload: any = {
     email,
-    contraseña: contraseña,
-    codigo_empresa: codigoEmpresa
+    password: password,
   };
+
+  // Solo agregar codigo_empresa si tiene valor
+  if (codigoEmpresa && codigoEmpresa.trim() !== '') {
+    payload.codigo_empresa = codigoEmpresa;
+  }
 
   logger.log('auth.service.login payload:', payload);
 
@@ -22,9 +26,14 @@ export const login = async (email: string, contraseña: string, codigoEmpresa: s
 
 export const getMe = async () => {
   console.log('auth.service.getMe llamado');
-  const response = await api.get('/auth/me');
-  console.log('auth.service.getMe response:', response.data);
-  return response.data;
+  try {
+    const response = await api.get('/auth/me');
+    console.log('auth.service.getMe response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('auth.service.getMe error:', error);
+    throw error;
+  }
 };
 
 export const register = async (data: any) => {

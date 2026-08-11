@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_BASE } from '@/services/api';
 import { CashClosingData, CashClosingFilters } from '@/types/cashClosing.types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = API_BASE;
 
 export const cashClosingService = {
   async list(filters?: CashClosingFilters) {
