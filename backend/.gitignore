@@ -39,9 +39,6 @@ lerna-debug.log*
 .env.*
 !.env.example
 
-# Prisma
-/prisma/migrations
-
 # Uploads
 /uploads
 
