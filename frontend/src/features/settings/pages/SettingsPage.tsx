@@ -10,6 +10,7 @@ import { NotificationsSection } from '../components/NotificationsSection';
 import { ApiSection } from '../components/ApiSection';
 import { PlanSection } from '../components/PlanSection';
 import { PDFSection } from '../components/PDFSection';
+import { TenantPageSection } from '../components/TenantPageSection';
 import { PLAN_LABELS } from '../types/settings.types';
 
 function LeftNav({ current, onChange, plan }: { current: string; onChange: (id: string) => void; plan: any }) {
@@ -102,6 +103,7 @@ export default function SettingsPage() {
               paymentMethods={paymentMethods} setPaymentMethods={setPaymentMethods}
             />
           )}
+          {!sectionLoading && section === 'tenantPage' && <TenantPageSection />}
           {!sectionLoading && section === 'Categoria' && <CategoriaSection categories={categories} setCategories={setCategories} />}
           {!sectionLoading && section === 'taxes' && <TaxesSection taxRates={taxRates} setTaxRates={setTaxRates} bankAccounts={bankAccounts} setBankAccounts={setBankAccounts} />}
           {!sectionLoading && section === 'notificationes' && <NotificationsSection notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} />}

@@ -52,6 +52,7 @@ model Company {
   integrations   Integration[]
   planSubscription PlanSubscription?
   repairStateRequests RepairStateRequest[]
+  tenantPage          TenantPage?
 
   @@index([codigo_empresa])
   @@index([activo])
@@ -437,6 +438,18 @@ model Brand {
   @@unique([nombre, empresa_id])
   @@index([empresa_id])
   @@index([nombre])
+}
+
+model TenantPage {
+  id         String   @id @default(uuid())
+  empresa_id String   @unique
+  config     Json
+  enabled    Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  empresa    Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
 }
 
 model ServerLog {

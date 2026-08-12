@@ -1,9 +1,10 @@
 import React from 'react';
-import { Cloud, Clock, Plus, Key, Bell, FileText, CreditCard } from 'lucide-react';
+import { Cloud, Clock, Plus, Key, Bell, FileText, CreditCard, Globe } from 'lucide-react';
 import type { Section } from '../types/settings.types';
 
 export const SECTIONS: Section[] = [
   { id: 'business', label: 'Perfil del negocio', icon: <Clock size={16} /> },
+  { id: 'tenantPage', label: 'Página de presupuesto', icon: <Globe size={16} /> },
   { id: 'Categoria', label: 'Categorías de stock', icon: <Plus size={16} /> },
   { id: 'taxes', label: 'Impuestos y pagos', icon: <Key size={16} /> },
   { id: 'notificationes', label: 'Notificaciones', icon: <Bell size={16} /> },
