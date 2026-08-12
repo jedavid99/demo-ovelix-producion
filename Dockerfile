@@ -28,10 +28,14 @@ WORKDIR /app
 COPY --from=build /app/package*.json ./
 RUN PRISMA_SKIP_POSTINSTALL_GENERATE=1 npm install --omit=dev
 
-# Artefactos compilados + Prisma (cliente generado y migraciones)
+# Artefactos compilados + Prisma (cliente generado, migraciones y CLI)
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+COPY --from=build /app/node_modules/.bin ./node_modules/.bin
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 
 EXPOSE 3000
-CMD ["node", "dist/src/main"]
+# Aplica migraciones pendientes y arranca
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
