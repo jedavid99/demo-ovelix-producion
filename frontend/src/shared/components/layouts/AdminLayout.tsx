@@ -12,7 +12,13 @@ export const AdminLayout = ({ children, orders = [] }: AdminLayoutProps) => {
   const location = useLocation()
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarCollapsed')
-    if (savedState) setSidebarCollapsed(JSON.parse(savedState))
+    if (savedState) {
+      try {
+        setSidebarCollapsed(JSON.parse(savedState))
+      } catch {
+        localStorage.removeItem('sidebarCollapsed')
+      }
+    }
   }, [])
   useEffect(() => {
     setSidebarOpen(false)

@@ -35,7 +35,13 @@ export { AuthContext };
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const cached = localStorage.getItem('user_data');
-    return cached ? JSON.parse(cached) : null;
+    if (!cached) return null;
+    try {
+      return JSON.parse(cached);
+    } catch {
+      localStorage.removeItem('user_data');
+      return null;
+    }
   });
   const [isLoading, setIsLoading] = useState(() => {
     const hasToken = !!localStorage.getItem('access_token');
@@ -72,7 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logger.error('Error al obtener usuario en initAuth:', error);
           const cached = localStorage.getItem('user_data');
           if (cached) {
-            setUser(JSON.parse(cached));
+            try {
+              setUser(JSON.parse(cached));
+            } catch {
+              setUser(null);
+            }
             setIsAuthenticated(true);
           } else {
             clearAuthToken();

@@ -41,7 +41,7 @@ export default function DataTable<T>({
     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm dark:shadow-none overflow-hidden transition-all duration-150">
+    <div data-tour="table" className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm dark:shadow-none overflow-hidden transition-all duration-150">
       {/* Table */}
       <div className="overflow-x-auto flex-1">
         <table className="w-full">

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Component, type ReactNode, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import Tour from 'reactour'
 import { useAuth } from '@/contexts/AuthContext'
@@ -6,6 +6,23 @@ import { Button } from '@/shared/components/ui/button'
 import { GraduationCap } from 'lucide-react'
 import { useTutorial } from '../hooks/useTutorial'
 import { getTutorialByRoute } from '../constants'
+
+class TourBoundary extends Component<{ onReset: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch() {
+    this.props.onReset()
+  }
+
+  render() {
+    if (this.state.failed) return null
+    return this.props.children
+  }
+}
 
 const helperStyles = {
   position: 'absolute' as const,
@@ -29,6 +46,11 @@ export const GuidedTour: React.FC = () => {
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
+    closeTour()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
+
+  useEffect(() => {
     if (!isOpen && isAuthenticated && section) {
       markSeen(section.id)
     }
@@ -40,20 +62,22 @@ export const GuidedTour: React.FC = () => {
   }
 
   return (
-    <Tour
-      isOpen={isOpen}
-      onRequestClose={closeTour}
-      steps={steps}
-      rounded={10}
-      accentColor="var(--primary, hsl(var(--primary)))"
-      showNavigation
-      showCloseButton
-      showButtons
-      showNumber
-      disableInteraction={false}
-      closeWithMask={false}
-      maskSpace={8}
-      lastStepNextButton={<span>Finalizar</span>}
+    <TourBoundary onReset={closeTour}>
+      <Tour
+        key={section.id}
+        isOpen={isOpen}
+        onRequestClose={closeTour}
+        steps={steps}
+        rounded={10}
+        accentColor="var(--primary, hsl(var(--primary)))"
+        showNavigation
+        showCloseButton
+        showButtons
+        showNumber
+        disableInteraction={false}
+        closeWithMask={false}
+        maskSpace={8}
+        lastStepNextButton={<span>Finalizar</span>}
       CustomHelper={({ current, totalSteps, gotoStep, close, content }) => (
         <div style={helperStyles} className="p-5">
           <div className="flex items-center justify-between mb-3">
@@ -93,7 +117,8 @@ export const GuidedTour: React.FC = () => {
           </div>
         </div>
       )}
-    />
+      />
+    </TourBoundary>
   )
 }
 

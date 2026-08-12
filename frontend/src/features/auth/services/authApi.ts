@@ -3,7 +3,13 @@ import { SUBSCRIPTION_PLANS } from '../constants/auth.constants';
 
 export const getStoredActivationCodes = (): StoredActivationCode[] | null => {
   const storedCodes = localStorage.getItem('activation_codes');
-  return storedCodes ? JSON.parse(storedCodes) : null;
+  if (!storedCodes) return null;
+  try {
+    return JSON.parse(storedCodes);
+  } catch {
+    localStorage.removeItem('activation_codes');
+    return null;
+  }
 };
 
 export const validateActivationCodeService = (code: string): {
@@ -72,8 +78,13 @@ export const registerUserService = async (params: {
 
   const storedCodes = localStorage.getItem('activation_codes');
   if (storedCodes) {
-    const codes = JSON.parse(storedCodes);
-    const updatedCodes = codes.map((c: any) => {
+    let codes: StoredActivationCode[] = [];
+    try {
+      codes = JSON.parse(storedCodes);
+    } catch {
+      localStorage.removeItem('activation_codes');
+    }
+    const updatedCodes = codes.map((c: StoredActivationCode) => {
       if (c.code === activationCode) {
         return {
           ...c,
@@ -107,7 +118,13 @@ export const registerUserService = async (params: {
 
 export const loadCodesFromStorage = (): ActivationCode[] => {
   const storedCodes = localStorage.getItem('activation_codes');
-  return storedCodes ? JSON.parse(storedCodes) : [];
+  if (!storedCodes) return [];
+  try {
+    return JSON.parse(storedCodes);
+  } catch {
+    localStorage.removeItem('activation_codes');
+    return [];
+  }
 };
 
 export const generateCodeInStorage = (

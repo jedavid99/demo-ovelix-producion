@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button"
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
+  resetKey?: string | number
 }
 
 interface ErrorBoundaryState {
@@ -24,6 +25,18 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     console.error("Error no controlado:", error, errorInfo)
   }
 
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    // Si cambió la ruta, reiniciar el estado de error para que la app se recupere por sí sola
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null })
+    }
+  }
+
+  handleReload = () => {
+    window.location.href = "/"
+    window.location.reload()
+  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -40,9 +53,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <pre className="mt-2 whitespace-pre-wrap">{this.state.error.message}</pre>
               </details>
             )}
-            <Button onClick={() => window.location.reload()}>
-              Recargar página
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button onClick={() => window.history.back?.()}>
+                Volver atrás
+              </Button>
+              <Button onClick={this.handleReload}>
+                Recargar página
+              </Button>
+            </div>
           </div>
         </div>
       )

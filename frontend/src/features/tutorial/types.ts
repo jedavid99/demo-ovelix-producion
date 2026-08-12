@@ -13,5 +13,7 @@ export interface TutorialSection {
   title: string
   description: string
   route: string
+  /** Rutas adicionales (parámetros dinámicos) que apuntan a este tour */
+  routes?: string[]
   steps: TutorialStep[]
 }

@@ -32,7 +32,13 @@ export function useActivationCodes() {
 
   const loadCodes = () => {
     const storedCodes = localStorage.getItem('activation_codes');
-    if (storedCodes) setCodes(JSON.parse(storedCodes));
+    if (!storedCodes) return;
+    try {
+      setCodes(JSON.parse(storedCodes));
+    } catch {
+      localStorage.removeItem('activation_codes');
+      setCodes([]);
+    }
   };
 
   const generateCode = () => {
