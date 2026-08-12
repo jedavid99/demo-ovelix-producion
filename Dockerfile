@@ -1,6 +1,9 @@
 # ---- Build stage ----
 FROM node:20-slim AS build
 
+# OpenSSL para el motor de Prisma
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Dependencias primero (cache)
@@ -20,6 +23,9 @@ RUN npm run build
 
 # ---- Runtime stage ----
 FROM node:20-slim AS runtime
+
+# OpenSSL para el motor de Prisma
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 WORKDIR /app
