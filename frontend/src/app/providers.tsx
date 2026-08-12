@@ -4,6 +4,9 @@ import { LoadingProvider } from "@/contexts/LoadingContext"
 import { ThemeProvider } from "@/contexts/ThemeContext"
 import { GlobalLoader } from "@/shared/components/GlobalLoader"
 import { Toaster } from "@/shared/components/ui/toaster"
+import { TutorialProvider } from "@/features/tutorial"
+import { GuidedTour, HelpTourButton } from "@/features/tutorial"
+import { TourProvider } from "@/features/tutorial"
 function LayoutContent({ children }: { children: React.ReactNode }) {
   return <main className="min-h-screen bg-background text-foreground">{children}</main>
 }
@@ -13,9 +16,15 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       <AppProvider>
         <LoadingProvider>
           <AuthProvider>
-            <GlobalLoader />
-            <Toaster />
-            <LayoutContent>{children}</LayoutContent>
+            <TutorialProvider>
+              <TourProvider>
+                <GlobalLoader />
+                <Toaster />
+                <GuidedTour />
+                <HelpTourButton />
+                <LayoutContent>{children}</LayoutContent>
+              </TourProvider>
+            </TutorialProvider>
           </AuthProvider>
         </LoadingProvider>
       </AppProvider>

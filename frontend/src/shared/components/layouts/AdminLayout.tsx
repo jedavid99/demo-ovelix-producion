@@ -48,7 +48,7 @@ export const AdminLayout = ({ children, orders = [] }: AdminLayoutProps) => {
           sidebarCollapsed={sidebarCollapsed}
           sidebarOpen={sidebarOpen}
         />
-        <main className="flex-1 overflow-auto p-6 lg:p-8 bg-background">
+        <main data-tour="content" className="flex-1 overflow-auto p-6 lg:p-8 bg-background">
           {children}
         </main>
       </div>

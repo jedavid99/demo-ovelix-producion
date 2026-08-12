@@ -32,6 +32,7 @@ const AdminSidebar = ({
     <>
       <SidebarOverlay isOpen={isOpen} onClose={onClose} />
       <motion.aside
+        data-tour="sidebar"
         initial={isOpen ? { x: -280 } : { x: 0 }}
         animate={isOpen ? { x: 0 } : { x: 0 }}
         exit={isOpen ? { x: -280 } : { x: 0 }}
