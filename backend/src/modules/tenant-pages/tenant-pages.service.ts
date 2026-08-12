@@ -271,7 +271,7 @@ export class TenantPagesService {
 
     return {
       slug: company.codigo_empresa.toLowerCase(),
-      config: page.config as TenantPageConfigDto,
+      config: { ...(page.config as TenantPageConfigDto), slug: company.codigo_empresa.toLowerCase(), enabled: true },
     };
   }
 
