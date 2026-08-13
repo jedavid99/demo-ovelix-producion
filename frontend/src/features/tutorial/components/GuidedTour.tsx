@@ -41,14 +41,28 @@ const badgeStyles = {
 }
 
 export const GuidedTour: React.FC = () => {
-  const { isOpen, section, steps, closeTour, markSeen } = useTutorial()
+  const { isOpen, section, steps, closeTour, openTour, pendingSection, markSeen } = useTutorial()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
-    closeTour()
+    if (pendingSection) {
+      // Se pidió un tour puntual: abrirlo cuando la ruta llegue a la sección destino
+      const current = getTutorialByRoute(location.pathname)
+      if (current?.id === pendingSection.id) {
+        openTour(pendingSection)
+      }
+      return
+    }
+    // Si se navegó a otra sección, cerrar el tour abierto
+    if (isOpen && section) {
+      const current = getTutorialByRoute(location.pathname)
+      if (current?.id !== section.id) {
+        closeTour()
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname])
+  }, [location.pathname, pendingSection])
 
   useEffect(() => {
     if (!isOpen && isAuthenticated && section) {
@@ -70,14 +84,15 @@ export const GuidedTour: React.FC = () => {
         steps={steps}
         rounded={10}
         accentColor="var(--primary, hsl(var(--primary)))"
-        showNavigation
-        showCloseButton
-        showButtons
-        showNumber
-        disableInteraction={false}
-        closeWithMask={false}
-        maskSpace={8}
-        lastStepNextButton={<span>Finalizar</span>}
+showNavigation
+      showCloseButton
+      showButtons
+      showNumber
+      disableInteraction={false}
+      closeWithMask={false}
+      maskSpace={8}
+      disableFocusLock
+      lastStepNextButton={<span>Finalizar</span>}
       CustomHelper={({ current, totalSteps, gotoStep, close, content }) => (
         <div style={helperStyles} className="p-5">
           <div className="flex items-center justify-between mb-3">

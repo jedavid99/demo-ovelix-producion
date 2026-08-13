@@ -5,9 +5,11 @@ import { getTutorialByRoute } from '../constants'
 interface TutorialContextType {
   isOpen: boolean
   section: TutorialSection | null
+  pendingSection: TutorialSection | null
   steps: TutorialStep[]
   openTour: (section: TutorialSection) => void
   openTourForRoute: (pathname: string) => void
+  requestTour: (section: TutorialSection) => void
   closeTour: () => void
   hasSeen: (sectionId: string) => boolean
   markSeen: (sectionId: string) => void
@@ -29,10 +31,17 @@ const getSeen = (): string[] => {
 export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [section, setSection] = useState<TutorialSection | null>(null)
+  const [pendingSection, setPendingSection] = useState<TutorialSection | null>(null)
 
   const openTour = useCallback((s: TutorialSection) => {
+    setPendingSection(null)
     setSection(s)
     setIsOpen(true)
+  }, [])
+
+  /** Solicita abrir el tour de una sección luego de navegar a su ruta. */
+  const requestTour = useCallback((s: TutorialSection) => {
+    setPendingSection(s)
   }, [])
 
   const openTourForRoute = useCallback(
@@ -43,7 +52,10 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [openTour],
   )
 
-  const closeTour = useCallback(() => setIsOpen(false), [])
+  const closeTour = useCallback(() => {
+    setPendingSection(null)
+    setIsOpen(false)
+  }, [])
 
   const hasSeen = useCallback((sectionId: string) => getSeen().includes(sectionId), [])
 
@@ -59,9 +71,11 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         isOpen,
         section,
+        pendingSection,
         steps: section?.steps ?? [],
         openTour,
         openTourForRoute,
+        requestTour,
         closeTour,
         hasSeen,
         markSeen,

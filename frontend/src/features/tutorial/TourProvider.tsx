@@ -1,15 +1,15 @@
 import React, { useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTutorial } from './hooks/useTutorial'
 import { PlayCircle, GraduationCap, MousePointerClick } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
-import { TUTORIAL_SECTIONS } from './constants'
+import { TUTORIAL_SECTIONS, getTutorialByRoute } from './constants'
 import type { TutorialSection } from './types'
 
 export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth()
-  const { hasSeen, openTourForRoute, openTour } = useTutorial()
+  const { hasSeen, openTourForRoute } = useTutorial()
   const location = useLocation()
   const prevAuthRef = useRef(isAuthenticated)
 
@@ -29,10 +29,19 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
 }
 
 export const TutorialHelpPage: React.FC = () => {
-  const { openTour, hasSeen } = useTutorial()
+  const { openTour, requestTour, hasSeen } = useTutorial()
+  const navigate = useNavigate()
 
   const handleOpen = (section: TutorialSection) => {
-    openTour(section)
+    // Si ya estamos en la sección, abrir el tour directamente
+    const current = getTutorialByRoute(window.location.pathname)
+    if (current?.id === section.id) {
+      openTour(section)
+    } else {
+      // Si no, navegar a la sección y abrir el tour cuando llegue
+      requestTour(section)
+      navigate(section.route)
+    }
   }
 
   return (
