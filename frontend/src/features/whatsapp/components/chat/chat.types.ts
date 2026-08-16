@@ -2,6 +2,7 @@ import type { Contact, Message, AttachmentFile } from '../../whatsapp.types';
 
 export interface ChatAreaProps {
   selectedContact: Contact | null;
+  onBack?: () => void;
   messages: Message[];
   onSendMessage: (text: string) => void;
   onSendAttachment: (file: AttachmentFile) => void;

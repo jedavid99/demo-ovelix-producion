@@ -16,7 +16,7 @@ export default function WhatsAppPage() {
 
   if (qr.loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-muted-foreground">Conectando con WhatsApp...</p>
@@ -31,7 +31,7 @@ export default function WhatsAppPage() {
 
   if (!qr.isConnected) {
     return (
-      <div className="h-screen ">
+      <div className="h-full ">
         <DisconnectedView
           qrCode={qr.qrCode}
           qrImageUrl={qr.qrImageUrl}
@@ -48,10 +48,10 @@ export default function WhatsAppPage() {
   }
 
   return (
-    <div className="h-screen ">
+    <div className="h-full">
       {qr.isConnected && <ConnectedIndicator onLogout={qr.handleLogout} />}
-      <div className="flex h-full">
-          <div className="w-80 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row h-full">
+          <div className={`w-full lg:w-80 lg:flex-shrink-0 ${qr.selectedContact ? 'hidden lg:block' : ''}`}>
             <ContactList
               contacts={qr.activeChats}
               selectedContact={qr.selectedContact}
@@ -69,9 +69,10 @@ export default function WhatsAppPage() {
             />
           </div>
 
-          <div className="flex-1">
+          <div className={`flex-1 min-w-0 ${qr.selectedContact ? '' : 'hidden lg:block'}`}>
             <ChatArea
               selectedContact={qr.selectedContact}
+              onBack={() => qr.setSelectedContact(null)}
               messages={qr.selectedContact ? qr.getFilteredMessages(qr.selectedContact.id) : []}
               onSendMessage={qr.handleSendMessage}
               onSendAttachment={qr.handleSendAttachment}

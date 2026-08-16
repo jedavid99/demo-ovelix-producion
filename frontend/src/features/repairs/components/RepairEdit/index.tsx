@@ -182,7 +182,7 @@ export default function RepairEdit() {
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-md z-50">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span className="hidden sm:inline">
               {repairData?.dispositivo || 'Reparación'}
@@ -192,7 +192,7 @@ export default function RepairEdit() {
             onClick={handleSave}
             disabled={saving}
             size="lg"
-            className="px-8 shadow-xl hover:shadow-2xl transition-all"
+            className="w-full sm:w-auto px-8 shadow-xl hover:shadow-2xl transition-all"
           >
             {saving ? (
               <>

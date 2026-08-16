@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Role {
@@ -22,6 +23,7 @@ model Role {
 model Company {
   id             String        @id @default(uuid())
   codigo_empresa String        @unique
+  slug           String        @unique
   razon_social   String
   email          String?
   telefono       String?
@@ -52,6 +54,8 @@ model Company {
   planSubscription PlanSubscription?
   repairStateRequests RepairStateRequest[]
   tenantPage          TenantPage?
+  repairCosts         RepairCost[]
+  bookings            Booking[]
 
   @@index([codigo_empresa])
   @@index([activo])
@@ -364,6 +368,28 @@ model Expense {
   @@index([categoria])
   @@index([estado])
   @@index([fecha])
+}
+
+model RepairCost {
+  id              String   @id @default(uuid())
+  nombre          String
+  categoria       String
+  tipo_equipo     String?
+  precio          Decimal  @db.Decimal(10, 2)
+  tiempo_estimado String
+  descripcion     String?
+  notas           String?
+  modelo          String?
+  activo          Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  empresa_id      String
+  empresa         Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([categoria])
+  @@index([tipo_equipo])
+  @@index([activo])
 }
 
 model CashClosing {
@@ -714,5 +740,26 @@ model RepairStateRequest {
   usuario         User?    @relation(fields: [usuario_id], references: [id])
 
   @@index([empresa_id])
+  @@index([estado])
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  empresa_id  String
+  nombre      String
+  email       String
+  whatsapp    String?
+  dispositivo String?
+  servicio    String?
+  fecha       DateTime
+  horario     String?
+  estado      String   @default("pendiente")
+  notas       String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  empresa     Company  @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([fecha])
   @@index([estado])
 }

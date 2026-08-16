@@ -1,0 +1,30 @@
+/* ============================================================
+   TEMA SCOPED DE LA PÁGINA PÚBLICA DE PRESUPUESTO
+   Mapea la paleta del tenant (--tc-*) a los tokens que usan los
+   componentes (bg-secondary, text-muted-foreground, bg-muted…).
+   Scoped a .presupuesto-root para no afectar al admin.
+   La página pública siempre se ve en modo claro (consistente).
+   ============================================================ */
+
+.presupuesto-root {
+  --background: #ffffff;
+  --foreground: #0f2231;
+  --card: #ffffff;
+  --card-foreground: #0f2231;
+  --popover: #ffffff;
+  --popover-foreground: #0f2231;
+  --primary: var(--tc-primary, #0066ff);
+  --primary-foreground: var(--tc-on-primary, #ffffff);
+  --secondary: var(--tc-secondary-fill, #1e3f57);
+  --secondary-foreground: var(--tc-on-secondary-fill, #ffffff);
+  --muted: color-mix(in srgb, var(--tc-secondary-fill, #1e3f57) 6%, #ffffff);
+  --muted-foreground: color-mix(in srgb, var(--tc-secondary-fill, #1e3f57) 62%, #ffffff);
+  --accent: var(--tc-accent-fill, #7fc4e0);
+  --accent-foreground: var(--tc-on-accent-fill, #0a2530);
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: color-mix(in srgb, var(--tc-secondary-fill, #1e3f57) 14%, #ffffff);
+  --input: color-mix(in srgb, var(--tc-secondary-fill, #1e3f57) 22%, #ffffff);
+  --ring: var(--tc-primary, #0066ff);
+  color-scheme: light;
+}

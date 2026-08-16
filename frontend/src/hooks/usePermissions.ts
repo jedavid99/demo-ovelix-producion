@@ -166,6 +166,8 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
   '/reparaciones/edit/:id': [PERMISSIONS.REPAIRS_EDIT],
   '/reparaciones/confirmation': [PERMISSIONS.REPAIRS_VIEW],
   '/reparaciones/budgets': [PERMISSIONS.REPAIRS_VIEW],
+  '/reparaciones/qr-scanner': [PERMISSIONS.REPAIRS_VIEW],
+  '/costos-reparaciones': [PERMISSIONS.REPAIRS_VIEW],
   '/caja-diaria': [PERMISSIONS.CASH_VIEW],
   '/reports': [PERMISSIONS.REPORTS_VIEW],
   '/reports/sales': [PERMISSIONS.REPORTS_SALES],

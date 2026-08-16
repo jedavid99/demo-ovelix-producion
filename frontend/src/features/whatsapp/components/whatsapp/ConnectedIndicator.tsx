@@ -6,7 +6,7 @@ interface ConnectedIndicatorProps {
 }
 
 const ConnectedIndicator: React.FC<ConnectedIndicatorProps> = ({ onLogout }) => (
-  <div className="fixed bottom-6 right-6 bg-success text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-3 z-50 border border-green-400/30">
+  <div className="fixed bottom-24 right-6 bg-success text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-3 z-50 border border-green-400/30">
     <div className="relative">
       <div className="w-2.5 h-2.5 bg-card rounded-full animate-pulse" />
       <div className="absolute inset-0 w-2.5 h-2.5 bg-card rounded-full animate-ping opacity-75" />

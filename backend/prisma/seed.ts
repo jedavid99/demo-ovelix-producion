@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { buildDefaultConfig } from '../src/modules/tenant-pages/tenant-pages.service';
 
 const prisma = new PrismaClient();
 
@@ -48,9 +49,10 @@ async function main() {
   // Create 2 companies
   const company1 = await prisma.company.upsert({
     where: { codigo_empresa: 'EMP001' },
-    update: {},
+    update: { slug: 'tech-reparaciones', razon_social: 'Tech Reparaciones S.A.' },
     create: {
       codigo_empresa: 'EMP001',
+      slug: 'tech-reparaciones',
       razon_social: 'Tech Reparaciones S.A.',
       email: 'contacto@techreparaciones.com',
       telefono: '+54 11 1234-5678',
@@ -64,9 +66,10 @@ async function main() {
 
   const company2 = await prisma.company.upsert({
     where: { codigo_empresa: 'EMP002' },
-    update: {},
+    update: { slug: 'electrofix', razon_social: 'ElectroFix Soluciones' },
     create: {
       codigo_empresa: 'EMP002',
+      slug: 'electrofix',
       razon_social: 'ElectroFix Soluciones',
       email: 'contacto@electrofix.com',
       telefono: '+54 11 9876-5432',
@@ -416,6 +419,31 @@ async function main() {
     });
   }
   console.log('5 clients created for ElectroFix Soluciones');
+
+  // Publicar la página de presupuesto de cada empresa (contenido diferenciado
+  // para poder probar las URLs por empresa en localhost: ?slug=EMP001 / ?slug=EMP002)
+  const page1 = buildDefaultConfig(company1.codigo_empresa, company1.razon_social);
+  const page2 = buildDefaultConfig(company2.codigo_empresa, company2.razon_social);
+
+  page2.theme.primaryColor = '#0d9488';
+  page2.hero = {
+    ...page2.hero,
+    headline1: 'EXPERTOS EN',
+    headlineAccent: 'POWER & DISPLAY',
+  };
+  page2.footer.rights = `© ${new Date().getFullYear()} ElectroFix Soluciones. CÓRDOBA, ARGENTINA.`;
+
+  for (const [company, config] of [
+    [company1, page1],
+    [company2, page2],
+  ] as const) {
+    await prisma.tenantPage.upsert({
+      where: { empresa_id: company.id },
+      update: { enabled: true, config: config as unknown as Prisma.InputJsonValue },
+      create: { empresa_id: company.id, enabled: true, config: config as unknown as Prisma.InputJsonValue },
+    });
+  }
+  console.log('Tenant pages published for both companies (Página de presupuesto)');
 
   console.log('Seed completed successfully!');
 }

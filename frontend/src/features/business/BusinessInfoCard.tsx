@@ -149,7 +149,7 @@ export const BusinessInfoCard: React.FC<BusinessInfoCardProps> = ({
           Horarios de Atención
         </h3>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
             { day: 'Lunes', hours: businessInfo.horarios.lunes },
             { day: 'Martes', hours: businessInfo.horarios.martes },

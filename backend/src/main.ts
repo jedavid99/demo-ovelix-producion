@@ -23,8 +23,22 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS
+  const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (
+        corsOrigins.includes(origin) ||
+        origin === 'http://localhost:5174' ||
+        /^http:\/\/([a-z0-9-]+\.)?localhost:5174$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origen no permitido por CORS: ${origin}`), false);
+    },
     credentials: true,
   });
 

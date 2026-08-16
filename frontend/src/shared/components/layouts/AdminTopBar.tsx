@@ -205,7 +205,7 @@ export const AdminTopBar = ({
           </Button>
           
           {notificationsOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50">
+            <div className="fixed inset-x-4 top-16 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2">
               <SimpleNotifications
                 notifications={simpleNotifications}
                 onRead={handleNotificationRead}

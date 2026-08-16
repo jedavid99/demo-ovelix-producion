@@ -45,7 +45,7 @@ export const tenantAboutSchema = z.object({
       title: z.string().max(120),
       desc: z.string().max(400),
     }),
-  ),
+  ).max(4),
   badgeTitle: z.string().max(120),
   badgeText: z.string().max(200),
   image: z.string().url(),
@@ -72,8 +72,20 @@ export const tenantCtaSchema = z.object({
   button: z.string().max(80),
 });
 
+export const tenantScheduleRowSchema = z.object({
+  day: z.string().min(1).max(40),
+  hours: z.string().max(60),
+  closed: z.boolean().optional(),
+});
+
+export const tenantLegalPageSchema = z.object({
+  label: z.string().min(1).max(60),
+  slug: z.string().min(1).max(60).regex(/^[a-z0-9-]+$/, 'Slug inválido: solo minúsculas, números y guiones'),
+  content: z.string().max(10000),
+});
+
 export const tenantFooterSchema = z.object({
-  legal: z.array(z.string().max(80)).max(10),
+  legalPages: z.array(tenantLegalPageSchema).max(10).default([]),
   rights: z.string().max(200),
 });
 
@@ -83,7 +95,7 @@ export const tenantResultsItemSchema = z.object({
   desc: z.string().max(500),
   label: z.string().max(80),
   price: z.string().max(60),
-  img: z.string().url(),
+  img: z.string().url().optional(),
 });
 
 export const tenantValuationSchema = z.object({
@@ -184,6 +196,13 @@ export const tenantBookingSchema = z.object({
   guaranteeText: z.string().max(300),
 });
 
+export const tenantCheckoutSchema = z.object({
+  deliveryCost: z.number().min(0).max(99999999),
+  cbu: z.string().max(60),
+  alias: z.string().max(120),
+  accountNumber: z.string().max(60),
+});
+
 export const tenantPageConfigSchema = z.object({
   slug: z.string().max(80),
   enabled: z.boolean(),
@@ -191,9 +210,11 @@ export const tenantPageConfigSchema = z.object({
     name: z.string().max(120),
     logoText: z.string().max(60),
     tagline: z.string().max(200),
+    logo: z.string().max(300000).optional(),
   }),
   theme: tenantThemeSchema,
   contact: tenantContactSchema,
+  schedule: z.array(tenantScheduleRowSchema).max(20).default([]),
   nav: z.array(tenantNavItemSchema).max(10),
   hero: tenantHeroSchema,
   about: tenantAboutSchema,
@@ -203,6 +224,7 @@ export const tenantPageConfigSchema = z.object({
   valuation: tenantValuationSchema,
   tracking: tenantTrackingSchema,
   booking: tenantBookingSchema,
+  checkout: tenantCheckoutSchema,
 });
 
 export const updateTenantPageSchema = z.object({

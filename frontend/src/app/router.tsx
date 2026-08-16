@@ -89,6 +89,15 @@ import DeveloperTokens from '../features/developer/api/Tokens'
 import DeveloperTemplates from '../features/developer/notifications/Templates'
 import DeveloperBulk from '../features/developer/notifications/Bulk'
 import WhatsAppPage from '../features/whatsapp/WhatsAppPage'
+import RepairCosts from '../features/repairCosts'
+import PresupuestoLayout from '../presupuesto/PresupuestoLayout'
+import ServicesPage from '../presupuesto/ServicesPage'
+import ServicesListPage from '../presupuesto/ServicesListPage'
+import PresupuestoFlow from '../presupuesto/PresupuestoFlow'
+import TrackingPage from '../presupuesto/TrackingPage'
+import BookingPage from '../presupuesto/BookingPage'
+import LegalPage from '../presupuesto/LegalPage'
+import PresupuestoTenantRoute from '../presupuesto/PresupuestoTenantRoute'
 import { PERMISSIONS } from '@/hooks/usePermissions'
 export function AppRouter() {
   return (
@@ -191,6 +200,20 @@ export function AppRouter() {
       <Route path="/docs" element={<PrivateRoute><ProtectedRoute><AdminLayout><Docs /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/help" element={<PrivateRoute><ProtectedRoute><AdminLayout><Help /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/whatsapp" element={<PrivateRoute><ProtectedRoute><AdminLayout><WhatsAppPage /></AdminLayout></ProtectedRoute></PrivateRoute>} />
+      <Route path="/costos-reparaciones" element={<PrivateRoute><ProtectedRoute><AdminLayout><RepairCosts /></AdminLayout></ProtectedRoute></PrivateRoute>} />
+      {/* Presupuesto: sitio público trasplantado del presupuesto (tokens del sistema) */}
+      <Route path="/presupuesto" element={<PresupuestoLayout />}>
+        <Route index element={<ServicesPage />} />
+        <Route path="servicios" element={<ServicesListPage />} />
+        <Route path="valuacion" element={<PresupuestoFlow />} />
+        <Route path="seguimiento" element={<TrackingPage />} />
+        <Route path="atelier" element={<BookingPage />} />
+        <Route path="legal/:slug" element={<LegalPage />} />
+      </Route>
+      {/* Ruta legacy del piloto: redirige a la página de valuación */}
+      <Route path="/presupuesto-piloto" element={<Navigate to="/presupuesto/valuacion" replace />} />
+      {/* Sitio público por empresa en dev: /presupuesto.<empresa>[/valuacion|...] */}
+      <Route path="*" element={<PresupuestoTenantRoute />} />
     </Routes>
   )
 }

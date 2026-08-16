@@ -27,11 +27,21 @@ export function buildDefaultConfig(slug: string, companyName?: string): TenantPa
       secondaryHover: '#3c517d',
     },
     contact: {},
+    schedule: [
+      { day: 'Lunes', hours: '10:00 - 19:00' },
+      { day: 'Martes', hours: '10:00 - 19:00' },
+      { day: 'Miércoles', hours: '10:00 - 19:00' },
+      { day: 'Jueves', hours: '10:00 - 19:00' },
+      { day: 'Viernes', hours: '10:00 - 19:00' },
+      { day: 'Sábado', hours: '10:00 - 14:00' },
+      { day: 'Domingo', hours: '—', closed: true },
+    ],
     nav: [
       { label: 'SERVICIOS', to: '/' },
       { label: 'TASAR', to: '/valuation' },
       { label: 'SEGUIMIENTO', to: '/tracking' },
-      { label: 'RESERVAR', to: '/atelier' },
+      { label: 'RESERVAR', to: '/Taller' },
+      { label: 'UBICACIÓN', to: '/ubicacion' },
     ],
     hero: {
       eyebrow: 'SERVICIO TÉCNICO ESPECIALIZADO',
@@ -72,7 +82,38 @@ export function buildDefaultConfig(slug: string, companyName?: string): TenantPa
       button: 'PEDIR PRESUPUESTO',
     },
     footer: {
-      legal: ['LEGAL', 'PRIVACIDAD', 'COBERTURA', 'GARANTÍA'],
+      legalPages: [
+        {
+          label: 'LEGAL',
+          slug: 'legal',
+          content:
+            `${name} es un servicio técnico de reparación de dispositivos electrónicos.\n\nLos servicios se prestan previa aceptación de un presupuesto. El cliente declara ser propietario del equipo o contar con autorización del titular para su intervención.\n\nLa reparación incluye únicamente los componentes indicados en el presupuesto aprobado. Cualquier modificación del alcance deberá ser aceptada por escrito antes de su ejecución.`,
+        },
+        {
+          label: 'PRIVACIDAD',
+          slug: 'privacidad',
+          content:
+            `Respetamos tu privacidad. Los datos que nos proporcionás (nombre, teléfono, correo y datos técnicos del equipo) se utilizan exclusivamente para gestionar tu orden de reparación y contactarte con novedades del servicio.\n\nNo compartimos tus datos con terceros, salvo los proveedores de logística o pagos estrictamente necesarios, o cuando la ley lo requiera.\n\nPodés solicitar acceso, rectificación o eliminación de tus datos personales escribiéndonos.`,
+        },
+        {
+          label: 'UBICACIÓN',
+          slug: 'ubicacion',
+          content:
+            `El ingreso y retiro de equipos se realiza dentro del horario de atención.\n\nSi necesitás retirar tu equipo fuera de ese horario, escribinos por WhatsApp y coordinamos la entrega.`,
+        },
+        {
+          label: 'HORARIOS',
+          slug: 'horarios',
+          content:
+            `El ingreso y retiro de equipos se realiza dentro del horario de atención.\n\nSi necesitás retirar tu equipo fuera de ese horario, escribinos por WhatsApp y coordinamos la entrega.`,
+        },
+        {
+          label: 'GARANTÍA',
+          slug: 'garantia',
+          content:
+            `Todos los trabajos incluyen garantía por escrito sobre los componentes reemplazados y la mano de obra.\n\nLa garantía cubre defectos de fabricación o fallas de instalación. No cubre daños por golpes, líquidos, uso indebido o modificaciones de terceros posteriores a la entrega.\n\nPara hacer valer la garantía presentá la orden de reparación o el ticket de entrega.`,
+        },
+      ],
       rights: `© ${new Date().getFullYear()} ${name}. BUENOS AIRES, ARGENTINA.`,
     },
     valuation: {
@@ -137,6 +178,12 @@ export function buildDefaultConfig(slug: string, companyName?: string): TenantPa
       completionTime: '—',
       completionNote: 'El equipo pasa una validación final antes de la entrega.',
     },
+    checkout: {
+      deliveryCost: 5000,
+      cbu: '0000003100000000000001',
+      alias: 'tu.alias.cbu',
+      accountNumber: '0000000000001',
+    },
     booking: {
       title: 'RESERVÁ TU REPARACIÓN',
       description:
@@ -189,7 +236,14 @@ export class TenantPagesService {
 
   /** Config editable desde el dashboard (por empresa del token) */
   async getForCompany(empresaId: string) {
-    const company = await this.prisma.company.findUnique({ where: { id: empresaId } });
+    const company = await this.prisma.company.findUnique({
+      where: { id: empresaId },
+      include: {
+        businessInfo: {
+          select: { telefono: true, email: true, logo_url: true },
+        },
+      },
+    });
     if (!company) {
       throw new NotFoundException('Empresa no encontrada');
     }
@@ -201,12 +255,16 @@ export class TenantPagesService {
     return {
       company: {
         id: company.id,
-        slug: company.codigo_empresa,
+        slug: company.slug ?? company.codigo_empresa.toLowerCase(),
         razon_social: company.razon_social,
       },
       enabled: page?.enabled ?? false,
       updated_at: page?.updated_at ?? null,
-      config: (page?.config as TenantPageConfigDto) ?? buildDefaultConfig(company.codigo_empresa, company.razon_social),
+      config: this.withCompanyContext(
+        (page?.config as TenantPageConfigDto) ?? buildDefaultConfig(company.codigo_empresa, company.razon_social),
+        company,
+        company.businessInfo,
+      ),
     };
   }
 
@@ -237,30 +295,53 @@ export class TenantPagesService {
     return this.serialize(created);
   }
 
-  /** Endpoint público: resuelve por codigo_empresa (slug del subdominio) */
+  /** Endpoint público: resuelve por slug público o codigo_empresa */
   async getPublicBySlug(slug: string) {
     const normalized = slug.toLowerCase();
-    const company = await this.prisma.company.findUnique({
-      where: { codigo_empresa: normalized },
-      select: { id: true, codigo_empresa: true, razon_social: true, activo: true },
-    });
+    const fields = {
+      id: true,
+      slug: true,
+      codigo_empresa: true,
+      razon_social: true,
+      activo: true,
+      direccion: true,
+      ciudad: true,
+      telefono: true,
+      email: true,
+      businessInfo: {
+        select: { telefono: true, email: true, logo_url: true },
+      },
+    } as const;
+
+    const company =
+      (await this.prisma.company.findUnique({ where: { slug: normalized }, select: fields })) ??
+      (await this.prisma.company.findUnique({ where: { codigo_empresa: normalized }, select: fields })) ??
+      (await this.prisma.company.findFirst({
+        where: { slug: { equals: normalized, mode: 'insensitive' }, activo: true },
+        select: fields,
+      })) ??
+      (await this.prisma.company.findFirst({
+        where: { codigo_empresa: { equals: normalized, mode: 'insensitive' }, activo: true },
+        select: fields,
+      }));
 
     if (!company || !company.activo) {
-      // Fallback por igualdad case-insensitive por si el slug fue creado con mayúsculas
-      const fallback = await this.prisma.company.findFirst({
-        where: { codigo_empresa: { equals: normalized, mode: 'insensitive' }, activo: true },
-        select: { id: true, codigo_empresa: true, razon_social: true, activo: true },
-      });
-      if (!fallback) {
-        throw new NotFoundException('Tenant no encontrado');
-      }
-      return this.buildPublicResponse(fallback);
+      throw new NotFoundException('Tenant no encontrado');
     }
 
     return this.buildPublicResponse(company);
   }
 
-  private async buildPublicResponse(company: { id: string; codigo_empresa: string }) {
+  private async buildPublicResponse(company: {
+    id: string;
+    slug?: string | null;
+    codigo_empresa: string;
+    direccion?: string | null;
+    ciudad?: string | null;
+    telefono?: string | null;
+    email?: string | null;
+    businessInfo?: { telefono?: string | null; email?: string | null; logo_url?: string | null } | null;
+  }) {
     const page = await this.prisma.tenantPage.findUnique({
       where: { empresa_id: company.id },
     });
@@ -269,9 +350,59 @@ export class TenantPagesService {
       throw new NotFoundException('La página no está publicada para este tenant');
     }
 
+    const publicSlug = company.slug ?? company.codigo_empresa.toLowerCase();
+
     return {
-      slug: company.codigo_empresa.toLowerCase(),
-      config: { ...(page.config as TenantPageConfigDto), slug: company.codigo_empresa.toLowerCase(), enabled: true },
+      slug: publicSlug,
+      config: this.withCompanyContext(
+        {
+          ...(page.config as TenantPageConfigDto),
+          slug: publicSlug,
+          enabled: true,
+        },
+        company,
+        company.businessInfo,
+      ),
+    };
+  }
+
+  /** Completa contact (teléfono, email, whatsapp, dirección, ciudad) y logo del
+   *  negocio desde la empresa y su perfil de negocio, cuando no estén definidos. */
+  private withCompanyContext(
+    config: TenantPageConfigDto,
+    company: {
+      direccion?: string | null;
+      ciudad?: string | null;
+      telefono?: string | null;
+      email?: string | null;
+    },
+    businessInfo?: { telefono?: string | null; email?: string | null; logo_url?: string | null } | null,
+  ): TenantPageConfigDto {
+    const phone = businessInfo?.telefono || company.telefono || config.contact.phone;
+    const email = businessInfo?.email || company.email || config.contact.email;
+    const whatsapp =
+      config.contact.whatsapp || (phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : undefined);
+    const address = config.contact.address || company.direccion || undefined;
+    const city = config.contact.city || company.ciudad || undefined;
+
+    return {
+      ...config,
+      contact: {
+        ...config.contact,
+        ...(phone ? { phone } : {}),
+        ...(email ? { email } : {}),
+        ...(whatsapp ? { whatsapp } : {}),
+        ...(address ? { address } : {}),
+        ...(city ? { city } : {}),
+      },
+      ...(businessInfo?.logo_url || config.brand.logo
+        ? {
+            brand: {
+              ...config.brand,
+              ...(businessInfo?.logo_url ? { logo: businessInfo.logo_url } : {}),
+            },
+          }
+        : {}),
     };
   }
 

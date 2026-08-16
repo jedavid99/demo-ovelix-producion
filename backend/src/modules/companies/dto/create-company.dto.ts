@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 export const createCompanySchema = z.object({
   codigo_empresa: z.string().min(2, 'El código de empresa debe tener al menos 2 caracteres'),
+  slug: z
+    .string()
+    .min(1, 'El slug es requerido')
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'El slug solo admite minúsculas, números y guiones')
+    .transform((s) => s.toLowerCase())
+    .optional(),
   razon_social: z.string().min(2, 'La razón social es requerida'),
   email: z.string().email('Email inválido').optional(),
   telefono: z.string().optional(),

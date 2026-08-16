@@ -18,6 +18,7 @@ export type { ChatAreaProps };
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
   selectedContact,
+  onBack,
   messages,
   onSendMessage,
   onSendAttachment,
@@ -138,6 +139,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         selectedContact={selectedContact}
         contactStatus={contactStatus}
         lastSeen={lastSeen}
+        onBack={onBack}
         filterDate={filterDate}
         filterKeyword={filterKeyword}
         showFilterPanel={showFilterPanel}

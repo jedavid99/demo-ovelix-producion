@@ -12,6 +12,7 @@ export class CompaniesService {
     const select = {
       id: true,
       codigo_empresa: true,
+      slug: true,
       razon_social: true,
       email: true,
       telefono: true,
@@ -61,6 +62,7 @@ export class CompaniesService {
       select: {
         id: true,
         codigo_empresa: true,
+        slug: true,
         razon_social: true,
         email: true,
         telefono: true,
@@ -102,12 +104,19 @@ export class CompaniesService {
       throw new ConflictException('El código de empresa ya existe');
     }
 
+    const slug = validatedData.slug ?? validatedData.codigo_empresa.toLowerCase();
+    const existingSlug = await this.prisma.company.findUnique({ where: { slug } });
+    if (existingSlug) {
+      throw new ConflictException('El slug ya está en uso');
+    }
+
     // Crear la empresa y el primer administrador en una transacción
     const result = await this.prisma.$transaction(async (tx) => {
       // Crear empresa
       const company = await tx.company.create({
         data: {
           codigo_empresa: validatedData.codigo_empresa,
+          slug,
           razon_social: validatedData.razon_social,
           email: validatedData.email,
           telefono: validatedData.telefono,
@@ -179,6 +188,17 @@ export class CompaniesService {
 
       if (existingCompany) {
         throw new ConflictException('El código de empresa ya existe');
+      }
+    }
+
+    // Si se cambia el slug, verificar que no exista
+    if (validatedData.slug && validatedData.slug !== company.slug) {
+      const existingSlug = await this.prisma.company.findUnique({
+        where: { slug: validatedData.slug },
+      });
+
+      if (existingSlug) {
+        throw new ConflictException('El slug ya está en uso');
       }
     }
 

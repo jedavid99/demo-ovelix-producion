@@ -31,6 +31,8 @@ import { BrandsModule } from './modules/brands/brands.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { TenantPagesModule } from './modules/tenant-pages/tenant-pages.module';
+import { RepairCostsModule } from './modules/repair-costs/repair-costs.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -82,6 +84,8 @@ const envSchema = z.object({
     ReviewsModule,
     SettingsModule,
     TenantPagesModule,
+    RepairCostsModule,
+    BookingsModule,
   ],
   providers: [
     {

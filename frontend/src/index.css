@@ -94,6 +94,15 @@ body{
   }
 }
 
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    /* iOS Safari hace zoom al enfocar campos con font-size < 16px */
+    font-size: 16px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

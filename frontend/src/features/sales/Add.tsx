@@ -60,7 +60,7 @@ export default function SaleAdd() {
         <h1 className="text-2xl font-extrabold">Crear Venta</h1>
         
       </div>
-      <div className="flex-1 flex gap-4 min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
         {/* Catálogo */}
         <section className="flex-1 min-w-0 bg-card  rounded-xl border border-border  overflow-hidden shadow-sm flex flex-col">
           <div className="p-4 border-b border-border  flex items-center justify-between">
@@ -121,7 +121,7 @@ export default function SaleAdd() {
           </div>
         </section>
         {/* Venta Actual */}
-         <section className="w-[420px] shrink-0 flex flex-col bg-card  rounded-xl border border-border  overflow-hidden shadow-sm h-full max-h-[calc(100vh-120px)]">
+         <section className="w-full lg:w-[420px] lg:shrink-0 flex flex-col bg-card  rounded-xl border border-border  overflow-hidden shadow-sm lg:h-full lg:max-h-[calc(100vh-120px)]">
   {/* Cabecera: cliente y número de venta - fijo */}
   {/* <div className="p-4 border-b border-border  flex flex-col gap-3 flex-shrink-0">
     <div className="flex items-center justify-between">

@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebarNavigation } from './hooks/useSidebarNavigation';
 import { SidebarOverlay } from './components/sidebar/SidebarOverlay';
@@ -31,16 +30,12 @@ const AdminSidebar = ({
   return (
     <>
       <SidebarOverlay isOpen={isOpen} onClose={onClose} />
-      <motion.aside
+      <aside
         data-tour="sidebar"
-        initial={isOpen ? { x: -280 } : { x: 0 }}
-        animate={isOpen ? { x: 0 } : { x: 0 }}
-        exit={isOpen ? { x: -280 } : { x: 0 }}
-        transition={{ duration: 0.2 }}
-        className={`fixed z-40 inset-y-0 left-0 bg-card border-r border-border transition-[width] duration-300 ease-in-out overflow-hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${collapsed ? 'lg:w-16' : 'lg:w-60'} shadow-xl lg:shadow-none`}>
+        className={`fixed z-40 inset-y-0 left-0 bg-card border-r border-border transition-[width,transform] duration-300 ease-in-out overflow-hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-64 ${collapsed ? 'lg:w-16' : 'lg:w-60'} shadow-xl lg:shadow-none`}>
         <div className="h-full flex flex-col">
           <SidebarHeader collapsed={collapsed} onClose={onClose} />
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 scrollbar-thin scrollbar-thumb-slate-300">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 overscroll-contain">
             {filteredNavItems.map(section => (
               <div key={section.title} className="mb-6">
                 {!collapsed && <h3 className="px-4 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{section.title}</h3>}
@@ -54,7 +49,7 @@ const AdminSidebar = ({
           </div>
           <SidebarFooter collapsed={collapsed} onLogout={logout} />
         </div>
-      </motion.aside>
+      </aside>
     </>
   );
 };

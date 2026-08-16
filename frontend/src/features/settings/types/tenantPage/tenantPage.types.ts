@@ -32,9 +32,11 @@ export interface TenantPageConfig {
     name: string;
     logoText: string;
     tagline: string;
+    logo?: string;
   };
   theme: TenantTheme;
   contact: TenantContact;
+  schedule: { day: string; hours: string; closed?: boolean }[];
   nav: { label: string; to: string }[];
   hero: {
     eyebrow: string;
@@ -66,7 +68,7 @@ export interface TenantPageConfig {
     button: string;
   };
   footer: {
-    legal: string[];
+    legalPages: { label: string; slug: string; content: string }[];
     rights: string;
   };
   valuation: {
@@ -77,7 +79,7 @@ export interface TenantPageConfig {
     resultsSubtitle: string;
     badgeLabel: string;
     selectLabel: string;
-    results: { badge: string; title: string; desc: string; label: string; price: string; img: string }[];
+    results: { badge: string; title: string; desc: string; label: string; price: string; img?: string }[];
     helpTitle: string;
     helpDescription: string;
     helpButtons: string[];
@@ -129,6 +131,12 @@ export interface TenantPageConfig {
     confirmed: string;
     guaranteeTitle: string;
     guaranteeText: string;
+  };
+  checkout: {
+    deliveryCost: number;
+    cbu: string;
+    alias: string;
+    accountNumber: string;
   };
 }
 

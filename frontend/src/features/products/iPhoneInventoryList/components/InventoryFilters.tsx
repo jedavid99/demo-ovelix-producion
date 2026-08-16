@@ -12,7 +12,7 @@ interface InventoryFiltersProps {
 export function InventoryFilters({ searchQuery, seriesFilter, conditionFilter, onSearchChange, onSeriesChange, onConditionChange }: InventoryFiltersProps) {
   return (
     <div className="p-6 border-b border-border  flex flex-wrap items-center justify-between gap-4">
-      <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 sm:min-w-[300px]">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -25,14 +25,14 @@ export function InventoryFilters({ searchQuery, seriesFilter, conditionFilter, o
           />
         </div>
         <select value={seriesFilter} onChange={(e) => onSeriesChange(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-muted dark:bg-muted border border-border dark:border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm">
+          className="w-full sm:w-auto px-4 py-2 rounded-lg bg-muted dark:bg-muted border border-border dark:border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm">
           <option>Series: Todas</option>
           <option>iPhone 15 Series</option>
           <option>iPhone 14 Series</option>
           <option>iPhone 13 Series</option>
         </select>
         <select value={conditionFilter} onChange={(e) => onConditionChange(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-muted dark:bg-muted border border-border dark:border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm">
+          className="w-full sm:w-auto px-4 py-2 rounded-lg bg-muted dark:bg-muted border border-border dark:border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm">
           <option>Condici\u00F3n: Todas</option>
           <option>Nuevo</option>
           <option>Usado - Como nuevo</option>
