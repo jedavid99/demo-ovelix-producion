@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, Wrench, ShoppingCart, BarChart2, Box, Truck, Send, DollarSign, FileText, Calendar, TrendingUp, Smartphone, Shield, Package, List, Plus, Settings, ClipboardList, Receipt, Printer, Calculator } from 'lucide-react';
+import { Home, Users, Wrench, ShoppingCart, BarChart2, Box, Truck, Send, DollarSign, FileText, Calendar, TrendingUp, Smartphone, Shield, Package, List, Plus, Settings, ClipboardList, Receipt, Printer, Calculator, Inbox } from 'lucide-react';
 import { BsWhatsapp } from 'react-icons/bs';
 import type { NavItem } from '../types/sidebar.types';
 
@@ -31,6 +31,7 @@ export const navItems: NavItem[] = [
         { title: 'Listar Reparaciones', href: '/reparaciones/list', icon: React.createElement(List, { size: 14 }) },
         { title: 'Nueva Reparación', href: '/reparaciones/add', icon: React.createElement(Plus, { size: 14 }) },
         { title: 'Presupuestos', href: '/reparaciones/budgets', icon: React.createElement(ClipboardList, { size: 14 }) },
+        { title: 'Solicitudes Recibidas', href: '/reparaciones/budget-requests', icon: React.createElement(Inbox, { size: 14 }) },
       ]},
       { title: 'Costos de Reparación', href: '/costos-reparaciones', icon: React.createElement(Calculator, { size: 18 }) },
       { title: 'Envíos', href: '/envios', icon: React.createElement(Send, { size: 18 }), children: [

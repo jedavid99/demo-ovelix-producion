@@ -197,7 +197,7 @@ export default function ServicesPage() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate(tenantHref('/presupuesto/atelier'))}
+              onClick={() => navigate(tenantHref('/presupuesto/valuacion'))}
               className="bg-primary text-primary-foreground px-16 py-5 text-xs font-black uppercase tracking-widest hover:bg-primary-hover rounded-lg transition-colors shadow-lg shadow-primary/20"
             >
               {cta.button}

@@ -35,6 +35,9 @@ export interface TenantPageConfig {
     email?: string
     address?: string
     city?: string
+    mapEmbed?: string
+    instagram?: string
+    facebook?: string
   }
   schedule: { day: string; hours: string; closed?: boolean }[]
   nav: { label: string; to: string }[]
@@ -221,8 +224,6 @@ export const DEFAULT_CONFIG: TenantPageConfig = {
     legalPages: [
       { label: 'LEGAL', slug: 'legal', content: 'Contenido legal.' },
       { label: 'PRIVACIDAD', slug: 'privacidad', content: 'Contenido de privacidad.' },
-      { label: 'UBICACIÓN', slug: 'ubicacion', content: 'Contenido de ubicación.' },
-      { label: 'HORARIOS', slug: 'horarios', content: 'Contenido de horarios.' },
       { label: 'GARANTÍA', slug: 'garantia', content: 'Contenido de garantía.' },
     ],
     rights: `© ${new Date().getFullYear()} Mi negocio. BUENOS AIRES, ARGENTINA.`,

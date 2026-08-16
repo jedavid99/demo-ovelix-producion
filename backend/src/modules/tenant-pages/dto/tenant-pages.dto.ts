@@ -20,6 +20,9 @@ export const tenantContactSchema = z.object({
   email: z.string().email().optional(),
   address: z.string().max(200).optional(),
   city: z.string().max(200).optional(),
+  mapEmbed: z.string().max(3000).optional(),
+  instagram: z.string().url().optional(),
+  facebook: z.string().url().optional(),
 });
 
 export const tenantNavItemSchema = z.object({

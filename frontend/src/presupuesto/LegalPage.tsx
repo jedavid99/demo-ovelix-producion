@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Clock, MapPin } from 'lucide-react'
 import { useTenantPage, tenantHref } from './tenantConfig'
 
 export default function LegalPage({ slug: slugProp }: { slug?: string } = {}) {
   const { slug: slugParam } = useParams<{ slug: string }>()
   const slug = slugProp ?? slugParam
-  const { brand, footer } = useTenantPage()
+  const { brand, footer, contact, schedule } = useTenantPage()
   const navigate = useNavigate()
   const toHome = tenantHref('/presupuesto')
 
@@ -22,6 +22,13 @@ export default function LegalPage({ slug: slugProp }: { slug?: string } = {}) {
       </main>
     )
   }
+
+  const fullAddress = [contact.address, contact.city].filter(Boolean).join(', ')
+  const mapsLink = fullAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
+    : null
+  const showSchedule = page.slug === 'horarios' && (schedule?.length ?? 0) > 0
+  const showMap = page.slug === 'ubicacion'
 
   return (
     <main className="max-w-3xl mx-auto px-5 md:px-8 py-16">
@@ -39,6 +46,49 @@ export default function LegalPage({ slug: slugProp }: { slug?: string } = {}) {
 
         <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-3">{brand.name}</p>
         <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-8">{page.label}</h1>
+
+        {showSchedule && (
+          <div className="bg-card border border-border rounded-xl p-8 md:p-12 mb-8">
+            <p className="flex items-center gap-2 text-[11px] font-black text-secondary uppercase tracking-widest mb-5">
+              <Clock size={14} /> HORARIOS DE ATENCIÓN
+            </p>
+            <ul className="space-y-3">
+              {schedule.map((row, i) => (
+                <li key={i} className="flex items-baseline justify-between gap-4 text-sm md:text-base">
+                  <span className="font-semibold text-foreground">{row.day}</span>
+                  <span className="text-muted-foreground">{row.closed ? 'Cerrado' : row.hours}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {showMap && (
+          <div className="bg-card border border-border rounded-xl p-8 md:p-12 mb-8">
+            <p className="flex items-center gap-2 text-[11px] font-black text-secondary uppercase tracking-widest mb-3">
+              <MapPin size={14} /> CÓMO LLEGAR
+            </p>
+            {fullAddress && <p className="text-sm md:text-base font-semibold text-foreground mb-4">{fullAddress}</p>}
+            {contact.mapEmbed ? (
+              <iframe
+                src={contact.mapEmbed}
+                title="Mapa de ubicación"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-64 rounded-lg border border-border bg-muted"
+              />
+            ) : mapsLink ? (
+              <a
+                href={mapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[11px] font-black text-secondary uppercase tracking-widest hover:opacity-80 transition-opacity"
+              >
+                <MapPin size={14} /> ABRIR EN GOOGLE MAPS
+              </a>
+            ) : null}
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-xl p-8 md:p-12">
           {page.content.split('\n').map((line, i) =>

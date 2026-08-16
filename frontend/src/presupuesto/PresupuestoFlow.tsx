@@ -21,11 +21,13 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useTenantPage } from './tenantConfig'
+import { parseSchedule, buildBusinessSlots, businessDaysLabel, hoursLabel } from './schedule'
 import { savePendingQuote, formatARS, type TenantQuoteSelection } from './tenant'
 import {
   DEMO_REPAIR_COSTS,
   fetchRepairCosts,
   resolveTenantSlug,
+  submitBudgetRequest,
   type TenantRepairCost,
 } from './services'
 
@@ -55,11 +57,6 @@ const STEPS = [
 ]
 
 const DAYS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
-/** Horario laboral del negocio: lunes a viernes, de 09:00 a 18:00, turnos cada 60 min. */
-const BUSINESS_DAYS = [1, 2, 3, 4, 5]
-const OPEN_HOUR = 9
-const CLOSE_HOUR = 18
-const SLOT_INTERVAL_MIN = 60
 
 const MONTHS_ES = [
   'ENERO',
@@ -76,22 +73,10 @@ const MONTHS_ES = [
   'DICIEMBRE',
 ]
 
-function buildBusinessSlots(): string[] {
-  const slots: string[] = []
-  for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) {
-    for (let m = 0; m < 60; m += SLOT_INTERVAL_MIN) {
-      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
-    }
-  }
-  return slots
-}
-
 function toMinute(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
 }
-
-const isBusinessDay = (d: Date) => BUSINESS_DAYS.includes(d.getDay())
 
 const startOfDay = (d: Date) => {
   const c = new Date(d)
@@ -158,7 +143,11 @@ export default function PresupuestoFlow() {
     month: new Date().getMonth(),
   }))
   const calendarDays = useMemo(() => buildCalendarDays(viewMonth.year, viewMonth.month), [viewMonth])
-  const businessSlots = useMemo(() => buildBusinessSlots(), [])
+  const scheduleInfo = useMemo(() => parseSchedule(tenant.schedule), [tenant.schedule])
+  const businessSlots = useMemo(
+    () => buildBusinessSlots(scheduleInfo.openMin, scheduleInfo.closeMin),
+    [scheduleInfo.openMin, scheduleInfo.closeMin],
+  )
   const [payPlan, setPayPlan] = useState<'half' | 'full' | null>(null)
   const [señaMethod, setSeñaMethod] = useState<'qr' | 'transferencia' | null>(null)
   const [comprobante, setComprobante] = useState('')
@@ -168,6 +157,7 @@ export default function PresupuestoFlow() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [orderNumber, setOrderNumber] = useState('')
   const ticketRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -312,6 +302,41 @@ export default function PresupuestoFlow() {
     setLoading(false)
     setSubmitted(true)
     window.open(buildWhatsAppUrl(quote), '_blank')
+
+    // Persistimos la solicitud en el backend para generar número de orden y seguimiento.
+    const slug = resolveTenantSlug()
+    if (slug) {
+      try {
+        const precio = quote.precio ?? null
+        const seña = precio != null && payPlan === 'half' ? Math.round(precio * 0.5) : precio
+        const res = await submitBudgetRequest({
+          slug,
+          nombre: form.name.trim(),
+          whatsapp: form.whatsapp.trim(),
+          email: form.email.trim() || undefined,
+          categoria: quote.categoria ?? undefined,
+          dispositivo: form.modelo.trim() || quote.nombre,
+          modelo: form.modelo.trim() || undefined,
+          problema: form.mensaje.trim() || undefined,
+          descripcion: quote.descripcion ?? undefined,
+          tiempo_estimado: quote.tiempo_estimado ?? undefined,
+          precio_ofertado: precio ?? undefined,
+          plan_pago: payPlan ?? undefined,
+          sena_monto: seña ?? undefined,
+          sena_metodo: señaMethod ?? undefined,
+          comprobante: comprobante.trim() || undefined,
+          resto_metodo: payPlan === 'half' ? (restoMethod ?? undefined) : undefined,
+          delivery_metodo: deliveryMethod ?? undefined,
+          delivery_direccion: deliveryMethod === 'retirar' ? deliveryAddress.trim() || undefined : undefined,
+          delivery_costo: deliveryMethod === 'retirar' ? checkout?.deliveryCost ?? undefined : undefined,
+          turno_fecha: selectedDay != null ? selectedDay.toISOString().slice(0, 10) : undefined,
+          turno_horario: selectedSlot ?? undefined,
+        })
+        setOrderNumber(res.numero)
+      } catch {
+        // El flujo publico sigue funcionando via WhatsApp aunque falle el guardado.
+      }
+    }
   }
 
   const reset = () => {
@@ -327,6 +352,7 @@ export default function PresupuestoFlow() {
     setRestoMethod(null)
     setDeliveryMethod(null)
     setDeliveryAddress('')
+    setOrderNumber('')
     setForm({ name: '', whatsapp: '', email: '', modelo: '', mensaje: '' })
   }
 
@@ -1072,7 +1098,7 @@ export default function PresupuestoFlow() {
                           const date = new Date(viewMonth.year, viewMonth.month, day)
                           const isToday = today.getTime() === date.getTime()
                           const isPast = date.getTime() < today.getTime()
-                          const isWeekend = !isBusinessDay(date)
+                          const isWeekend = !scheduleInfo.businessDays.includes(date.getDay())
                           const notOpen = isPast || isWeekend
                           const isSelected = selectedDay != null && selectedDay.getTime() === date.getTime()
                           return (
@@ -1107,7 +1133,7 @@ export default function PresupuestoFlow() {
                       </div>
 
                       <p className="mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
-                        {BUSINESS_DAYS.length === 5 ? 'LUN A VIE' : 'TODO EL DÍA'} · {String(OPEN_HOUR).padStart(2, '0')}:00 – {String(CLOSE_HOUR).padStart(2, '0')}:00
+                        {businessDaysLabel(scheduleInfo.businessDays)} · {hoursLabel(scheduleInfo.openMin, scheduleInfo.closeMin)}
                       </p>
                     </div>
 
@@ -1122,7 +1148,7 @@ export default function PresupuestoFlow() {
                       {selectedDay == null ? (
                         <div className="border border-dashed border-border rounded-lg p-6 text-center">
                           <p className="text-xs text-muted-foreground mb-1">Seleccioná una fecha disponible para ver los horarios.</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">LUN A VIE · 09:00 – 18:00</p>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{businessDaysLabel(scheduleInfo.businessDays)} · {hoursLabel(scheduleInfo.openMin, scheduleInfo.closeMin)}</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
@@ -1130,7 +1156,7 @@ export default function PresupuestoFlow() {
                             const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
                             const isTodaySlot = selectedDay.getTime() === today.getTime()
                             const passedToday = isTodaySlot && toMinute(time) <= nowMin
-                            const disabled = !isBusinessDay(selectedDay) || passedToday
+                            const disabled = !scheduleInfo.businessDays.includes(selectedDay.getDay()) || passedToday
                             const active = selectedSlot === time
                             return (
                               <motion.button
@@ -1211,7 +1237,26 @@ export default function PresupuestoFlow() {
                   Abrimos tu WhatsApp con el pedido armado. Si no se abrió, tocá el botón de abajo y te respondemos a la
                   brevedad.
                 </p>
+                {orderNumber && (
+                  <div className="inline-flex flex-col items-center gap-2 bg-primary/5 border border-primary/20 rounded-xl px-8 py-5 mb-8">
+                    <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Tu número de orden</p>
+                    <p className="text-xl md:text-2xl font-black text-primary tabular-nums tracking-tight">{orderNumber}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                      Guardalo para hacer el seguimiento de tu reparación.
+                    </p>
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  {orderNumber && (
+                    <motion.a
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      href={`/presupuesto/seguimiento?order=${encodeURIComponent(orderNumber)}`}
+                      className="flex items-center justify-center gap-2 border border-primary text-primary text-[11px] font-black px-8 py-4 tracking-widest uppercase hover:bg-primary/5 rounded-lg transition-colors"
+                    >
+                      <Search size={14} /> SEGUIR MI ORDEN
+                    </motion.a>
+                  )}
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}

@@ -455,12 +455,36 @@ export const TenantPageSection: React.FC = () => {
             value={(config.contact.city as string) || ''}
             onChange={(v) => setField('contact', 'city', v)}
           />
+          <div className="md:col-span-2">
+            <Field
+              label="Mapa (embed de Google Maps)"
+              value={(config.contact.mapEmbed as string) || ''}
+              onChange={(v) => setField('contact', 'mapEmbed', v)}
+              placeholder="https://www.google.com/maps/embed?pb=..."
+            />
+          </div>
+          <Field
+            label="Instagram (link del perfil)"
+            value={(config.contact.instagram as string) || ''}
+            onChange={(v) => setField('contact', 'instagram', v)}
+            placeholder="https://www.instagram.com/mi.negocio"
+          />
+          <Field
+            label="Facebook (link de la página)"
+            value={(config.contact.facebook as string) || ''}
+            onChange={(v) => setField('contact', 'facebook', v)}
+            placeholder="https://www.facebook.com/minegocio"
+          />
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Pegá el link de <span className="font-mono">Compartir → Insertar un mapa</span> de Google Maps para mostrar el
+          mapa en el footer y en la página UBICACIÓN. Si lo dejás vacío se muestra un link "Cómo llegar" con la dirección.
+        </p>
       </Card>
 
       <Card title="Horarios" icon={<Clock size={18} />}>
         <p className="text-sm text-muted-foreground mb-4">
-          Se muestra en las páginas UBICACIÓN y HORARIOS de tu sitio. Horario en formato{' '}
+          Se muestra en el footer de tu página (columna HORARIOS). Horario en formato{' '}
           <span className="font-mono">09:00 - 18:00</span>; marcá "Cerrado" para días sin atención.
         </p>
         <div className="space-y-2">

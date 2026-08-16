@@ -170,6 +170,36 @@ export const DEMO_REPAIR_COSTS: TenantRepairCost[] = [
   },
 ]
 
+export interface BudgetRequestPayload {
+  slug: string
+  nombre: string
+  whatsapp: string
+  email?: string
+  categoria?: string
+  dispositivo: string
+  modelo?: string
+  problema?: string
+  descripcion?: string
+  tiempo_estimado?: string
+  precio_ofertado?: number
+  plan_pago?: 'half' | 'full'
+  sena_monto?: number
+  sena_metodo?: 'qr' | 'transferencia'
+  comprobante?: string
+  resto_metodo?: 'qr' | 'transferencia' | 'efectivo'
+  delivery_metodo?: 'llevar' | 'retirar'
+  delivery_direccion?: string
+  delivery_costo?: number
+  turno_fecha?: string
+  turno_horario?: string
+}
+
+export interface BudgetRequestResponse {
+  id: string
+  numero: string
+  estado: string
+}
+
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
 /** Tarifario publicado por la empresa (backend Overlix) con fallback demo. */
@@ -200,3 +230,17 @@ export async function fetchRepairCosts(slug: string | null): Promise<TenantRepai
 }
 
 export { resolveTenantSlug }
+
+/** Guarda la solicitud de presupuesto en el backend (número de orden + seguimiento). */
+export async function submitBudgetRequest(payload: BudgetRequestPayload): Promise<BudgetRequestResponse> {
+  const res = await fetch(`${API_BASE}/public/budget-requests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(json?.message ?? json?.error ?? 'No se pudo guardar la solicitud')
+  }
+  return (json?.data ?? json) as BudgetRequestResponse
+}

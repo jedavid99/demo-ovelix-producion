@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, Bell, User, ChevronDown, ArrowRightToLine, LogOut, Camera, MessageSquare, Package, Wrench, ShoppingCart, Calendar } from 'lucide-react'
+import { Menu, Bell, User, ChevronDown, ArrowRightToLine, LogOut, Camera, MessageSquare, Package, Wrench, ShoppingCart, Calendar, ClipboardList } from 'lucide-react'
 import { MdSearch, MdSettings, MdBarChart, MdInventory2, MdAttachMoney, MdReceipt, MdLocalShipping } from 'react-icons/md'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
@@ -17,6 +17,7 @@ import { SearchModal } from '../SearchModal'
 import { QuickVerificationButton, QuickVerificationDialog } from '@/features/quickVerifications'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '../../components/ui/use-toast'
+import { ToastAction } from '../../components/ui/toast'
 import { notificationService, Notification } from '@/services/notificationService'
 export const AdminTopBar = ({
   onMenuClick = () => {},
@@ -33,6 +34,8 @@ export const AdminTopBar = ({
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const notificationsRef = useRef<HTMLDivElement>(null)
+  const knownNotificationIds = useRef<Set<string>>(new Set())
+  const hasLoadedFirstBatch = useRef(false)
   const navigate = useNavigate()
   const { logout, user } = useAuth()
   
@@ -40,24 +43,62 @@ export const AdminTopBar = ({
     logout()
   }
 
-  // Cargar notificaciones al montar
-  useEffect(() => {
-    loadNotifications()
-    loadUnreadCount()
-    
-    // Actualizar notificaciones cada 30 segundos
-    const interval = setInterval(() => {
-      loadNotifications()
-      loadUnreadCount()
-    }, 30000)
-    
-    return () => clearInterval(interval)
-  }, [])
+  // Alerta visual y sonora cuando llega una nueva solicitud de presupuesto
+  const alertNewBudgetRequest = (notification: Notification) => {
+    try {
+      const AudioCtx: typeof AudioContext | undefined =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      const notes = [880, 1174.66]
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = freq
+        const start = ctx.currentTime + i * 0.15
+        gain.gain.setValueAtTime(0.0001, start)
+        gain.gain.exponentialRampToValueAtTime(0.15, start + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(start)
+        osc.stop(start + 0.22)
+      })
+      setTimeout(() => ctx.close().catch(() => {}), 1000)
+    } catch {
+      // Audio no disponible: continuar con el toast
+    }
+
+    toast({
+      title: 'Nueva solicitud de presupuesto',
+      description: notification.mensaje,
+      action: (
+        <ToastAction altText="Ver solicitudes" onClick={() => navigate('/reparaciones/budget-requests')}>
+          Ver
+        </ToastAction>
+      ),
+    })
+  }
 
   const loadNotifications = async () => {
     try {
       const data = await notificationService.getAll()
-      setNotifications(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : []
+      setNotifications(list)
+      list.forEach((notification) => {
+        if (notification.tipo !== 'nuevo_presupuesto') return
+        if (!hasLoadedFirstBatch.current) {
+          knownNotificationIds.current.add(notification.id)
+          return
+        }
+        if (!knownNotificationIds.current.has(notification.id)) {
+          knownNotificationIds.current.add(notification.id)
+          alertNewBudgetRequest(notification)
+        }
+      })
+      hasLoadedFirstBatch.current = true
     } catch (error) {
       console.error('Error loading notifications:', error)
       setNotifications([])
@@ -72,6 +113,19 @@ export const AdminTopBar = ({
       console.error('Error loading unread count:', error)
     }
   }
+
+  // Cargar notificaciones al montar y hacer polling cada 10 segundos
+  useEffect(() => {
+    loadNotifications()
+    loadUnreadCount()
+    
+    const interval = setInterval(() => {
+      loadNotifications()
+      loadUnreadCount()
+    }, 10000)
+    
+    return () => clearInterval(interval)
+  }, [])
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -147,6 +201,7 @@ export const AdminTopBar = ({
       reparacion_recibida: <Wrench size={16} className="text-blue-500" />,
       venta_realizada: <ShoppingCart size={16} className="text-green-500" />,
       cierre_caja: <Calendar size={16} className="text-purple-500" />,
+      nuevo_presupuesto: <ClipboardList size={16} className="text-blue-500" />,
     }
 
     return {

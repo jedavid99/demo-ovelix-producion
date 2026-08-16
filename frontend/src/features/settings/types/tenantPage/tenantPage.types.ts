@@ -16,6 +16,9 @@ export interface TenantContact {
   email?: string;
   address?: string;
   city?: string;
+  mapEmbed?: string;
+  instagram?: string;
+  facebook?: string;
 }
 
 export interface TenantServiceItem {

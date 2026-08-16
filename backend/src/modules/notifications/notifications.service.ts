@@ -3,7 +3,7 @@ import { PrismaService } from '../../database/prisma.service';
 
 export interface CreateNotificationDto {
   usuario_id: string;
-  tipo: 'whatsapp' | 'stock_bajo' | 'reparacion_completada' | 'reparacion_recibida' | 'venta_realizada' | 'cierre_caja';
+  tipo: 'whatsapp' | 'stock_bajo' | 'reparacion_completada' | 'reparacion_recibida' | 'venta_realizada' | 'cierre_caja' | 'nuevo_presupuesto';
   titulo: string;
   mensaje: string;
   entidad_id?: string;
@@ -126,6 +126,16 @@ export class NotificationsService {
       tipo: 'cierre_caja',
       titulo: 'Recordatorio de cierre de caja',
       mensaje: `Recuerde realizar el cierre de caja de hoy (${fecha}) a las 18:00`,
+    });
+  }
+
+  async notifyNuevoPresupuesto(usuarioId: string, request: { numero: string; nombre: string; dispositivo: string }) {
+    return this.create({
+      usuario_id: usuarioId,
+      tipo: 'nuevo_presupuesto',
+      titulo: 'Nueva solicitud de presupuesto',
+      mensaje: `${request.numero} — ${request.nombre} pidió presupuesto para ${request.dispositivo}`,
+      entidad_tipo: 'budget_request',
     });
   }
 }

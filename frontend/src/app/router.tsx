@@ -23,6 +23,7 @@ import RepairFlow from '../features/repairs/RepairFlow'
 import QuickRepairForm from '../features/repairs/QuickRepairForm'
 import RepairAddSimple from '../features/repairs/RepairAdd'
 import Budgets from '../features/repairs/components/Budgets'
+import BudgetRequests from '../features/budgetRequests'
 import ClientAdd from '../features/clients/Add'
 import SaleAdd from '../features/sales/Add'
 import StockAdd from '../features/products/Add'
@@ -171,6 +172,7 @@ export function AppRouter() {
       <Route path="/reparaciones/add-simple" element={<PrivateRoute><ProtectedRoute><AdminLayout><RepairAddSimple /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/reparaciones/edit/:id" element={<PrivateRoute><ProtectedRoute><AdminLayout><RepairEdit /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/reparaciones/budgets" element={<PrivateRoute><ProtectedRoute><AdminLayout><Budgets /></AdminLayout></ProtectedRoute></PrivateRoute>} />
+      <Route path="/reparaciones/budget-requests" element={<PrivateRoute><ProtectedRoute><AdminLayout><BudgetRequests /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/reparaciones/qr-scanner" element={<PrivateRoute><ProtectedRoute><AdminLayout><QRScanner /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/reparaciones/qr-details/:order" element={<PrivateRoute><ProtectedRoute><AdminLayout><RepairQRDetails /></AdminLayout></ProtectedRoute></PrivateRoute>} />
       <Route path="/billing/ARCA" element={<PrivateRoute><ProtectedRoute><AdminLayout><ARCA /></AdminLayout></ProtectedRoute></PrivateRoute>} />

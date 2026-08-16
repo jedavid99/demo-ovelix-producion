@@ -96,18 +96,6 @@ export function buildDefaultConfig(slug: string, companyName?: string): TenantPa
             `Respetamos tu privacidad. Los datos que nos proporcionás (nombre, teléfono, correo y datos técnicos del equipo) se utilizan exclusivamente para gestionar tu orden de reparación y contactarte con novedades del servicio.\n\nNo compartimos tus datos con terceros, salvo los proveedores de logística o pagos estrictamente necesarios, o cuando la ley lo requiera.\n\nPodés solicitar acceso, rectificación o eliminación de tus datos personales escribiéndonos.`,
         },
         {
-          label: 'UBICACIÓN',
-          slug: 'ubicacion',
-          content:
-            `El ingreso y retiro de equipos se realiza dentro del horario de atención.\n\nSi necesitás retirar tu equipo fuera de ese horario, escribinos por WhatsApp y coordinamos la entrega.`,
-        },
-        {
-          label: 'HORARIOS',
-          slug: 'horarios',
-          content:
-            `El ingreso y retiro de equipos se realiza dentro del horario de atención.\n\nSi necesitás retirar tu equipo fuera de ese horario, escribinos por WhatsApp y coordinamos la entrega.`,
-        },
-        {
           label: 'GARANTÍA',
           slug: 'garantia',
           content:

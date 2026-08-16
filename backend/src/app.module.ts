@@ -33,6 +33,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { TenantPagesModule } from './modules/tenant-pages/tenant-pages.module';
 import { RepairCostsModule } from './modules/repair-costs/repair-costs.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { BudgetRequestsModule } from './modules/budget-requests/budget-requests.module';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -86,6 +87,7 @@ const envSchema = z.object({
     TenantPagesModule,
     RepairCostsModule,
     BookingsModule,
+    BudgetRequestsModule,
   ],
   providers: [
     {

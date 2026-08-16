@@ -20,7 +20,8 @@ function mapTipoToUi(tipo: string): NotificationItem['type'] {
   switch (tipo) {
     case 'stock_bajo': return 'urgent';
     case 'venta_realizada': return 'sale';
-    case 'whatsapp': return 'general';
+    case 'whatsapp':
+    case 'nuevo_presupuesto': return 'general';
     case 'reparacion_completada':
     case 'reparacion_recibida':
     case 'cierre_caja':
@@ -32,7 +33,8 @@ function mapTipoToIcon(tipo: string): string {
   switch (tipo) {
     case 'stock_bajo': return 'warning';
     case 'venta_realizada': return 'check_circle';
-    case 'whatsapp': return 'schedule';
+    case 'whatsapp':
+    case 'nuevo_presupuesto': return 'schedule';
     case 'reparacion_completada':
     case 'reparacion_recibida':
     case 'cierre_caja':

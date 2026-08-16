@@ -3,13 +3,13 @@ import api from './api';
 export interface Notification {
   id: string;
   usuario_id: string;
-  tipo: 'whatsapp' | 'stock_bajo' | 'reparacion_completada' | 'reparacion_recibida' | 'venta_realizada' | 'cierre_caja';
+  tipo: 'whatsapp' | 'stock_bajo' | 'reparacion_completada' | 'reparacion_recibida' | 'venta_realizada' | 'cierre_caja' | 'nuevo_presupuesto';
   titulo: string;
   mensaje: string;
   leida: boolean;
   entidad_id?: string;
   entidad_tipo?: string;
-  metadata?: any;
+  metadata?: unknown;
   created_at: string;
 }
 

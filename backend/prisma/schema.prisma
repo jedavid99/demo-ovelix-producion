@@ -42,6 +42,7 @@ model Company {
   repairs        Repair[]
   sales          Sale[]
   expenses       Expense[]
+  budgetRequests BudgetRequest[]
   whatsappSessions WhatsAppSession[]
   stockItems     StockItem[]
   users          User[]
@@ -190,6 +191,7 @@ model Repair {
   tecnico_asignado        User?               @relation("TechnicianRepairs", fields: [tecnico_asignado_id], references: [id])
   partsUsed               RepairPart[]
   estado_historial        RepairStateHistory[]
+  budgetRequest           BudgetRequest?
 
   @@index([empresa_id])
   @@index([cliente_id])
@@ -762,4 +764,62 @@ model Booking {
   @@index([empresa_id])
   @@index([fecha])
   @@index([estado])
+}
+
+enum BudgetRequestEstado {
+  PENDIENTE
+  CONFIRMADO
+  CONVERTIDO
+  RECHAZADO
+}
+
+model BudgetRequest {
+  id                 String              @id @default(uuid())
+  empresa_id         String
+  numero             String              @unique
+  estado             BudgetRequestEstado  @default(PENDIENTE)
+
+  // Datos de contacto del cliente
+  nombre             String
+  whatsapp           String
+  email              String?
+
+  // Equipo y reparación solicitada
+  categoria          String?
+  dispositivo        String
+  modelo             String?
+  problema           String?
+  descripcion        String?
+  tiempo_estimado    String?
+  precio_ofertado    Decimal?            @db.Decimal(10, 2)
+  precio_ajustado    Decimal?            @db.Decimal(10, 2)
+
+  // Plan de pago
+  plan_pago          String?             // half | full
+  sena_monto         Decimal?            @db.Decimal(10, 2)
+  sena_metodo        String?             // qr | transferencia
+  comprobante        String?
+  resto_metodo       String?             // qr | transferencia | efectivo
+
+  // Entrega
+  delivery_metodo    String?             // llevar | retirar
+  delivery_direccion String?
+  delivery_costo     Decimal?            @db.Decimal(10, 2)
+
+  // Turno
+  turno_fecha        String?
+  turno_horario      String?
+
+  // Gestión admin
+  notas_admin        String?
+  repair_id          String?             @unique
+  repair             Repair?             @relation(fields: [repair_id], references: [id], onDelete: SetNull)
+
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  empresa            Company             @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([estado])
+  @@index([created_at])
 }
