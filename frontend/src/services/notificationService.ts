@@ -16,12 +16,14 @@ export interface Notification {
 export const notificationService = {
   async getAll(unreadOnly = false) {
     const response = await api.get('/notifications', { params: { unreadOnly } });
-    return response.data;
+    const envelope = response.data as { data?: unknown };
+    return Array.isArray(envelope?.data) ? envelope.data : (response.data as Notification[]);
   },
 
   async getUnreadCount() {
     const response = await api.get('/notifications/unread-count');
-    return response.data.count;
+    const envelope = response.data as { data?: { count?: number } };
+    return envelope?.data?.count ?? (response.data as { count?: number })?.count ?? 0;
   },
 
   async markAsRead(id: string) {

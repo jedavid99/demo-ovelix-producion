@@ -1,0 +1,6 @@
+export enum BudgetRequestEstado {
+  PENDIENTE = 'PENDIENTE',
+  CONFIRMADO = 'CONFIRMADO',
+  CONVERTIDO = 'CONVERTIDO',
+  RECHAZADO = 'RECHAZADO',
+}

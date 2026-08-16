@@ -153,12 +153,12 @@ export const AdminTopBar = ({
   }, [notificationsOpen])
   
   // 📦 ESTADO DE NOTIFICACIONES – Conectado con API
-  const handleNotificationRead = async (id: number) => {
+  const handleNotificationRead = async (id: string) => {
     try {
-      await notificationService.markAsRead(id.toString())
+      await notificationService.markAsRead(id)
       setNotifications(prev => 
         prev.map(notif => 
-          notif.id === id.toString() ? { ...notif, leida: true } : notif
+          notif.id === id ? { ...notif, leida: true } : notif
         )
       )
       loadUnreadCount()
@@ -168,10 +168,10 @@ export const AdminTopBar = ({
     }
   }
 
-  const handleNotificationDelete = async (id: number) => {
+  const handleNotificationDelete = async (id: string) => {
     try {
-      await notificationService.delete(id.toString())
-      setNotifications(prev => prev.filter(notif => notif.id !== id.toString()))
+      await notificationService.delete(id)
+      setNotifications(prev => prev.filter(notif => notif.id !== id))
       loadUnreadCount()
     } catch (error) {
       console.error('Error deleting notification:', error)
@@ -205,7 +205,7 @@ export const AdminTopBar = ({
     }
 
     return {
-      id: parseInt(notif.id),
+      id: notif.id,
       title: notif.titulo,
       description: notif.mensaje,
       icon: iconMap[notif.tipo] || <Bell size={16} />,

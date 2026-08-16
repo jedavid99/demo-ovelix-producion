@@ -1,7 +1,7 @@
 import React from 'react'
 import { Bell, X, Check } from 'lucide-react'
 export interface SimpleNotification {
-  id: number
+  id: string
   title: string
   description: string
   time: string
@@ -10,8 +10,8 @@ export interface SimpleNotification {
 }
 interface SimpleNotificationsProps {
   notifications: SimpleNotification[]
-  onRead: (id: number) => void
-  onDelete: (id: number) => void
+  onRead: (id: string) => void
+  onDelete: (id: string) => void
   onMarkAllRead: () => void
   unreadCount: number
 }
@@ -23,7 +23,7 @@ export const SimpleNotifications: React.FC<SimpleNotificationsProps> = ({
   unreadCount
 }) => {
   return (
-    <div className="w-full sm:w-[400px] max-h-[70vh] flex flex-col bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden">
+    <div className="w-full sm:w-[400px] max-h-[70vh] flex flex-col bg-card border border-border/50 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/30 overflow-hidden">
       {/* Cabecera con gradiente sutil */}
       <div className="flex items-center justify-between p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 via-transparent to-primary/5">
         <div className="flex items-center gap-3">
