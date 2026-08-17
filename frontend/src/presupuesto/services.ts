@@ -180,6 +180,7 @@ export interface BudgetRequestPayload {
   dni?: string
   categoria?: string
   dispositivo: string
+  marca?: string
   modelo?: string
   problema?: string
   descripcion?: string
@@ -269,6 +270,7 @@ export interface PublicBudgetRequest {
   whatsapp?: string | null
   categoria?: string | null
   dispositivo?: string | null
+  marca?: string | null
   modelo?: string | null
   problema?: string | null
   descripcion?: string | null

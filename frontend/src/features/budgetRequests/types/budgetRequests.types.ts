@@ -17,6 +17,7 @@ export interface BudgetRequest {
   dni: string | null;
   categoria: string | null;
   dispositivo: string;
+  marca: string | null;
   modelo: string | null;
   problema: string | null;
   descripcion: string | null;

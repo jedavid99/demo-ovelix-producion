@@ -809,6 +809,7 @@ model BudgetRequest {
   // Equipo y reparación solicitada
   categoria          String?
   dispositivo        String
+  marca              String?
   modelo             String?
   problema           String?
   descripcion        String?

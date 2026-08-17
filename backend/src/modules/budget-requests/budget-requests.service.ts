@@ -54,6 +54,7 @@ export class BudgetRequestsService {
         dni: data.dni || null,
         categoria: data.categoria || null,
         dispositivo: data.dispositivo,
+        marca: data.marca || null,
         modelo: data.modelo || null,
         problema: data.problema || null,
         descripcion: data.descripcion || null,
@@ -213,6 +214,7 @@ export class BudgetRequestsService {
           numero_reparacion: request.numero,
           categoria_dispositivo: request.categoria || null,
           dispositivo: request.dispositivo,
+          marca: request.marca ?? this.detectBrand(request.dispositivo),
           modelo: request.modelo || null,
           problema_reportado:
             request.problema || request.descripcion || `Solicitud de presupuesto: ${request.dispositivo}`,
@@ -475,6 +477,7 @@ export class BudgetRequestsService {
       dni: request.dni,
       categoria: request.categoria,
       dispositivo: request.dispositivo,
+      marca: request.marca,
       modelo: request.modelo,
       problema: request.problema,
       descripcion: request.descripcion,
@@ -499,6 +502,24 @@ export class BudgetRequestsService {
           }
         : null,
     };
+  }
+
+  /** Detecta la marca a partir del texto del dispositivo cuando no fue capturada explícitamente. */
+  private detectBrand(dispositivo: string): string | null {
+    if (!dispositivo) return null;
+    const known = [
+      'apple', 'iphone', 'ipad', 'macbook', 'imac',
+      'samsung', 'xiaomi', 'redmi', 'poco', 'motorola', 'huawei', 'honor',
+      'lg', 'nokia', 'sony', 'ericsson', 'lenovo', 'hp', 'dell', 'asus',
+      'acer', 'tcl', 'alcatel', 'oppo', 'oneplus', 'realme', 'vivo',
+      'msi', 'gigabyte', 'vaio', 'toshiba', 'aoc', 'benq', 'nintendo',
+      'playstation', 'xbox', 'gopro', 'kindle', 'amazon', 'google',
+    ];
+    const text = dispositivo.toLowerCase();
+    for (const brand of known) {
+      if (text === brand || text.startsWith(`${brand} `)) return brand[0].toUpperCase() + brand.slice(1);
+    }
+    return null;
   }
 
   private async generateRequestNumber(empresaId: string): Promise<string> {

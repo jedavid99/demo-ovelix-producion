@@ -222,6 +222,7 @@ function DetailDialog({
               {request.email && <DetailRow label="Email" value={request.email} />}
               <DetailRow label="Dispositivo" value={`${request.categoria ? `${request.categoria} — ` : ''}${request.dispositivo}`} />
               {request.modelo && <DetailRow label="Modelo" value={request.modelo} />}
+              {request.marca && <DetailRow label="Marca" value={request.marca} />}
               {request.tiempo_estimado && <DetailRow label="Tiempo estimado" value={request.tiempo_estimado} />}
               {request.problema && <DetailRow label="Problema reportado" value={request.problema} />}
               {request.descripcion && <DetailRow label="Descripción" value={request.descripcion} />}

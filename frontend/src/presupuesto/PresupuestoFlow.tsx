@@ -384,6 +384,7 @@ export default function PresupuestoFlow() {
           dni: form.dni.trim() || undefined,
           categoria: customRequest ? 'Sin precio de referencia' : quote.categoria ?? undefined,
           dispositivo: form.modelo.trim() || quote.nombre,
+          marca: equipoMarca ?? undefined,
           modelo: form.modelo.trim() || undefined,
           problema: form.mensaje.trim() || undefined,
           descripcion: customRequest ? undefined : quote.descripcion ?? undefined,

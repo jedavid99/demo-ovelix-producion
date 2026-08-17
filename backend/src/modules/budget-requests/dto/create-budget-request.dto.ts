@@ -9,6 +9,7 @@ export const createBudgetRequestSchema = z.object({
 
   categoria: z.string().max(120).optional(),
   dispositivo: z.string().min(1, 'El dispositivo es requerido').max(200),
+  marca: z.string().max(80).optional(),
   modelo: z.string().max(200).optional(),
   problema: z.string().max(600).optional(),
   descripcion: z.string().max(1200).optional(),

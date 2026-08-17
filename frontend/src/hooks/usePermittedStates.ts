@@ -28,7 +28,7 @@ export function usePermittedStates(repairId: string) {
         return res.json();
       })
       .then((data) => {
-        setPermitted(data.data?.data?.permitted || []);
+        setPermitted(data.data?.permitted || []);
         setLoading(false);
       })
       .catch((err) => {

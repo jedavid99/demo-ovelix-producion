@@ -246,6 +246,7 @@ export default function BookingPage() {
           dni: form.dni.trim() || undefined,
           categoria: repair.categoria ?? undefined,
           dispositivo: form.modelo.trim() || repair.nombre,
+          marca: equipoMarca ?? undefined,
           modelo: form.modelo.trim() || undefined,
           problema: form.mensaje.trim() || undefined,
           descripcion: repair.descripcion ?? undefined,
