@@ -1,0 +1,1 @@
+ALTER TABLE "BudgetRequest" ADD COLUMN "dni" TEXT;

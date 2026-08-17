@@ -5,6 +5,7 @@ export const createBudgetRequestSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido').max(200),
   whatsapp: z.string().min(1, 'El WhatsApp es requerido').max(40),
   email: z.string().email('Correo electrónico inválido').max(200).optional().or(z.literal('')),
+  dni: z.string().max(20, 'El DNI es muy largo').optional(),
 
   categoria: z.string().max(120).optional(),
   dispositivo: z.string().min(1, 'El dispositivo es requerido').max(200),

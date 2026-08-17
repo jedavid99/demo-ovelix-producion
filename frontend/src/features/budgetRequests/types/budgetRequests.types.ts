@@ -14,6 +14,7 @@ export interface BudgetRequest {
   nombre: string;
   whatsapp: string;
   email: string | null;
+  dni: string | null;
   categoria: string | null;
   dispositivo: string;
   modelo: string | null;

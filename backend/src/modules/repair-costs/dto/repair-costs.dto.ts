@@ -9,6 +9,16 @@ export const createRepairCostSchema = z.object({
   descripcion: z.string().max(500).nullable().optional(),
   notas: z.string().max(1000).nullable().optional(),
   modelo: z.string().max(300).nullable().optional(),
+  marcas: z.array(z.string().min(1, 'La marca no puede estar vacía').max(80)).max(30).optional(),
+  modelos: z
+    .array(
+      z.object({
+        marca: z.string().min(1, 'La marca del modelo no puede estar vacía').max(80),
+        nombre: z.string().min(1, 'El nombre del modelo no puede estar vacío').max(120),
+      }),
+    )
+    .max(100)
+    .optional(),
   activo: z.boolean().optional(),
 });
 
@@ -21,6 +31,16 @@ export const updateRepairCostSchema = z.object({
   descripcion: z.string().max(500).nullable().optional(),
   notas: z.string().max(1000).nullable().optional(),
   modelo: z.string().max(300).nullable().optional(),
+  marcas: z.array(z.string().min(1, 'La marca no puede estar vacía').max(80)).max(30).optional(),
+  modelos: z
+    .array(
+      z.object({
+        marca: z.string().min(1, 'La marca del modelo no puede estar vacía').max(80),
+        nombre: z.string().min(1, 'El nombre del modelo no puede estar vacío').max(120),
+      }),
+    )
+    .max(100)
+    .optional(),
   activo: z.boolean().optional(),
 });
 

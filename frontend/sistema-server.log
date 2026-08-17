@@ -866,3 +866,22 @@ Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
 [2m04:35:17[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mtailwind.config.cjs[22m
 [2m04:45:21[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mtailwind.config.cjs[22m
 [2m04:46:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/shared/components/notifications/SimpleNotifications.tsx, /src/index.css[22m
+[2m05:24:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/presupuesto/PresupuestoFlow.tsx, /src/presupuesto/ServicesListPage.tsx[22m
+[2m05:24:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/presupuesto/PresupuestoFlow.tsx, /src/presupuesto/ServicesListPage.tsx[22m
+[2m05:24:57[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:25:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:25:14[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:25:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:25:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:26:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:27:03[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:28:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:29:02[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:29:09[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:29:48[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/PresupuestoFlow.tsx, /src/index.css[22m
+[2m05:31:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/TrackingPage.tsx, /src/index.css[22m
+[2m05:31:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/TrackingPage.tsx, /src/index.css[22m
+[2m05:32:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/TrackingPage.tsx, /src/index.css[22m
+[2m05:32:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/TrackingPage.tsx, /src/index.css[22m
+[2m05:32:48[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/presupuesto/TrackingPage.tsx, /src/index.css[22m
+[2m05:34:14[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/features/budgetRequests/pages/BudgetRequestsPage.tsx, /src/index.css[22m

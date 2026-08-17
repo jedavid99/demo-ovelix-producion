@@ -4,7 +4,12 @@ import { PrismaService } from '../../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateBudgetRequestDto } from './dto/create-budget-request.dto';
 import { UpdateBudgetRequestDto } from './dto/update-budget-request.dto';
+import { PayBudgetRequestDto } from './dto/pay-budget-request.dto';
 import { BudgetRequestEstado } from './enums/budget-request-estado.enum';
+
+type BudgetRequestWithRepair = Prisma.BudgetRequestGetPayload<{
+  include: { repair: { select: { numero_reparacion: true; estado: true } } };
+}>;
 
 @Injectable()
 export class BudgetRequestsService {
@@ -46,6 +51,7 @@ export class BudgetRequestsService {
         nombre: data.nombre,
         whatsapp: data.whatsapp,
         email: data.email || null,
+        dni: data.dni || null,
         categoria: data.categoria || null,
         dispositivo: data.dispositivo,
         modelo: data.modelo || null,
@@ -187,8 +193,14 @@ export class BudgetRequestsService {
             nombre_completo: request.nombre,
             telefono: request.whatsapp,
             email: request.email || null,
+            dni: request.dni || null,
             empresa_id: request.empresa_id,
           },
+        });
+      } else if (request.dni && !client.dni) {
+        client = await tx.client.update({
+          where: { id: client.id },
+          data: { dni: request.dni },
         });
       }
 
@@ -251,6 +263,187 @@ export class BudgetRequestsService {
     return { message: 'Solicitud eliminada correctamente' };
   }
 
+  /** Endpoint público: el cliente confirma la reparación con el costo enviado por el admin. */
+  async confirmPublic(numero: string) {
+    const request = await this.prisma.budgetRequest.findUnique({
+      where: { numero },
+      include: { repair: { select: { id: true, numero_reparacion: true, estado: true } } },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+    if (request.estado === BudgetRequestEstado.RECHAZADO) {
+      throw new BadRequestException('Esta solicitud fue rechazada y no puede confirmarse');
+    }
+    if (request.estado === BudgetRequestEstado.CONVERTIDO) {
+      throw new BadRequestException('Esta solicitud ya fue convertida en reparación');
+    }
+    if (request.precio_ajustado == null && request.precio_ofertado == null) {
+      throw new BadRequestException('Todavía no hay un costo definido. El taller te va a enviar el precio por WhatsApp.');
+    }
+
+    const updated = await this.prisma.budgetRequest.update({
+      where: { id: request.id },
+      data: { estado: BudgetRequestEstado.CONFIRMADO },
+      include: { repair: { select: { id: true, numero_reparacion: true, estado: true } } },
+    });
+
+    await this.notifyConfirmada({
+      numero: updated.numero,
+      nombre: updated.nombre,
+      dispositivo: updated.dispositivo,
+      empresa_id: updated.empresa_id,
+    });
+
+    return updated;
+  }
+
+  /** Endpoint público: el cliente registra la forma de pago una vez que el admin confirmó el precio. */
+  async payPublic(numero: string, data: PayBudgetRequestDto) {
+    const request = await this.prisma.budgetRequest.findUnique({
+      where: { numero },
+      include: { repair: { select: { numero_reparacion: true, estado: true } } },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+    if (request.estado === BudgetRequestEstado.RECHAZADO) {
+      throw new BadRequestException('Esta solicitud fue rechazada y no puede confirmarse');
+    }
+    if (request.estado === BudgetRequestEstado.CONVERTIDO) {
+      throw new BadRequestException('Esta solicitud ya fue convertida en reparación');
+    }
+
+    const precioFinal = request.precio_ajustado ?? request.precio_ofertado;
+    if (precioFinal == null) {
+      throw new BadRequestException(
+        'Todavía no hay un costo definido. El taller te va a confirmar el precio por WhatsApp.',
+      );
+    }
+
+    const planPago = data.plan_pago ?? request.plan_pago;
+    if (planPago === 'half' || planPago === 'full') {
+      if (!data.sena_metodo && !request.sena_metodo) {
+        throw new BadRequestException('Elegí cómo vas a abonar la seña: por QR o por transferencia.');
+      }
+      if (!data.comprobante?.trim() && !request.comprobante?.trim()) {
+        throw new BadRequestException('Ingresá el número de comprobante de la seña.');
+      }
+      if (planPago === 'half' && !data.resto_metodo && !request.resto_metodo) {
+        throw new BadRequestException('Elegí cómo vas a abonar el resto.');
+      }
+    }
+
+    const senaMonto =
+      planPago === 'half' ? Number(precioFinal) * 0.5 : planPago === 'full' ? Number(precioFinal) : null;
+
+    const updated = await this.prisma.budgetRequest.update({
+      where: { id: request.id },
+      data: {
+        estado: BudgetRequestEstado.CONFIRMADO,
+        ...(data.plan_pago ? { plan_pago: data.plan_pago } : {}),
+        ...(senaMonto != null ? { sena_monto: new Prisma.Decimal(senaMonto) } : {}),
+        ...(data.sena_metodo ? { sena_metodo: data.sena_metodo } : {}),
+        ...(data.comprobante ? { comprobante: data.comprobante.trim() } : {}),
+        ...(data.resto_metodo ? { resto_metodo: data.resto_metodo } : {}),
+        ...(data.delivery_metodo ? { delivery_metodo: data.delivery_metodo } : {}),
+        ...(data.delivery_direccion ? { delivery_direccion: data.delivery_direccion } : {}),
+        ...(data.turno_fecha ? { turno_fecha: data.turno_fecha } : {}),
+        ...(data.turno_horario ? { turno_horario: data.turno_horario } : {}),
+      },
+      include: { repair: { select: { numero_reparacion: true, estado: true } } },
+    });
+
+    await this.notifyConfirmada({
+      numero: updated.numero,
+      nombre: updated.nombre,
+      dispositivo: updated.dispositivo,
+      empresa_id: updated.empresa_id,
+    });
+
+    return this.toPublicShape(updated);
+  }
+
+  /** Endpoint público: el cliente cancela/elimina la reserva (cambió de opinión). */
+  async cancelPublic(numero: string) {
+    const request = await this.prisma.budgetRequest.findUnique({ where: { numero } });
+
+    if (!request) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+    if (request.estado === BudgetRequestEstado.CONVERTIDO) {
+      throw new BadRequestException('Esta solicitud ya fue convertida en reparación y no puede cancelarse desde esta página');
+    }
+
+    await this.prisma.budgetRequest.delete({ where: { id: request.id } });
+
+    await this.notifyCancelada({
+      numero: request.numero,
+      nombre: request.nombre,
+      dispositivo: request.dispositivo,
+      empresa_id: request.empresa_id,
+    });
+
+    return { message: 'Reserva cancelada correctamente' };
+  }
+
+  /** Avisa al staff cuando el cliente confirma la reparación con el costo. */
+  private async notifyConfirmada(request: {
+    numero: string;
+    nombre: string;
+    dispositivo: string;
+    empresa_id: string;
+  }) {
+    const staff = await this.staffRecipients(request.empresa_id);
+    await Promise.all(
+      staff.map((u) =>
+        this.notificationsService.create({
+          usuario_id: u.id,
+          tipo: 'nuevo_presupuesto',
+          titulo: 'Cliente confirmó la reparación',
+          mensaje: `${request.numero} — ${request.nombre} confirmó la reparación de ${request.dispositivo}`,
+          entidad_tipo: 'budget_request',
+        }),
+      ),
+    );
+  }
+
+  /** Avisa al staff cuando el cliente cancela una reserva. */
+  private async notifyCancelada(request: {
+    numero: string;
+    nombre: string;
+    dispositivo: string;
+    empresa_id: string;
+  }) {
+    const staff = await this.staffRecipients(request.empresa_id);
+    await Promise.all(
+      staff.map((u) =>
+        this.notificationsService.create({
+          usuario_id: u.id,
+          tipo: 'nuevo_presupuesto',
+          titulo: 'Cliente canceló una reserva',
+          mensaje: `${request.numero} — ${request.nombre} canceló la reserva de ${request.dispositivo}`,
+          entidad_tipo: 'budget_request',
+        }),
+      ),
+    );
+  }
+
+  /** Usuarios del staff (ADMIN/RECEPCIONISTA de la empresa) + DESARROLLADOR. */
+  private async staffRecipients(empresaId: string) {
+    const staff = await this.prisma.user.findMany({
+      where: { activo: true },
+      include: { rol: { select: { name: true } } },
+    });
+    return staff.filter(
+      (u) =>
+        (u.empresa_id === empresaId && ['ADMIN', 'RECEPCIONISTA'].includes(u.rol?.name ?? '')) ||
+        u.rol?.name === 'DESARROLLADOR',
+    );
+  }
+
   /** Endpoint público: consultar el estado de una solicitud por número de orden (antes o después de convertirse). */
   async findByOrderNumber(numero: string) {
     const request = await this.prisma.budgetRequest.findUnique({
@@ -269,16 +462,35 @@ export class BudgetRequestsService {
       throw new NotFoundException('Solicitud no encontrada');
     }
 
+    return this.toPublicShape(request);
+  }
+
+  /** Shape público de una solicitud (sin datos internos de la empresa). */
+  private toPublicShape(request: BudgetRequestWithRepair) {
     return {
       numero: request.numero,
       estado: request.estado,
+      nombre: request.nombre,
+      whatsapp: request.whatsapp,
+      dni: request.dni,
       categoria: request.categoria,
       dispositivo: request.dispositivo,
       modelo: request.modelo,
       problema: request.problema,
+      descripcion: request.descripcion,
       tiempo_estimado: request.tiempo_estimado,
       precio_ofertado: request.precio_ofertado,
       precio_ajustado: request.precio_ajustado,
+      plan_pago: request.plan_pago,
+      sena_monto: request.sena_monto,
+      sena_metodo: request.sena_metodo,
+      comprobante: request.comprobante,
+      resto_metodo: request.resto_metodo,
+      delivery_metodo: request.delivery_metodo,
+      delivery_direccion: request.delivery_direccion,
+      delivery_costo: request.delivery_costo,
+      turno_fecha: request.turno_fecha,
+      turno_horario: request.turno_horario,
       created_at: request.created_at,
       repair: request.repair
         ? {

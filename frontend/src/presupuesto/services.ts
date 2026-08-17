@@ -15,6 +15,8 @@ export interface TenantRepairCost {
   tiempo_estimado?: string | null
   descripcion?: string | null
   modelo?: string | null
+  marcas?: string[]
+  modelos?: { marca: string; nombre: string }[]
 }
 
 export const DEMO_REPAIR_COSTS: TenantRepairCost[] = [
@@ -175,6 +177,7 @@ export interface BudgetRequestPayload {
   nombre: string
   whatsapp: string
   email?: string
+  dni?: string
   categoria?: string
   dispositivo: string
   modelo?: string
@@ -202,18 +205,30 @@ export interface BudgetRequestResponse {
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '')
 
-/** Tarifario publicado por la empresa (backend Overlix) con fallback demo. */
+/** Tarifario publicado por la empresa (backend Overlix).
+ *  Con slug real: devuelve SOLO lo publicado (nunca datos demo).
+ *  Sin slug (dev localhost): fallback al catálogo demo. */
 export async function fetchRepairCosts(slug: string | null): Promise<TenantRepairCost[]> {
   if (!slug) return DEMO_REPAIR_COSTS
   try {
     const res = await fetch(`${API_BASE}/public/repair-costs/${encodeURIComponent(slug)}`)
-    if (!res.ok) return DEMO_REPAIR_COSTS
+    if (!res.ok) return []
     const json = await res.json()
     const payload = json?.data ?? json
     const list = Array.isArray(payload) ? payload : []
-    if (list.length === 0) return DEMO_REPAIR_COSTS
     return list.map(
-      (c: { id?: string; nombre?: string; categoria?: string; tipo_equipo?: string | null; precio?: number; tiempo_estimado?: string | null; descripcion?: string | null; modelo?: string | null }) => ({
+      (c: {
+        id?: string
+        nombre?: string
+        categoria?: string
+        tipo_equipo?: string | null
+        precio?: number
+        tiempo_estimado?: string | null
+        descripcion?: string | null
+        modelo?: string | null
+        marcas?: string[]
+        modelos?: { marca: string; nombre: string }[]
+      }) => ({
         id: c.id ?? '',
         nombre: c.nombre ?? '',
         categoria: c.categoria ?? '',
@@ -222,10 +237,12 @@ export async function fetchRepairCosts(slug: string | null): Promise<TenantRepai
         tiempo_estimado: c.tiempo_estimado ?? null,
         descripcion: c.descripcion ?? null,
         modelo: c.modelo ?? null,
+        marcas: Array.isArray(c.marcas) ? c.marcas : [],
+        modelos: Array.isArray(c.modelos) ? c.modelos : [],
       })
     )
   } catch {
-    return DEMO_REPAIR_COSTS
+    return []
   }
 }
 
@@ -243,4 +260,86 @@ export async function submitBudgetRequest(payload: BudgetRequestPayload): Promis
     throw new Error(json?.message ?? json?.error ?? 'No se pudo guardar la solicitud')
   }
   return (json?.data ?? json) as BudgetRequestResponse
+}
+
+export interface PublicBudgetRequest {
+  numero: string
+  estado: 'PENDIENTE' | 'CONFIRMADO' | 'CONVERTIDO' | 'RECHAZADO'
+  nombre?: string | null
+  whatsapp?: string | null
+  categoria?: string | null
+  dispositivo?: string | null
+  modelo?: string | null
+  problema?: string | null
+  descripcion?: string | null
+  tiempo_estimado?: string | null
+  precio_ofertado?: string | number | null
+  precio_ajustado?: string | number | null
+  plan_pago?: string | null
+  sena_monto?: string | number | null
+  sena_metodo?: string | null
+  comprobante?: string | null
+  resto_metodo?: string | null
+  delivery_metodo?: string | null
+  delivery_direccion?: string | null
+  delivery_costo?: string | number | null
+  turno_fecha?: string | null
+  turno_horario?: string | null
+  created_at?: string | null
+  repair?: { numero_reparacion?: string | null; estado?: string | null } | null
+}
+
+export interface PayBudgetRequestPayload {
+  plan_pago?: 'half' | 'full'
+  sena_metodo?: 'qr' | 'transferencia'
+  comprobante?: string
+  resto_metodo?: 'qr' | 'transferencia' | 'efectivo'
+  delivery_metodo?: 'llevar' | 'retirar'
+  delivery_direccion?: string
+  turno_fecha?: string
+  turno_horario?: string
+}
+
+/** Consulta pública de una reserva por número de orden (REQ-…). */
+export async function fetchPublicBudgetRequest(numero: string): Promise<PublicBudgetRequest | null> {
+  const res = await fetch(`${API_BASE}/public/budget-requests/${encodeURIComponent(numero)}`)
+  if (!res.ok) return null
+  const json = await res.json().catch(() => ({}))
+  const payload = json?.data ?? json
+  return (Array.isArray(payload) ? payload[0] : payload) as PublicBudgetRequest | null
+}
+
+/** El cliente confirma la reparación con el costo enviado por el admin. */
+export async function confirmPublicBudgetRequest(numero: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/public/budget-requests/${encodeURIComponent(numero)}/confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.ok
+}
+
+/** El cliente registra la forma de pago cuando el admin ya confirmó el precio. */
+export async function payPublicBudgetRequest(
+  numero: string,
+  payload: PayBudgetRequestPayload,
+): Promise<PublicBudgetRequest | null> {
+  const res = await fetch(`${API_BASE}/public/budget-requests/${encodeURIComponent(numero)}/payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    throw new Error(json?.message ?? json?.error ?? 'No se pudo registrar el pago')
+  }
+  const json = await res.json().catch(() => ({}))
+  return (json?.data ?? json) as PublicBudgetRequest | null
+}
+
+/** El cliente cancela/elimina su reserva (cambió de opinión). */
+export async function cancelPublicBudgetRequest(numero: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/public/budget-requests/${encodeURIComponent(numero)}`, {
+    method: 'DELETE',
+  })
+  return res.ok
 }

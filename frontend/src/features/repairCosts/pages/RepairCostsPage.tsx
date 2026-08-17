@@ -22,7 +22,6 @@ import { settingsApi } from '@/features/settings/services/settingsApi';
 import { repairCostsApi } from '../services/repairCostsApi';
 import { CostFormDialog } from '../components/CostFormDialog';
 import type { RepairCost, RepairCostForm, TaxRate } from '../types/repairCosts.types';
-import { EQUIPMENT_TYPES, equipmentLabel } from '@/shared/lib/equipmentTypes';
 
 function formatARS(n: number): string {
   return '$ ' + n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -62,7 +61,6 @@ export default function RepairCostsPage() {
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [onlyActive, setOnlyActive] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -97,27 +95,28 @@ export default function RepairCostsPage() {
 
   const categories = useMemo(() => Array.from(new Set(costs.map((c) => c.categoria))).sort(), [costs]);
 
-  const equipmentTypes = useMemo(
-    () =>
-      EQUIPMENT_TYPES.filter((t) => costs.some((c) => c.tipo_equipo === t.value)).map((t) => t.value),
-    [costs],
-  );
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return costs.filter((c) => {
       if (onlyActive && !c.activo) return false;
       if (categoryFilter !== 'all' && c.categoria !== categoryFilter) return false;
-      if (equipmentFilter !== 'all' && (c.tipo_equipo ?? '') !== equipmentFilter) return false;
       if (q) {
-        const haystack = [c.nombre, c.categoria, c.modelo ?? '', c.tipo_equipo ?? '', c.descripcion ?? '', c.notas ?? '']
+        const haystack = [
+          c.nombre,
+          c.categoria,
+          c.modelo ?? '',
+          c.descripcion ?? '',
+          c.notas ?? '',
+          (c.marcas ?? []).map((m) => m.nombre).join(' '),
+          (c.modelos ?? []).map((m) => m.nombre).join(' '),
+        ]
           .join(' ')
           .toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [costs, search, categoryFilter, equipmentFilter, onlyActive]);
+  }, [costs, search, categoryFilter, onlyActive]);
 
   const activeRates = useMemo(() => taxRates.filter((r) => r.activo && (r.porcentaje ?? 0) > 0), [taxRates]);
 
@@ -225,18 +224,6 @@ export default function RepairCostsPage() {
               </option>
             ))}
           </select>
-          <select
-            value={equipmentFilter}
-            onChange={(e) => setEquipmentFilter(e.target.value)}
-            className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="all">Todos los equipos</option>
-            {EQUIPMENT_TYPES.filter((t) => equipmentTypes.includes(t.value)).map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
           <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer select-none">
             <input
               type="checkbox"
@@ -291,9 +278,6 @@ export default function RepairCostsPage() {
                       Categoría
                     </th>
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Equipo
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       <Clock size={12} className="inline mr-1" />
                       Tiempo
                     </th>
@@ -327,19 +311,32 @@ export default function RepairCostsPage() {
                             {cost.descripcion || cost.notas}
                           </p>
                         )}
+                        {(cost.marcas?.length > 0 || cost.modelos?.length > 0) && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {(cost.marcas ?? []).map((b) => (
+                              <span
+                                key={b.id}
+                                className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-semibold text-muted-foreground capitalize"
+                              >
+                                {b.nombre}
+                              </span>
+                            ))}
+                            {(cost.modelos ?? []).map((m) => (
+                              <span
+                                key={m.id}
+                                className="px-1.5 py-0.5 rounded bg-primary/10 text-[10px] font-semibold text-primary"
+                              >
+                                {m.nombre}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {cost.modelo && (
                           <p className="text-[11px] font-medium text-primary mt-0.5">Modelos: {cost.modelo}</p>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <Badge variant="outline">{cost.categoria}</Badge>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        {cost.tipo_equipo ? (
-                          <Badge variant="secondary">{equipmentLabel(cost.tipo_equipo)}</Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">{cost.tiempo_estimado || '—'}</td>
                       <td className="px-6 py-4 text-sm font-bold text-foreground">
@@ -414,6 +411,7 @@ export default function RepairCostsPage() {
         onOpenChange={setDialogOpen}
         initial={editing}
         categories={categories}
+        taxRates={taxRates}
         submitting={submitting}
         onSubmit={handleSubmit}
       />

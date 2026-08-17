@@ -78,7 +78,7 @@ describe('BudgetRequestsService', () => {
       providers: [
         BudgetRequestsService,
         { provide: PrismaService, useValue: prisma },
-        { provide: NotificationsService, useValue: { notifyNuevoPresupuesto: jest.fn() } },
+        { provide: NotificationsService, useValue: { notifyNuevoPresupuesto: jest.fn(), create: jest.fn() } },
       ],
     }).compile();
 
@@ -293,6 +293,69 @@ describe('BudgetRequestsService', () => {
       prisma.budgetRequest.findUnique.mockResolvedValue({ ...request, estado: 'RECHAZADO' });
 
       await expect(service.convertToRepair('req-1', userEmp1)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('confirmPublic', () => {
+    const pricedRequest = { ...request, precio_ajustado: '400000' };
+
+    it('should mark the request as CONFIRMADO when there is a cost', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue(pricedRequest);
+      prisma.budgetRequest.update.mockResolvedValue({ ...pricedRequest, estado: 'CONFIRMADO' });
+      prisma.user.findMany.mockResolvedValue([]);
+
+      const result = await service.confirmPublic('REQ-20260816-0001');
+
+      expect(prisma.budgetRequest.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'req-1' },
+          data: expect.objectContaining({ estado: 'CONFIRMADO' }),
+        }),
+      );
+      expect(result.estado).toBe('CONFIRMADO');
+    });
+
+    it('should throw BadRequestException when there is no cost yet', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue({ ...request, precio_ofertado: null, precio_ajustado: null });
+
+      await expect(service.confirmPublic('REQ-20260816-0001')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when already CONVERTIDO', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue({ ...pricedRequest, estado: 'CONVERTIDO' });
+
+      await expect(service.confirmPublic('REQ-20260816-0001')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException when it does not exist', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue(null);
+
+      await expect(service.confirmPublic('REQ-9999-0001')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('cancelPublic', () => {
+    it('should delete the request and return a message', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue(request);
+      prisma.budgetRequest.delete.mockResolvedValue(request);
+      prisma.user.findMany.mockResolvedValue([]);
+
+      const result = await service.cancelPublic('REQ-20260816-0001');
+
+      expect(prisma.budgetRequest.delete).toHaveBeenCalledWith({ where: { id: 'req-1' } });
+      expect(result).toEqual({ message: 'Reserva cancelada correctamente' });
+    });
+
+    it('should throw BadRequestException when already CONVERTIDO', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue({ ...request, estado: 'CONVERTIDO' });
+
+      await expect(service.cancelPublic('REQ-20260816-0001')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw NotFoundException when it does not exist', async () => {
+      prisma.budgetRequest.findUnique.mockResolvedValue(null);
+
+      await expect(service.cancelPublic('REQ-9999-0001')).rejects.toThrow(NotFoundException);
     });
   });
 

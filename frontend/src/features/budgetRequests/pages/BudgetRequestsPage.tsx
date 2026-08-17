@@ -165,6 +165,37 @@ function DetailDialog({
     }
   };
 
+  const handleSendCost = async () => {
+    if (!request) return;
+    const precio = toNumber(precioAjustado) ?? toNumber(request.precio_ofertado);
+    if (precio == null) {
+      toast({ title: 'Falta el precio', description: 'Ingresá el precio final antes de confirmarlo y enviarlo.', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const updated = await budgetRequestsApi.updateRequest(request.id, {
+        precio_ajustado: toNumber(precioAjustado),
+        notas_admin: notas.trim(),
+      });
+      const msg = [
+        `Hola ${updated.nombre ?? ''}, te confirmamos el costo de tu reparación.`,
+        ``,
+        `• Orden: ${updated.numero}`,
+        `• Equipo: ${[updated.categoria, updated.dispositivo, updated.modelo].filter(Boolean).join(' — ')}`,
+        `• Costo de la reparación: ${formatARS(precio)}`,
+        ``,
+        `Confirmá desde el seguimiento con tu número de orden: ahí vas a ver el precio y podés elegir la forma de pago.`,
+      ].join('\n');
+      window.open(`https://wa.me/${request.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+      onSaved(updated);
+    } catch (err: unknown) {
+      toast({ title: 'Error', description: errMsg(err), variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const planLabel =
     request?.plan_pago === 'half' ? '50% + 50%' : request?.plan_pago === 'full' ? 'Pago completo' : null;
   const isConvertido = request?.estado === 'CONVERTIDO';
@@ -187,6 +218,7 @@ function DetailDialog({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
               <DetailRow label="Cliente" value={request.nombre} />
               <DetailRow label="WhatsApp" value={request.whatsapp} />
+              {request.dni && <DetailRow label="DNI / CUIL" value={request.dni} />}
               {request.email && <DetailRow label="Email" value={request.email} />}
               <DetailRow label="Dispositivo" value={`${request.categoria ? `${request.categoria} — ` : ''}${request.dispositivo}`} />
               {request.modelo && <DetailRow label="Modelo" value={request.modelo} />}
@@ -245,8 +277,14 @@ function DetailDialog({
             </div>
 
             <DialogFooter className="flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => window.open(`https://wa.me/${request.whatsapp.replace(/\D/g, '')}`, '_blank')}>
-                <MessageCircle size={14} className="mr-2" /> WhatsApp
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSendCost}
+                disabled={saving}
+              >
+                {saving ? <Loader2 size={14} className="mr-2 animate-spin" /> : <MessageCircle size={14} className="mr-2" />}
+                Confirmar precio y enviar por WhatsApp
               </Button>
               {!isConvertido && (
                 <>
@@ -321,7 +359,7 @@ export default function BudgetRequestsPage() {
     const q = search.trim().toLowerCase();
     if (!q) return requests;
     return requests.filter((r) =>
-      [r.nombre, r.whatsapp, r.numero, r.dispositivo, r.modelo ?? '', r.categoria ?? ''].join(' ').toLowerCase().includes(q),
+      [r.nombre, r.whatsapp, r.dni ?? '', r.numero, r.dispositivo, r.modelo ?? '', r.categoria ?? ''].join(' ').toLowerCase().includes(q),
     );
   }, [requests, search]);
 

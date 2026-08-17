@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Loader2, Smartphone, MessageCircle, AlertTriangle, CheckCircle2, CalendarClock, ShieldCheck } from 'lucide-react'
+import { Search, Loader2, Smartphone, MessageCircle, AlertTriangle, CheckCircle2, CalendarClock, ShieldCheck, BadgeCheck, Trash2, Wallet, RefreshCw, QrCode, Landmark, Banknote, Percent } from 'lucide-react'
 import { API_BASE } from '@/services/api'
 import { useTenantPage } from './tenantConfig'
 import { resolveIcon } from './icons'
+import {
+  fetchPublicBudgetRequest,
+  confirmPublicBudgetRequest,
+  cancelPublicBudgetRequest,
+  payPublicBudgetRequest,
+  type PublicBudgetRequest,
+} from './services'
 
 interface RepairData {
   numero_reparacion: string
@@ -102,19 +109,49 @@ export default function TrackingPage() {
   const [isLoading, setIsLoading] = useState(Boolean(orderParam))
   const [error, setError] = useState('')
   const [repair, setRepair] = useState<RepairData | null>(null)
+  const [reservation, setReservation] = useState<PublicBudgetRequest | null>(null)
+  const [actionBusy, setActionBusy] = useState(false)
+
+  const [payPlan, setPayPlan] = useState<'half' | 'full' | null>(null)
+  const [señaMethod, setSeñaMethod] = useState<'qr' | 'transferencia' | null>(null)
+  const [comprobante, setComprobante] = useState('')
+  const [restoMethod, setRestoMethod] = useState<'qr' | 'transferencia' | 'efectivo' | null>(null)
+
+  const lookupOrder = async (term: string) => {
+    // Primero intentamos una reparación (REP-…); si no existe, probamos una reserva de presupuesto (REQ-…).
+    let foundRepair: RepairData | null = null
+    try {
+      const res = await axios.get(`${API_BASE}/repairs/public/${encodeURIComponent(term)}`)
+      const payload = res.data?.data
+      if (payload) foundRepair = payload
+    } catch {
+      foundRepair = null
+    }
+    if (foundRepair) {
+      setRepair(foundRepair)
+      setReservation(null)
+      return
+    }
+    const foundReservation = await fetchPublicBudgetRequest(term)
+    if (foundReservation) {
+      setRepair(null)
+      setReservation(foundReservation)
+      return
+    }
+    setRepair(null)
+    setReservation(null)
+    throw new Error('empty')
+  }
 
   useEffect(() => {
     if (!orderParam) return
     let cancelled = false
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/repairs/public/${encodeURIComponent(orderParam)}`)
-        const payload = res.data?.data
+        await lookupOrder(orderParam)
         if (cancelled) return
-        if (!payload) throw new Error('empty')
-        setRepair(payload)
       } catch {
-        if (!cancelled) setError('No encontramos ninguna reparación con ese número de orden. Verificá el número e intentá de nuevo.')
+        if (!cancelled) setError('No encontramos ninguna orden con ese número. Verificá el número e intentá de nuevo.')
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -134,15 +171,86 @@ export default function TrackingPage() {
     setIsLoading(true)
     setError('')
     setRepair(null)
+    setReservation(null)
     try {
-      const res = await axios.get(`${API_BASE}/repairs/public/${encodeURIComponent(term)}`)
-      const payload = res.data?.data
-      if (!payload) throw new Error('empty')
-      setRepair(payload)
+      await lookupOrder(term)
     } catch {
-      setError('No encontramos ninguna reparación con ese número de orden. Verificá el número e intentá de nuevo.')
+      setError('No encontramos ninguna orden con ese número. Verificá el número e intentá de nuevo.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleConfirmReservation = async () => {
+    if (!reservation) return
+    setActionBusy(true)
+    setError('')
+    const ok = await confirmPublicBudgetRequest(reservation.numero)
+    setActionBusy(false)
+    if (ok) {
+      setReservation({ ...reservation, estado: 'CONFIRMADO' })
+    } else {
+      setError('No pudimos confirmar la reserva. Probá de nuevo o escribinos por WhatsApp.')
+    }
+  }
+
+  const handleCancelReservation = async () => {
+    if (!reservation) return
+    const ok = window.confirm('¿Seguro que querés eliminar esta reserva? El taller dejará de trabajar en tu cotización.')
+    if (!ok) return
+    setActionBusy(true)
+    setError('')
+    const removed = await cancelPublicBudgetRequest(reservation.numero)
+    setActionBusy(false)
+    if (removed) {
+      setReservation(null)
+      setRepair(null)
+      setError('Tu reserva fue eliminada. Si cambiás de opinión, volvé a generar tu presupuesto.')
+    } else {
+      setError('No pudimos eliminar la reserva. Probá de nuevo o escribinos por WhatsApp.')
+    }
+  }
+
+  const handlePay = async () => {
+    if (!reservation) return
+    if (!payPlan) {
+      setError('Elegí si vas a pagar el 50% o el total.')
+      return
+    }
+    if (!señaMethod) {
+      setError('Elegí cómo vas a abonar la seña: por QR o por transferencia.')
+      return
+    }
+    if (!comprobante.trim()) {
+      setError('Ingresá el número de comprobante de la seña.')
+      return
+    }
+    if (payPlan === 'half' && !restoMethod) {
+      setError('Elegí cómo vas a abonar el resto.')
+      return
+    }
+    setActionBusy(true)
+    setError('')
+    try {
+      const updated = await payPublicBudgetRequest(reservation.numero, {
+        plan_pago: payPlan,
+        sena_metodo: señaMethod,
+        comprobante: comprobante.trim(),
+        resto_metodo: payPlan === 'half' ? (restoMethod ?? undefined) : undefined,
+      })
+      if (updated) {
+        setReservation(updated)
+        setPayPlan(null)
+        setSeñaMethod(null)
+        setComprobante('')
+        setRestoMethod(null)
+      } else {
+        setError('No pudimos registrar el pago. Probá de nuevo o escribinos por WhatsApp.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No pudimos registrar el pago. Probá de nuevo.')
+    } finally {
+      setActionBusy(false)
     }
   }
 
@@ -157,6 +265,12 @@ export default function TrackingPage() {
   const waLink = contact.whatsapp
     ? `${contact.whatsapp}?text=${encodeURIComponent(`Hola, quiero consultar el estado de mi orden ${repair?.numero_reparacion ?? ''}.`)}`
     : ''
+
+  const reservationPrice =
+    reservation != null ? Number(reservation.precio_ajustado ?? reservation.precio_ofertado) : null
+  const reservationPriceDefined = reservationPrice != null && !Number.isNaN(reservationPrice)
+  const hasPaymentData = !!reservation?.plan_pago
+  const showPaymentStep = reservation?.estado === 'PENDIENTE' && reservationPriceDefined && !hasPaymentData
 
   const details = repair
     ? [
@@ -253,7 +367,305 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Resultado */}
+        {/* Reserva de presupuesto (REQ-…): el admin aún no confirmó el costo */}
+        {reservation && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="space-y-8"
+          >
+            <div className={`border rounded-2xl p-8 md:p-10 ${reservation.estado === 'CONFIRMADO' ? 'border-emerald-500/30' : 'border-border'}`}>
+              <div className="flex items-center gap-5">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${reservation.estado === 'CONFIRMADO' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
+                  {reservation.estado === 'CONFIRMADO' ? <BadgeCheck size={26} /> : <CalendarClock size={26} />}
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Reserva de presupuesto · {reservation.numero}</p>
+                  <h3 className="text-2xl md:text-3xl font-black text-foreground">
+                    {reservation.estado === 'CONFIRMADO' ? 'Reparación confirmada' : 'Esperando la cotización del taller'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {reservation.estado === 'CONFIRMADO'
+                      ? 'El taller ya tiene tu OK y avanzará con la reparación.'
+                      : showPaymentStep
+                      ? 'El taller te confirmó el costo. Registrá tu forma de pago para confirmar tu reparación.'
+                      : 'Recibimos tu solicitud. El taller te envía el costo por WhatsApp para que confirmes.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-8 md:p-10">
+              <h3 className="text-lg font-black uppercase tracking-widest mb-8">Detalles de la reserva</h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Equipo</p>
+                  <p className="text-sm font-semibold text-foreground">{reservation.dispositivo || reservation.modelo || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Problema</p>
+                  <p className="text-sm font-semibold text-foreground">{reservation.problema || reservation.descripcion || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Fecha</p>
+                  <p className="text-sm font-semibold text-foreground">{formatDate(reservation.created_at)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Estado</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {reservation.estado === 'PENDIENTE' ? 'Pendiente de cotización' : reservation.estado === 'CONFIRMADO' ? 'Confirmada' : reservation.estado === 'CONVERTIDO' ? 'En taller' : reservation.estado === 'RECHAZADO' ? 'Rechazada' : reservation.estado}
+                  </p>
+                </div>
+                {reservation.plan_pago && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Plan de pago</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {reservation.plan_pago === 'half' ? '50% + 50%' : 'Pago completo'}
+                    </p>
+                  </div>
+                )}
+                {(reservation.sena_monto != null || reservation.sena_metodo) && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Seña</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {`${formatCurrency(Number(reservation.sena_monto ?? 0))}${reservation.sena_metodo ? ` (${reservation.sena_metodo === 'qr' ? 'QR' : 'Transferencia'})` : ''}`}
+                    </p>
+                  </div>
+                )}
+                {reservation.resto_metodo && (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Resto</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {reservation.resto_metodo === 'qr' ? 'QR' : reservation.resto_metodo === 'transferencia' ? 'Transferencia' : 'Efectivo en el local'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {(reservation.precio_ajustado != null || reservation.precio_ofertado != null) && reservation.estado !== 'CONVERTIDO' && (
+                <div className="mt-8 pt-6 border-t border-border flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Wallet size={22} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                      {showPaymentStep ? 'Costo confirmado por el taller' : 'Costo de la reparación'}
+                    </p>
+                    <p className="text-2xl font-black text-foreground tabular-nums">
+                      {formatCurrency(Number(reservation.precio_ajustado ?? reservation.precio_ofertado))}
+                    </p>
+                    {showPaymentStep && payPlan && reservationPrice != null && (
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">
+                        {payPlan === 'half'
+                          ? `Seña (50%): ${formatCurrency(Math.round(reservationPrice * 0.5))} · Resto (50%): ${formatCurrency(Math.round(reservationPrice * 0.5))}`
+                          : `Seña (100%): ${formatCurrency(reservationPrice)}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {reservation.estado === 'CONVERTIDO' && reservation.repair?.numero_reparacion && (
+                <div className="mt-8 pt-6 border-t border-border flex items-center gap-3 text-sm text-muted-foreground">
+                  <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
+                  <span>Tu equipo ya ingresó al taller con la orden <strong className="text-foreground">{reservation.repair.numero_reparacion}</strong>. Podés seguirlo con ese número.</span>
+                </div>
+              )}
+
+              {showPaymentStep ? (
+                <div className="mt-10 pt-8 border-t border-border space-y-8">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-1">PLAN DE PAGO</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setPayPlan('half')}
+                        aria-pressed={payPlan === 'half'}
+                        className={`flex items-center gap-3 p-5 border rounded-xl text-left transition-colors ${
+                          payPlan === 'half'
+                            ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                            : 'border-border bg-card text-foreground hover:border-primary'
+                        }`}
+                      >
+                        <Percent size={20} className="shrink-0" />
+                        <span className="text-sm font-black uppercase tracking-widest">PAGO 50% + 50%</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPayPlan('full')}
+                        aria-pressed={payPlan === 'full'}
+                        className={`flex items-center gap-3 p-5 border rounded-xl text-left transition-colors ${
+                          payPlan === 'full'
+                            ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                            : 'border-border bg-card text-foreground hover:border-primary'
+                        }`}
+                      >
+                        <CheckCircle2 size={20} className="shrink-0" />
+                        <span className="text-sm font-black uppercase tracking-widest">PAGO COMPLETO</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {payPlan && (
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-1">
+                        SEÑA (OBLIGATORIA) {payPlan === 'half' ? '· 50%' : '· 100%'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        <button
+                          type="button"
+                          onClick={() => setSeñaMethod('qr')}
+                          aria-pressed={señaMethod === 'qr'}
+                          className={`flex items-center gap-3 p-5 border rounded-xl text-left transition-colors ${
+                            señaMethod === 'qr'
+                              ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                              : 'border-border bg-card text-foreground hover:border-primary'
+                          }`}
+                        >
+                          <QrCode size={20} className="shrink-0" />
+                          <span className="text-sm font-black uppercase tracking-widest">QR</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSeñaMethod('transferencia')}
+                          aria-pressed={señaMethod === 'transferencia'}
+                          className={`flex items-center gap-3 p-5 border rounded-xl text-left transition-colors ${
+                            señaMethod === 'transferencia'
+                              ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                              : 'border-border bg-card text-foreground hover:border-primary'
+                          }`}
+                        >
+                          <Landmark size={20} className="shrink-0" />
+                          <span className="text-sm font-black uppercase tracking-widest">TRANSFERENCIA</span>
+                        </button>
+                      </div>
+
+                      {señaMethod && (
+                        <div className="mt-4 flex flex-col gap-2 max-w-md">
+                          <label htmlFor="track-comprobante" className="text-xs font-bold text-muted-foreground tracking-widest">
+                            N° DE COMPROBANTE *
+                          </label>
+                          <input
+                            id="track-comprobante"
+                            type="text"
+                            placeholder="EJ: OPERACIÓN 000000123456"
+                            value={comprobante}
+                            onChange={(e) => setComprobante(e.target.value)}
+                            className="bg-transparent border-b border-input py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary transition-colors"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {payPlan === 'half' && (
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-1">RESTO (50%)</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                        {([
+                          ['qr', QrCode, 'QR'],
+                          ['transferencia', Landmark, 'TRANSFERENCIA'],
+                          ['efectivo', Banknote, 'EFECTIVO'],
+                        ] as const).map(([key, Icon, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setRestoMethod(key)}
+                            aria-pressed={restoMethod === key}
+                            className={`flex items-center gap-3 p-4 border rounded-xl text-left transition-colors ${
+                              restoMethod === key
+                                ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                                : 'border-border bg-card text-foreground hover:border-primary'
+                            }`}
+                          >
+                            <Icon size={18} className="shrink-0" />
+                            <span className="text-xs font-black uppercase tracking-widest">{label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border">
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <ShieldCheck size={16} /> El taller ya te confirmó el costo. Registrá tu forma de pago para confirmar.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                      <button
+                        onClick={handleCancelReservation}
+                        disabled={actionBusy}
+                        className="flex items-center justify-center gap-2 px-6 py-3 border border-destructive/50 text-destructive text-xs font-black uppercase tracking-widest hover:bg-destructive/5 disabled:opacity-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={15} /> Eliminar reserva
+                      </button>
+                      <button
+                        onClick={handlePay}
+                        disabled={actionBusy}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground text-xs font-black uppercase tracking-widest hover:bg-[var(--tc-secondary-hover)] disabled:opacity-50 rounded-lg transition-colors"
+                      >
+                        {actionBusy ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
+                        Confirmar y registrar pago
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (reservation.estado === 'PENDIENTE' || reservation.estado === 'CONFIRMADO') && (
+                <div className="mt-10 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ShieldCheck size={16} />
+                    {reservation.estado === 'CONFIRMADO'
+                      ? 'Ya confirmaste el costo de tu reparación. El taller va a avanzar con el trabajo.'
+                      : reservationPriceDefined
+                      ? 'El taller te confirmó el costo. Tocá «Confirmar reparación» para avanzar.'
+                      : 'Recibimos tu solicitud. El taller te confirma el costo por WhatsApp.'}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    {reservation.estado === 'PENDIENTE' && (
+                      <button
+                        onClick={handleCancelReservation}
+                        disabled={actionBusy}
+                        className="flex items-center justify-center gap-2 px-6 py-3 border border-destructive/50 text-destructive text-xs font-black uppercase tracking-widest hover:bg-destructive/5 disabled:opacity-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={15} /> Eliminar reserva
+                      </button>
+                    )}
+                    {reservation.estado === 'PENDIENTE' && reservationPriceDefined && (
+                      <button
+                        onClick={handleConfirmReservation}
+                        disabled={actionBusy}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground text-xs font-black uppercase tracking-widest hover:bg-[var(--tc-secondary-hover)] disabled:opacity-50 rounded-lg transition-colors"
+                      >
+                        {actionBusy ? <Loader2 size={15} className="animate-spin" /> : <BadgeCheck size={15} />}
+                        Confirmar reparación
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {reservation.estado === 'RECHAZADO' && (
+                <div className="mt-10 pt-8 border-t border-border flex items-center gap-3 text-sm text-muted-foreground">
+                  <AlertTriangle size={18} className="shrink-0 text-amber-500" />
+                  <span>El taller no pudo cotizar esta reparación. Escribinos por WhatsApp para ver alternativas.</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-5 py-4 text-sm text-muted-foreground">
+              <RefreshCw size={18} className="shrink-0 text-secondary" />
+              <span>
+                {showPaymentStep
+                  ? 'El taller te confirmó el costo. Elegí tu plan de pago y registrá la seña para confirmar.'
+                  : reservation.estado === 'PENDIENTE' && !reservationPriceDefined
+                  ? 'El taller te confirma el costo por WhatsApp. Cuando lo tenga listo, vas a poder verlo acá y pagar online.'
+                  : 'Si el taller te confirmó el costo por WhatsApp, tocá «Confirmar reparación» para avanzar.'}
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Resultado reparación */}
         {repair && info && (
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -362,7 +774,7 @@ export default function TrackingPage() {
         )}
 
         {/* Hint cuando no hay búsqueda todavía */}
-        {!repair && !isLoading && !error && (
+        {!repair && !reservation && !isLoading && !error && (
           <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-5 py-4 text-sm text-muted-foreground max-w-2xl">
             <ShieldCheck size={18} className="shrink-0 text-secondary" />
             <span>El número de orden figura en el comprobante que recibiste al dejar tu equipo.</span>

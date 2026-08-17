@@ -19,12 +19,12 @@ import {
   Percent,
   ChevronLeft,
   ChevronRight,
+  FileQuestion,
 } from 'lucide-react'
 import { useTenantPage } from './tenantConfig'
 import { parseSchedule, buildBusinessSlots, businessDaysLabel, hoursLabel } from './schedule'
 import { savePendingQuote, formatARS, type TenantQuoteSelection } from './tenant'
 import {
-  DEMO_REPAIR_COSTS,
   fetchRepairCosts,
   resolveTenantSlug,
   submitBudgetRequest,
@@ -132,9 +132,11 @@ export default function PresupuestoFlow() {
   const checkout = tenant.checkout
 
   const [query, setQuery] = useState('')
-  const [repairCosts, setRepairCosts] = useState<TenantRepairCost[]>(DEMO_REPAIR_COSTS)
+  const [repairCosts, setRepairCosts] = useState<TenantRepairCost[]>([])
   const [selected, setSelected] = useState<TenantRepairCost | null>(null)
-  const [form, setForm] = useState({ name: '', whatsapp: '', email: '', modelo: '', mensaje: '' })
+  const [equipoMarca, setEquipoMarca] = useState<string | null>(null)
+  const [customRequest, setCustomRequest] = useState(false)
+  const [form, setForm] = useState({ name: '', whatsapp: '', email: '', dni: '', modelo: '', mensaje: '' })
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [today] = useState(() => startOfDay(new Date()))
@@ -156,6 +158,7 @@ export default function PresupuestoFlow() {
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
   const [error, setError] = useState('')
   const [orderNumber, setOrderNumber] = useState('')
   const ticketRef = useRef<HTMLDivElement>(null)
@@ -181,9 +184,13 @@ export default function PresupuestoFlow() {
     if (tokens.length === 0) return []
     return repairCosts
       .map(c => {
-        const hay = normalize([c.nombre, c.categoria, c.descripcion ?? '', c.modelo ?? '', c.tiempo_estimado ?? ''].join(' '))
+        const marcas = (c.marcas ?? []).join(' ')
+        const modelos = (c.modelos ?? []).map(m => `${m.nombre} ${m.marca}`).join(' ')
+        const hay = normalize(
+          [c.nombre, c.categoria, c.descripcion ?? '', c.modelo ?? '', c.tiempo_estimado ?? '', marcas, modelos].join(' ')
+        )
         const score = tokens.filter(t => hay.includes(t)).length
-        const isGeneric = !c.modelo?.trim()
+        const isGeneric = (c.marcas?.length ?? 0) === 0 && (c.modelos?.length ?? 0) === 0 && !c.modelo?.trim()
         return { c, score, isGeneric, matches: score > 0 || isGeneric }
       })
       .filter(m => m.matches)
@@ -193,10 +200,14 @@ export default function PresupuestoFlow() {
 
   const searchActive = tokens.length > 0
 
-  const stepIndex = submitted ? 6 : selected ? 2 : searchActive ? 1 : 0
+  const hasQuote = !!selected || customRequest
+
+  const stepIndex = submitted ? 6 : hasQuote ? 2 : searchActive ? 1 : 0
 
   const selectRepair = (c: TenantRepairCost) => {
     setSelected(c)
+    setEquipoMarca(null)
+    setCustomRequest(false)
     setSubmitted(false)
     setError('')
     setForm(p => ({ ...p, modelo: c.modelo ?? '' }))
@@ -205,9 +216,50 @@ export default function PresupuestoFlow() {
       categoria: c.categoria,
       tipo_equipo: c.tipo_equipo,
       modelo: c.modelo,
+      marcas: c.marcas,
+      modelos: c.modelos,
       tiempo_estimado: c.tiempo_estimado,
       descripcion: c.descripcion,
       precio: c.precio,
+    })
+    setTimeout(() => {
+      const el = document.getElementById('paso-datos')
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+  }
+
+  const selectedMarcas = selected?.marcas ?? []
+  const selectedModelos = selected?.modelos ?? []
+  const hasBrandChooser = !!selected && selectedMarcas.length > 0
+  const availableModels = equipoMarca ? selectedModelos.filter(m => m.marca === equipoMarca) : []
+
+  const chooseBrand = (brand: string) => {
+    setEquipoMarca(brand)
+    setForm(p => ({ ...p, modelo: brand }))
+  }
+
+  const chooseModel = (marca: string, nombre: string) => {
+    setEquipoMarca(marca)
+    setForm(p => ({ ...p, modelo: `${marca} ${nombre}` }))
+  }
+
+  /** El modelo no está en las sugerencias: el cliente ingresa modelo + falla SIN precio y deja la reserva para que el admin cotice. */
+  const selectCustomFromQuery = () => {
+    const modelo = (form.modelo.trim() || query.trim() || 'Sin especificar').trim()
+    setCustomRequest(true)
+    setSelected(null)
+    setSubmitted(false)
+    setError('')
+    setForm(p => ({ ...p, modelo }))
+    savePendingQuote({
+      nombre: 'Reparación a cotizar',
+      categoria: 'Sin precio de referencia',
+      tipo_equipo: null,
+      modelo,
+      tiempo_estimado: null,
+      descripcion: form.mensaje.trim() || null,
+      precio: null,
+      priceLabel: 'A CONFIRMAR',
     })
     setTimeout(() => {
       const el = document.getElementById('paso-datos')
@@ -234,6 +286,7 @@ export default function PresupuestoFlow() {
       `• Modelo: ${form.modelo || '—'}`,
       ``,
       `• Nombre: ${form.name}`,
+      `• DNI: ${form.dni}`,
       `• WhatsApp: ${form.whatsapp}`,
       ...(form.email ? [`• Email: ${form.email}`] : []),
       ...(form.mensaje ? [`\n${form.mensaje}`] : []),
@@ -264,37 +317,51 @@ export default function PresupuestoFlow() {
         nombre: selected.nombre,
         categoria: selected.categoria,
         modelo: selected.modelo,
+        marcas: selected.marcas,
+        modelos: selected.modelos,
         tiempo_estimado: selected.tiempo_estimado,
         descripcion: selected.descripcion,
         precio: selected.precio,
+      }
+    : customRequest
+    ? {
+        nombre: 'Reparación a cotizar',
+        categoria: 'Sin precio de referencia',
+        modelo: form.modelo.trim() || query.trim() || null,
+        tiempo_estimado: null,
+        descripcion: form.mensaje.trim() || null,
+        precio: null,
+        priceLabel: 'A CONFIRMAR',
       }
     : null
 
   const handleSubmit = async () => {
     if (!quote) return
-    if (!form.name.trim() || !form.whatsapp.trim()) {
-      setError('Completá tu nombre y tu WhatsApp para enviar la solicitud.')
+    if (!form.name.trim() || !form.whatsapp.trim() || !form.dni.trim()) {
+      setError('Completá tu nombre, tu DNI y tu WhatsApp para enviar la solicitud.')
       return
     }
-    if (!payPlan) {
-      setError('Elegí si vas a pagar el 50% o el total.')
-      return
-    }
-    if (!señaMethod) {
-      setError('Elegí cómo vas a abonar la seña: por QR o por transferencia.')
-      return
-    }
-    if (!comprobante.trim()) {
-      setError('Ingresá el número de comprobante de la seña.')
-      return
-    }
-    if (payPlan === 'half' && !restoMethod) {
-      setError('Elegí cómo vas a abonar el resto.')
-      return
-    }
-    if (deliveryMethod === 'retirar' && !deliveryAddress.trim()) {
-      setError('Ingresá la dirección de retiro del equipo.')
-      return
+    if (!customRequest) {
+      if (!payPlan) {
+        setError('Elegí si vas a pagar el 50% o el total.')
+        return
+      }
+      if (!señaMethod) {
+        setError('Elegí cómo vas a abonar la seña: por QR o por transferencia.')
+        return
+      }
+      if (!comprobante.trim()) {
+        setError('Ingresá el número de comprobante de la seña.')
+        return
+      }
+      if (payPlan === 'half' && !restoMethod) {
+        setError('Elegí cómo vas a abonar el resto.')
+        return
+      }
+      if (deliveryMethod === 'retirar' && !deliveryAddress.trim()) {
+        setError('Ingresá la dirección de retiro del equipo.')
+        return
+      }
     }
     setError('')
     setLoading(true)
@@ -314,33 +381,40 @@ export default function PresupuestoFlow() {
           nombre: form.name.trim(),
           whatsapp: form.whatsapp.trim(),
           email: form.email.trim() || undefined,
-          categoria: quote.categoria ?? undefined,
+          dni: form.dni.trim() || undefined,
+          categoria: customRequest ? 'Sin precio de referencia' : quote.categoria ?? undefined,
           dispositivo: form.modelo.trim() || quote.nombre,
           modelo: form.modelo.trim() || undefined,
           problema: form.mensaje.trim() || undefined,
-          descripcion: quote.descripcion ?? undefined,
-          tiempo_estimado: quote.tiempo_estimado ?? undefined,
-          precio_ofertado: precio ?? undefined,
-          plan_pago: payPlan ?? undefined,
-          sena_monto: seña ?? undefined,
-          sena_metodo: señaMethod ?? undefined,
-          comprobante: comprobante.trim() || undefined,
-          resto_metodo: payPlan === 'half' ? (restoMethod ?? undefined) : undefined,
-          delivery_metodo: deliveryMethod ?? undefined,
-          delivery_direccion: deliveryMethod === 'retirar' ? deliveryAddress.trim() || undefined : undefined,
-          delivery_costo: deliveryMethod === 'retirar' ? checkout?.deliveryCost ?? undefined : undefined,
-          turno_fecha: selectedDay != null ? selectedDay.toISOString().slice(0, 10) : undefined,
-          turno_horario: selectedSlot ?? undefined,
+          descripcion: customRequest ? undefined : quote.descripcion ?? undefined,
+          tiempo_estimado: customRequest ? undefined : quote.tiempo_estimado ?? undefined,
+          precio_ofertado: customRequest ? undefined : precio ?? undefined,
+          plan_pago: customRequest ? undefined : payPlan ?? undefined,
+          sena_monto: customRequest ? undefined : seña ?? undefined,
+          sena_metodo: customRequest ? undefined : señaMethod ?? undefined,
+          comprobante: customRequest ? undefined : comprobante.trim() || undefined,
+          resto_metodo: customRequest ? undefined : payPlan === 'half' ? (restoMethod ?? undefined) : undefined,
+          delivery_metodo: customRequest ? undefined : deliveryMethod ?? undefined,
+          delivery_direccion: customRequest ? undefined : deliveryMethod === 'retirar' ? deliveryAddress.trim() || undefined : undefined,
+          delivery_costo: customRequest ? undefined : deliveryMethod === 'retirar' ? checkout?.deliveryCost ?? undefined : undefined,
+          turno_fecha: customRequest ? undefined : selectedDay != null ? selectedDay.toISOString().slice(0, 10) : undefined,
+          turno_horario: customRequest ? undefined : selectedSlot ?? undefined,
         })
         setOrderNumber(res.numero)
-      } catch {
-        // El flujo publico sigue funcionando via WhatsApp aunque falle el guardado.
+        setSaveFailed(false)
+      } catch (err) {
+        // El flujo público sigue funcionando via WhatsApp aunque falle el guardado,
+        // pero avisamos para que el fallo no pase desapercibido.
+        console.warn('No se pudo guardar la reserva en el backend:', err)
+        setSaveFailed(true)
       }
     }
   }
 
   const reset = () => {
     setSelected(null)
+    setEquipoMarca(null)
+    setCustomRequest(false)
     setSubmitted(false)
     setError('')
     setQuery('')
@@ -353,7 +427,8 @@ export default function PresupuestoFlow() {
     setDeliveryMethod(null)
     setDeliveryAddress('')
     setOrderNumber('')
-    setForm({ name: '', whatsapp: '', email: '', modelo: '', mensaje: '' })
+    setSaveFailed(false)
+    setForm({ name: '', whatsapp: '', email: '', dni: '', modelo: '', mensaje: '' })
   }
 
   const inputCls =
@@ -436,20 +511,7 @@ export default function PresupuestoFlow() {
                 />
                 <Search size={26} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary" />
               </div>
-              {valuation.suggestions.length > 0 && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs font-bold text-muted-foreground opacity-60 uppercase tracking-widest">SUGERENCIAS:</span>
-                  {valuation.suggestions.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setQuery(s)}
-                      className="text-xs font-bold text-foreground hover:text-primary transition-colors uppercase tracking-wider border border-border px-3 py-1.5 rounded-md"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
+            
             </section>
 
             {/* 02 REPARACIÓN */}
@@ -472,12 +534,79 @@ export default function PresupuestoFlow() {
 
                 {matches.length === 0 ? (
                   <div className="bg-card border border-border rounded-xl p-8 md:p-10">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Probá con el modelo de tu equipo (ej: “iPhone 10”, “Samsung A54”) o con el nombre de la reparación
-                      (ej: “cambio de pantalla”, “pin de carga”).
-                    </p>
+                    {!customRequest ? (
+                      <>
+                        <div className="flex items-start gap-4 mb-6">
+                          <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <FileQuestion size={22} />
+                          </div>
+                          <div>
+                            <p className="text-base font-black text-foreground uppercase tracking-widest mb-1">
+                              No encontramos <span className="text-secondary">“{query.trim()}”</span>
+                            </p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              Probá con el modelo de tu equipo (ej: «iPhone 10», «Samsung A54») o… si tu equipo no aparece,
+                              podés reservar tu lugar y un técnico te cotiza por WhatsApp.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border pt-6">
+                          <p className="text-xs font-black text-secondary uppercase tracking-widest mb-4">
+                            RESERVÁ TU DIAGNÓSTICO SIN PRECIO
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                            <div className="flex flex-col gap-2">
+                              <label htmlFor="c-modelo" className="text-xs font-bold text-muted-foreground tracking-widest">MODELO DEL EQUIPO</label>
+                              <input
+                                id="c-modelo"
+                                type="text"
+                                placeholder="EJ: iPhone 10"
+                                value={form.modelo}
+                                onChange={e => setForm(p => ({ ...p, modelo: e.target.value }))}
+                                className={inputCls}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <label htmlFor="c-falla" className="text-xs font-bold text-muted-foreground tracking-widest">¿QUÉ LE PASA AL EQUIPO?</label>
+                              <textarea
+                                id="c-falla"
+                                rows={2}
+                                placeholder="Describí la falla para agilizar el presupuesto…"
+                                value={form.mensaje}
+                                onChange={e => setForm(p => ({ ...p, mensaje: e.target.value }))}
+                                className={`${inputCls} resize-none`}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                            <p className="text-[10px] font-semibold text-muted-foreground leading-relaxed max-w-sm flex items-center gap-2">
+                              <ShieldCheck size={12} className="shrink-0 text-primary" />
+                              El precio lo confirma el taller por WhatsApp. Si cambiás de opinión, podés cancelar la reserva.
+                            </p>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={selectCustomFromQuery}
+                              className="flex items-center gap-2 bg-primary text-primary-foreground text-[11px] font-black px-8 py-4 tracking-[0.25em] uppercase hover:bg-primary-hover rounded-lg transition-colors shadow-lg shadow-primary/20"
+                            >
+                              <ArrowRight size={14} /> RESERVAR SIN PRECIO
+                            </motion.button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <CheckCircle size={18} className="shrink-0 text-primary" />
+                        <span>
+                          Vas a cotizar <strong className="text-foreground">{form.modelo}</strong> — completá tus datos abajo.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
+                  <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <AnimatePresence>
                       {matches.map((c, i) => {
@@ -510,8 +639,24 @@ export default function PresupuestoFlow() {
                               <p className="text-sm text-muted-foreground leading-relaxed mt-4">{c.descripcion}</p>
                             )}
 
-                            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-1.5">
-                              {c.modelo && (
+                            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-1.5">
+                              {(c.marcas ?? []).map(brand => (
+                                <span
+                                  key={brand}
+                                  className="px-2 py-0.5 rounded-md bg-primary/10 border border-primary/25 text-[10px] font-black uppercase tracking-wider text-primary"
+                                >
+                                  {brand}
+                                </span>
+                              ))}
+                              {(c.modelos ?? []).slice(0, 6).map(m => (
+                                <span
+                                  key={`${m.marca}-${m.nombre}`}
+                                  className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                                >
+                                  {m.nombre}
+                                </span>
+                              ))}
+                              {c.modelo && !(c.marcas?.length || c.modelos?.length) && (
                                 <span className="text-[11px] font-semibold text-foreground uppercase tracking-wide">
                                   Compatible: {c.modelo}
                                 </span>
@@ -541,12 +686,37 @@ export default function PresupuestoFlow() {
                       })}
                     </AnimatePresence>
                   </div>
+
+                  <div className="border-t border-border pt-6 mt-8">
+                    <div className="bg-card border border-border rounded-xl p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <FileQuestion size={20} className="shrink-0 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-xs font-black text-secondary uppercase tracking-widest mb-1">
+                            ¿NO ENCONTRÁS TU EQUIPO?
+                          </p>
+                          <p className="text-[13px] text-muted-foreground leading-relaxed">
+                            Si tu marca o modelo no aparece publicado, reservá tu lugar sin precio y un técnico te cotiza por WhatsApp.
+                          </p>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={selectCustomFromQuery}
+                        className="flex items-center gap-2 bg-primary text-primary-foreground text-[11px] font-black px-8 py-4 tracking-[0.25em] uppercase hover:bg-primary-hover rounded-lg transition-colors shadow-lg shadow-primary/20 whitespace-nowrap"
+                      >
+                        <FileQuestion size={14} /> RESERVAR SIN PRECIO
+                      </motion.button>
+                    </div>
+                  </div>
+                  </>
                 )}
               </motion.section>
             )}
 
             {/* 03 DATOS */}
-            {selected && !submitted && (
+            {hasQuote && !submitted && (
               <motion.section
                 id="paso-datos"
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -595,15 +765,83 @@ export default function PresupuestoFlow() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="q-modelo" className="text-xs font-bold text-muted-foreground tracking-widest">MODELO DEL EQUIPO</label>
+                    <label htmlFor="q-dni" className="text-xs font-bold text-muted-foreground tracking-widest">DNI / CUIL *</label>
                     <input
-                      id="q-modelo"
+                      id="q-dni"
                       type="text"
-                      placeholder="iPhone 15 Pro Max"
-                      value={form.modelo}
-                      onChange={e => setForm(p => ({ ...p, modelo: e.target.value }))}
+                      inputMode="numeric"
+                      placeholder="33.123.456"
+                      value={form.dni}
+                      onChange={e => setForm(p => ({ ...p, dni: e.target.value }))}
                       className={inputCls}
                     />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="q-modelo" className="text-xs font-bold text-muted-foreground tracking-widest">
+                      {hasBrandChooser ? 'MARCA Y MODELO DEL EQUIPO' : 'MODELO DEL EQUIPO'}
+                    </label>
+                    {hasBrandChooser ? (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedMarcas.map(brand => (
+                            <button
+                              key={brand}
+                              type="button"
+                              onClick={() => chooseBrand(brand)}
+                              aria-pressed={equipoMarca === brand}
+                              className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg border transition-colors ${
+                                equipoMarca === brand
+                                  ? 'border-primary bg-primary text-primary-foreground'
+                                  : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))}
+                        </div>
+                        {equipoMarca && availableModels.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {availableModels.map(m => (
+                              <button
+                                key={`${m.marca}-${m.nombre}`}
+                                type="button"
+                                onClick={() => chooseModel(m.marca, m.nombre)}
+                                aria-pressed={form.modelo === `${m.marca} ${m.nombre}`}
+                                className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg border transition-colors ${
+                                  form.modelo === `${m.marca} ${m.nombre}`
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+                                }`}
+                              >
+                                {m.nombre}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          id="q-modelo"
+                          type="text"
+                          placeholder="ej: Samsung Galaxy S22"
+                          value={form.modelo}
+                          onChange={e => setForm(p => ({ ...p, modelo: e.target.value }))}
+                          className={inputCls}
+                        />
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+                          {equipoMarca
+                            ? `RESERVÁS PARA: ${form.modelo || equipoMarca}`
+                            : 'ELEGÍ TU MARCA O ESCRIBÍ EL MODELO SI NO ESTÁ LISTADO.'}
+                        </p>
+                      </>
+                    ) : (
+                      <input
+                        id="q-modelo"
+                        type="text"
+                        placeholder="iPhone 15 Pro Max"
+                        value={form.modelo}
+                        onChange={e => setForm(p => ({ ...p, modelo: e.target.value }))}
+                        className={inputCls}
+                      />
+                    )}
                   </div>
                   <div className="flex flex-col gap-2 md:col-span-2">
                     <label htmlFor="q-mensaje" className="text-xs font-bold text-muted-foreground tracking-widest">¿QUÉ LE PASA AL EQUIPO?</label>
@@ -629,10 +867,10 @@ export default function PresupuestoFlow() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={goNext('paso-pago')}
+                      onClick={customRequest ? handleSubmit : goNext('paso-pago')}
                       className="flex items-center gap-2 bg-primary text-primary-foreground text-[11px] font-black px-10 py-5 tracking-[0.25em] uppercase hover:bg-primary-hover rounded-lg transition-colors shadow-lg shadow-primary/20"
                     >
-                      CONTINUAR <ArrowRight size={14} />
+                      {customRequest ? 'ENVIAR SOLICITUD' : 'CONTINUAR'} <ArrowRight size={14} />
                     </motion.button>
                   </div>
                 </div>
@@ -1218,7 +1456,7 @@ export default function PresupuestoFlow() {
             )}
 
             {/* 07 ENVÍO */}
-            {selected && submitted && (
+            {hasQuote && submitted && (
               <motion.section
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                 className="bg-card border border-border rounded-xl p-10 md:p-14 text-center relative overflow-hidden"
@@ -1243,6 +1481,16 @@ export default function PresupuestoFlow() {
                     <p className="text-xl md:text-2xl font-black text-primary tabular-nums tracking-tight">{orderNumber}</p>
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                       Guardalo para hacer el seguimiento de tu reparación.
+                    </p>
+                  </div>
+                )}
+                {!orderNumber && submitted && saveFailed && (
+                  <div role="alert" className="mx-auto max-w-md bg-destructive/10 border border-destructive/30 rounded-xl px-6 py-5 mb-8 text-left">
+                    <p className="text-[12px] font-black text-destructive uppercase tracking-widest mb-1">
+                      No pudimos registrar tu reserva automáticamente
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Mandanos el pedido por WhatsApp (tocá el botón de abajo) y te confirmamos la reserva a la brevedad.
                     </p>
                   </div>
                 )}
@@ -1287,7 +1535,7 @@ export default function PresupuestoFlow() {
                   <p className="text-[11px] font-black text-foreground uppercase tracking-widest">TICKET DE SERVICIO</p>
                   {quote && (
                     <span className="text-[10px] font-black text-primary uppercase tracking-widest tabular-nums">
-                      EST: {formatARS(quote.precio ?? 0)}
+                      {quote.precio != null ? `EST: ${formatARS(quote.precio)}` : 'EST: A CONFIRMAR'}
                     </span>
                   )}
                 </div>
@@ -1302,9 +1550,9 @@ export default function PresupuestoFlow() {
                       {quote.categoria && (
                         <p className="flex justify-between gap-4"><span>Categoría</span><span className="text-foreground text-right">{quote.categoria}</span></p>
                       )}
-                      {quote.modelo && (
-                        <p className="flex justify-between gap-4"><span>Modelo</span><span className="text-foreground text-right">{quote.modelo}</span></p>
-                      )}
+{form.modelo.trim() && (
+  <p className="flex justify-between gap-4"><span>Equipo</span><span className="text-foreground text-right">{form.modelo}</span></p>
+)}
                       {quote.tiempo_estimado && (
                         <p className="flex justify-between gap-4"><span>Tiempo</span><span className="text-foreground text-right">{quote.tiempo_estimado}</span></p>
                       )}

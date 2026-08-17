@@ -303,20 +303,7 @@ export default function ValuationPage() {
                 />
                 <Search size={26} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary" />
               </div>
-              {valuation.suggestions.length > 0 && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">SUGERENCIAS:</span>
-                  {valuation.suggestions.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setQuery(s)}
-                      className="text-xs font-bold text-on-surface hover:text-primary transition-colors uppercase tracking-wider border border-outline-variant px-3 py-1.5"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
+             
             </section>
 
             {/* 02 REPARACIÓN */}

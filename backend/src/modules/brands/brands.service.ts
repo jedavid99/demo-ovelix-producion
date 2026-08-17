@@ -19,6 +19,9 @@ export class BrandsService {
 
     return this.prisma.brand.findMany({
       where,
+      include: {
+        modelos: { select: { id: true, nombre: true }, orderBy: { nombre: 'asc' } },
+      },
       orderBy: { nombre: 'asc' },
     });
   }

@@ -1,5 +1,5 @@
 import api from '@/services/api';
-import type { RepairCost, RepairCostForm } from '../types/repairCosts.types';
+import type { BrandOption, RepairCost, RepairCostForm } from '../types/repairCosts.types';
 
 interface Envelope<T> {
   data: T;
@@ -15,7 +15,16 @@ const mapCost = (c: RepairCost): RepairCost => ({
   notas: c.notas ?? '',
   modelo: c.modelo ?? '',
   tipo_equipo: c.tipo_equipo ?? '',
+  marcas: Array.isArray(c.marcas) ? c.marcas : [],
+  modelos: Array.isArray(c.modelos) ? c.modelos : [],
 });
+
+/** Catálogo de marcas (con sus modelos) de la empresa, para el selector del formulario. */
+export const loadBrandCatalog = async (): Promise<BrandOption[]> => {
+  const response = await api.get('/brands');
+  const list = (response.data?.data || response.data || []) as BrandOption[];
+  return Array.isArray(list) ? list : [];
+};
 
 export const repairCostsApi = {
   getRepairCosts: async (params?: { search?: string; categoria?: string; tipo_equipo?: string }): Promise<RepairCost[]> => {

@@ -47,6 +47,7 @@ model Company {
   stockItems     StockItem[]
   users          User[]
   brands         Brand[]
+  modelos        DeviceModel[]
   paymentMethods PaymentMethod[]
   taxRates       TaxRate[]
   bankAccounts   BankAccount[]
@@ -387,6 +388,8 @@ model RepairCost {
   updated_at      DateTime @updatedAt
   empresa_id      String
   empresa         Company  @relation(fields: [empresa_id], references: [id])
+  marcas          Brand[]
+  modelos         DeviceModel[]
 
   @@index([empresa_id])
   @@index([categoria])
@@ -461,10 +464,28 @@ model Brand {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   empresa     Company  @relation(fields: [empresa_id], references: [id])
+  modelos     DeviceModel[]
+  repairCosts RepairCost[]
 
   @@unique([nombre, empresa_id])
   @@index([empresa_id])
   @@index([nombre])
+}
+
+model DeviceModel {
+  id          String      @id @default(uuid())
+  nombre      String
+  marca_id    String
+  empresa_id  String
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  marca       Brand       @relation(fields: [marca_id], references: [id], onDelete: Cascade)
+  empresa     Company     @relation(fields: [empresa_id], references: [id])
+  repairCosts RepairCost[]
+
+  @@unique([nombre, marca_id])
+  @@index([marca_id])
+  @@index([empresa_id])
 }
 
 model TenantPage {
@@ -783,6 +804,7 @@ model BudgetRequest {
   nombre             String
   whatsapp           String
   email              String?
+  dni                String?
 
   // Equipo y reparación solicitada
   categoria          String?

@@ -23,6 +23,7 @@ export default function ServicesListPage() {
   const navigate = useNavigate()
 
   const [repairCosts, setRepairCosts] = useState<TenantRepairCost[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [equipoFilter, setEquipoFilter] = useState<string>('all')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -32,6 +33,7 @@ export default function ServicesListPage() {
     fetchRepairCosts(tenant.slug ?? null).then(costs => {
       if (alive) {
         setRepairCosts(costs)
+        setLoaded(true)
         setPage(1)
       }
     })
@@ -52,7 +54,15 @@ export default function ServicesListPage() {
       if (equipoFilter !== 'all' && (c.tipo_equipo ?? '') !== equipoFilter) return false
       if (!q) return true
       const haystack = normalize(
-        [c.nombre, c.categoria, c.modelo ?? '', c.descripcion ?? '', equipmentLabel(c.tipo_equipo)].join(' ')
+        [
+          c.nombre,
+          c.categoria,
+          c.modelo ?? '',
+          c.descripcion ?? '',
+          equipmentLabel(c.tipo_equipo),
+          (c.marcas ?? []).join(' '),
+          (c.modelos ?? []).map(m => `${m.nombre} ${m.marca}`).join(' '),
+        ].join(' ')
       )
       return haystack.includes(q)
     })
@@ -76,6 +86,8 @@ export default function ServicesListPage() {
       categoria: c.categoria,
       tipo_equipo: c.tipo_equipo,
       modelo: c.modelo,
+      marcas: c.marcas,
+      modelos: c.modelos,
       tiempo_estimado: c.tiempo_estimado,
       descripcion: c.descripcion,
       precio: c.precio,
@@ -196,8 +208,14 @@ export default function ServicesListPage() {
 
       {/* ── Catálogo ───────────────────────────── */}
       <section className="pb-16 max-w-6xl mx-auto px-5 md:px-8">
-        {repairCosts.length === 0 && (
+        {!loaded && repairCosts.length === 0 && (
           <p className="text-sm text-muted-foreground py-16 text-center">Cargando el tarifario…</p>
+        )}
+
+        {loaded && repairCosts.length === 0 && (
+          <p className="text-sm text-muted-foreground py-16 text-center">
+            Todavía no tenemos servicios publicados. Escribinos por WhatsApp y te pasamos el presupuesto.
+          </p>
         )}
 
         {repairCosts.length > 0 && filtered.length === 0 && (
@@ -248,8 +266,30 @@ export default function ServicesListPage() {
                     )}
                   </div>
 
-                  {c.modelo && (
-                    <p className="text-[11px] font-semibold text-muted-foreground tracking-wide mb-4">{c.modelo}</p>
+                  {(c.modelo || (c.marcas?.length ?? 0) > 0 || (c.modelos?.length ?? 0) > 0) && (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                      {(c.marcas ?? []).map(brand => (
+                        <span
+                          key={brand}
+                          className="px-2 py-0.5 rounded-md bg-primary/10 border border-primary/25 text-[10px] font-black uppercase tracking-wider text-primary"
+                        >
+                          {brand}
+                        </span>
+                      ))}
+                      {(c.modelos ?? []).map(m => (
+                        <span
+                          key={`${m.marca}-${m.nombre}`}
+                          className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                        >
+                          {m.nombre}
+                        </span>
+                      ))}
+                      {c.modelo && !(c.marcas?.length || c.modelos?.length) && (
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                          Compatible: {c.modelo}
+                        </span>
+                      )}
+                    </div>
                   )}
 
                   {c.descripcion && (

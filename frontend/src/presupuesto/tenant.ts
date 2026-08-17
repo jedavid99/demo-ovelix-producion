@@ -8,6 +8,8 @@ export interface TenantQuoteSelection {
   categoria?: string | null
   tipo_equipo?: string | null
   modelo?: string | null
+  marcas?: string[]
+  modelos?: { marca: string; nombre: string }[]
   tiempo_estimado?: string | null
   descripcion?: string | null
   precio?: number | null

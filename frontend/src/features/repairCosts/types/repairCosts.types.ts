@@ -1,3 +1,9 @@
+export interface BrandOption {
+  id: string;
+  nombre: string;
+  modelos: { id: string; nombre: string }[];
+}
+
 export interface RepairCost {
   id: string;
   empresa_id: string;
@@ -9,6 +15,8 @@ export interface RepairCost {
   descripcion: string | null;
   notas: string | null;
   modelo: string | null;
+  marcas: { id: string; nombre: string }[];
+  modelos: { id: string; nombre: string; marca: { id: string; nombre: string } }[];
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -23,6 +31,8 @@ export interface RepairCostForm {
   descripcion: string | null;
   notas: string | null;
   modelo: string | null;
+  marcas: string[];
+  modelos: { marca: string; nombre: string }[];
   activo: boolean;
 }
 
