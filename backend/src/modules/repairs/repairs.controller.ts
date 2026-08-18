@@ -124,7 +124,7 @@ export class RepairsController {
   @ApiOperation({ summary: 'Obtener las reparaciones de un cliente' })
   @Get('client/:clienteId')
   @Roles('DESARROLLADOR', 'ADMIN', 'RECEPCIONISTA', 'TECNICO', 'VENTAS')
-  async getByClient(@Param('clienteId', new ParseUUIDPipe({ version: '4' })) clienteId: string, @Request() req) {
+  async getByClient(@Param('clienteId') clienteId: string, @Request() req) {
     return this.repairsService.getByClient(clienteId, req.user);
   }
 

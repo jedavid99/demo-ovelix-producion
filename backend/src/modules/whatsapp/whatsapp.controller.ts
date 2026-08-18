@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, HttpException, HttpStatus, Res, Header, Param, UseInterceptors, Request, UseGuards, Logger, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpException, HttpStatus, Res, Header, Param, UseInterceptors, Request, UseGuards, Logger } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { WhatsappService } from './whatsapp.service';
 import { Response } from 'express';
@@ -199,7 +199,7 @@ export class WhatsappController {
   @Get('messages/client/:clienteId')
   async getClientMessages(
     @Request() req: any,
-    @Param('clienteId', new ParseUUIDPipe({ version: '4' })) clienteId: string,
+    @Param('clienteId') clienteId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
