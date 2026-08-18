@@ -43,16 +43,12 @@ function Card({ title, icon, children }: { title: string; icon: React.ReactNode;
   );
 }
 
-const THEME_FIELDS: { key: keyof TenantPageConfig['theme']; label: string }[] = [
-  { key: 'primaryColor', label: 'Color primario (botones)' },
-  { key: 'onPrimary', label: 'Texto sobre primario' },
-  { key: 'accentText', label: 'Texto de acento' },
-  { key: 'accentFill', label: 'Fill de acento' },
-  { key: 'onAccentFill', label: 'Texto sobre acento' },
-  { key: 'accentHover', label: 'Hover de acento' },
-  { key: 'secondaryFill', label: 'Fill secundario' },
-  { key: 'onSecondaryFill', label: 'Texto sobre secundario' },
-  { key: 'secondaryHover', label: 'Hover secundario' },
+const THEME_FIELDS: { key: keyof TenantPageConfig['theme']; label: string; hint: string }[] = [
+  { key: 'primaryColor', label: 'Color principal', hint: 'Botones, enlaces y elementos destacados de la página' },
+  { key: 'onPrimary', label: 'Texto de los botones', hint: 'Color del texto que va encima del color principal' },
+  { key: 'secondaryFill', label: 'Encabezado y títulos', hint: 'Fondo del menú superior y color de los títulos de sección' },
+  { key: 'onSecondaryFill', label: 'Texto del encabezado', hint: 'Color del texto que va encima del encabezado' },
+  { key: 'secondaryHover', label: 'Encabezado al pasar el cursor', hint: 'Cómo se ven los botones del encabezado al pasar el mouse' },
 ];
 
 const DEFAULT_THEME: TenantPageConfig['theme'] = {
@@ -374,10 +370,14 @@ export const TenantPageSection: React.FC = () => {
       </Card>
 
       <Card title="Tema" icon={<Palette size={18} />}>
+        <p className="text-sm text-muted-foreground mb-4">
+          Colores de tu página pública de presupuesto. Elegí tonos con buen contraste para que se lea cómodo.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {THEME_FIELDS.map(({ key, label }) => (
+          {THEME_FIELDS.map(({ key, label, hint }) => (
             <div key={key}>
-              <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">{label}</label>
+              <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-0.5">{label}</label>
+              <p className="text-xs text-muted-foreground mb-1.5">{hint}</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
