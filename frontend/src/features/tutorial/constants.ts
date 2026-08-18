@@ -24,7 +24,7 @@ export const TUTORIAL_SECTIONS: TutorialSection[] = [
     description: 'Resumen general del negocio: métricas, reparaciones recientes y accesos rápidos.',
     route: '/dashboard',
     steps: [
-      { selector: CONTENT, position: 'center', title: 'Bienvenido al panel', content: 'Este es el panel principal. Desde acá ves la actividad del negocio de un vistazo: métricas clave, reparaciones recientes y atajos a las secciones más usadas.' },
+      { selector: CONTENT, position: 'top', title: 'Bienvenido al panel', content: 'Este es el panel principal. Desde acá ves la actividad del negocio de un vistazo: métricas clave, reparaciones recientes y atajos a las secciones más usadas.' },
       { selector: TOPBAR, position: 'bottom', title: 'Barra superior', content: 'Acá encontrás el buscador global (Ctrl+K), notificaciones, el escáner QR de reparaciones y tu perfil.' },
       { selector: SIDEBAR, position: 'right', title: 'Menú de navegación', content: 'Desde el menú lateral accedés a todas las secciones: clientes, ventas, stock, reparaciones, proveedores, gastos y más.' },
     ],

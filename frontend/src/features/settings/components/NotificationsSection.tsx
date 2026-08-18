@@ -3,6 +3,10 @@ import { Ticket, CheckCircle2, AlertCircle, Bell } from 'lucide-react';
 import type { NotificationPreference } from '../types/settings.types';
 import { settingsApi } from '../services/settingsApi';
 import { toast } from '@/shared/components/ui/use-toast';
+import { Switch } from '@/shared/components/ui/switch';
+import { getSectionMeta } from '../constants/settings.constants';
+import { SectionHeader } from '../components/ui/SectionHeader';
+import { SettingsCard } from '../components/ui/SettingsCard';
 
 interface NotificationsSectionProps {
   notificationPrefs: NotificationPreference[];
@@ -10,78 +14,58 @@ interface NotificationsSectionProps {
 }
 
 export const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notificationPrefs, setNotificationPrefs }) => {
+  const meta = getSectionMeta('notificationes');
   const eventIcons = [Ticket, CheckCircle2, AlertCircle];
   const colorClasses: Record<string, string> = {
-    blue: 'bg-primary/5 dark:bg-blue-900/20 text-blue-500',
-    green: 'bg-green-50 dark:bg-green-900/20 text-success',
-    amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-500',
+    blue: 'bg-primary/10 text-blue-500',
+    green: 'bg-green-500/10 text-success',
+    amber: 'bg-amber-500/10 text-amber-500',
   };
 
   const togglePref = async (pref: NotificationPreference) => {
     try {
       const updated = await settingsApi.updateNotificationPreference(pref.id, !pref.activo);
       setNotificationPrefs(prev => prev.map(p => (p.id === pref.id ? updated : p)));
-    } catch (e) {
+    } catch {
       toast({ title: 'Error', description: 'Error al actualizar la preferencia', variant: 'destructive' });
     }
   };
 
   return (
     <div className="space-y-6 pb-24">
-      <div className="bg-card  rounded-xl border border-border  overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-border  flex items-center gap-3">
-          <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center">
-            <Bell className="text-primary" size={20} />
+      <SectionHeader icon={meta.icon} eyebrow={meta.eyebrow} title={meta.label} description={meta.description} />
+      <SettingsCard
+        title="Notificaciones de eventos"
+        description="Activa o desactiva los eventos que generan alertas"
+        icon={<Bell size={18} />}
+      >
+        {notificationPrefs.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No hay notificaciones configuradas</p>
+        ) : (
+          <div className="space-y-2.5">
+            {notificationPrefs.map((pref, idx) => {
+              const IconComp = eventIcons[idx] || Bell;
+              return (
+                <div
+                  key={pref.id}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/40 dark:bg-muted/20 p-4"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className={`size-9 shrink-0 rounded-lg flex items-center justify-center ${colorClasses[['blue', 'green', 'amber'][idx]] || 'bg-muted text-muted-foreground'}`}>
+                      <IconComp size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{pref.titulo}</p>
+                      {pref.descripcion && <p className="text-xs text-muted-foreground">{pref.descripcion}</p>}
+                    </div>
+                  </div>
+                  <Switch checked={pref.activo} onCheckedChange={() => togglePref(pref)} aria-label={`Activar ${pref.titulo}`} />
+                </div>
+              );
+            })}
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Notificaciones de eventos</h2>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Activa o desactiva los eventos que generan alertas</p>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
-              <tr className="bg-muted dark:bg-muted/50 border-b border-border ">
-                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Evento</th>
-                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Activo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border ">
-              {notificationPrefs.map((pref, idx) => {
-                const IconComp = eventIcons[idx] || Bell;
-                return (
-                  <tr key={pref.id}>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`size-8 ${colorClasses[['blue', 'green', 'amber'][idx]] || 'bg-muted dark:bg-muted text-muted-foreground'} rounded flex items-center justify-center`}>
-                          <IconComp size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{pref.titulo}</p>
-                          {pref.descripcion && <p className="text-xs text-muted-foreground dark:text-muted-foreground">{pref.descripcion}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={pref.activo} onChange={() => togglePref(pref)} />
-                        <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer  peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                      </label>
-                    </td>
-                  </tr>
-                );
-              })}
-              {notificationPrefs.length === 0 && (
-                <tr>
-                  <td colSpan={2} className="px-6 py-8 text-center text-muted-foreground">
-                    <p className="font-medium">No hay notificaciones configuradas</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        )}
+      </SettingsCard>
     </div>
   );
 };

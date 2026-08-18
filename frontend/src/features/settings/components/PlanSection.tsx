@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { Crown, CalendarDays, Save } from 'lucide-react';
+import { Crown, CalendarDays, Save, CreditCard } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
+import { Badge } from '@/shared/components/ui/badge';
 import type { PlanSubscription } from '../types/settings.types';
 import { PLAN_LABELS, PLAN_MONTHS_OPTIONS } from '../types/settings.types';
 import { settingsApi } from '../services/settingsApi';
 import { toast } from '@/shared/components/ui/use-toast';
+import { getSectionMeta } from '../constants/settings.constants';
+import { SectionHeader } from './ui/SectionHeader';
+import { SettingsCard } from './ui/SettingsCard';
+import { Field } from './ui/Field';
 
 interface PlanSectionProps {
   plan: PlanSubscription | null;
@@ -11,14 +17,15 @@ interface PlanSectionProps {
   isDeveloper: boolean;
 }
 
-const PLAN_COLORS: Record<string, string> = {
-  DEMO: 'bg-muted dark:bg-muted text-muted-foreground',
-  BASICO: 'bg-primary/5 dark:bg-blue-900/20 text-primary dark:text-blue-300',
-  PRO: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300',
-  PLATINO: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300',
+const PLAN_BADGE: Record<string, string> = {
+  DEMO: 'bg-muted text-muted-foreground',
+  BASICO: 'bg-primary/10 text-primary',
+  PRO: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300',
+  PLATINO: 'bg-amber-500/10 text-amber-600 dark:text-amber-300',
 };
 
 export const PlanSection: React.FC<PlanSectionProps> = ({ plan, setPlan, isDeveloper }) => {
+  const meta = getSectionMeta('plan');
   const [selectedPlan, setSelectedPlan] = useState(plan?.plan || 'DEMO');
   const [selectedMonths, setSelectedMonths] = useState(plan?.meses || 1);
   const [saving, setSaving] = useState(false);
@@ -32,7 +39,7 @@ export const PlanSection: React.FC<PlanSectionProps> = ({ plan, setPlan, isDevel
       });
       setPlan(updated);
       toast({ title: 'Éxito', description: 'Plan actualizado correctamente' });
-    } catch (e) {
+    } catch {
       toast({ title: 'Error', description: 'Error al actualizar el plan', variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -49,28 +56,24 @@ export const PlanSection: React.FC<PlanSectionProps> = ({ plan, setPlan, isDevel
 
   return (
     <div className="space-y-6 pb-24">
-      <div className="bg-card  rounded-xl border border-border  overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-border  flex items-center gap-3">
-          <div className="size-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center">
-            <Crown className="text-amber-500" size={20} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Tu plan actual</h2>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground">Plan disponible y fecha de vencimiento de tu cuenta</p>
-          </div>
-        </div>
+      <SectionHeader icon={meta.icon} eyebrow={meta.eyebrow} title={meta.label} description={meta.description} />
 
+      <SettingsCard
+        title="Tu plan actual"
+        description="Plan disponible y fecha de vencimiento de tu cuenta"
+        icon={<Crown size={18} />}
+      >
         {plan ? (
-          <div className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-gradient-to-r from-slate-50 dark:from-slate-800/50 to-transparent rounded-xl border border-border ">
+          <>
+            <div className="flex flex-col justify-between gap-4 rounded-xl border border-border bg-gradient-to-r from-muted/60 to-transparent p-6 md:flex-row md:items-center">
               <div>
-                <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1.5 rounded-lg font-black text-lg ${PLAN_COLORS[plan.plan] || PLAN_COLORS.DEMO}`}>
+                <div className="flex items-center gap-2.5">
+                  <span className={`rounded-lg px-3 py-1.5 text-lg font-bold ${PLAN_BADGE[plan.plan] || PLAN_BADGE.DEMO}`}>
                     {PLAN_LABELS[plan.plan] || plan.plan}
                   </span>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${plan.activo ? 'bg-green-50 dark:bg-green-900/20 text-success dark:text-green-300' : 'bg-destructive/10 dark:bg-red-900/20 text-destructive dark:text-red-300'}`}>
+                  <Badge variant={plan.activo ? 'success' : 'destructive'}>
                     {plan.activo ? 'Activo' : 'Inactivo'}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarDays size={16} className="text-primary" />
@@ -85,38 +88,47 @@ export const PlanSection: React.FC<PlanSectionProps> = ({ plan, setPlan, isDevel
             </div>
 
             {isDeveloper && (
-              <div className="mt-6 p-6 border border-border dark:border-border rounded-xl bg-muted dark:bg-muted/50">
-                <h3 className="font-bold text-foreground mb-4">Administrar plan (desarrollador)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">Plan</label>
-                    <select className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground" value={selectedPlan} onChange={(e) => setSelectedPlan(e.target.value)}>
+              <div className="mt-6 rounded-xl border border-border bg-muted/40 dark:bg-muted/20 p-5">
+                <h3 className="mb-4 font-semibold text-foreground">Administrar plan (desarrollador)</h3>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Field label="Plan" htmlFor="plan-select">
+                    <select
+                      id="plan-select"
+                      className="h-10 w-full rounded border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
+                      value={selectedPlan}
+                      onChange={(e) => setSelectedPlan(e.target.value)}
+                    >
                       {Object.entries(PLAN_LABELS).map(([key, label]) => (
                         <option key={key} value={key}>{label}</option>
                       ))}
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">Duración (meses)</label>
-                    <select className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground" value={selectedMonths} onChange={(e) => setSelectedMonths(parseInt(e.target.value))}>
+                  </Field>
+                  <Field label="Duración (meses)" htmlFor="plan-meses">
+                    <select
+                      id="plan-meses"
+                      className="h-10 w-full rounded border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 focus:outline-none"
+                      value={selectedMonths}
+                      onChange={(e) => setSelectedMonths(parseInt(e.target.value))}
+                    >
                       {PLAN_MONTHS_OPTIONS.map(m => (
                         <option key={m} value={m}>{m} {m === 1 ? 'mes' : 'meses'}</option>
                       ))}
                     </select>
-                  </div>
+                  </Field>
                 </div>
-                <button onClick={savePlan} disabled={saving} className="mt-4 flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-all disabled:opacity-50">
+                <Button onClick={savePlan} disabled={saving} className="mt-4">
                   <Save size={16} /> {saving ? 'Guardando...' : 'Guardar plan'}
-                </button>
+                </Button>
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <div className="p-6 text-center py-10 text-muted-foreground">
+          <div className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
+            <CreditCard size={28} className="mb-1 opacity-40" />
             <p className="font-medium">No hay información de plan disponible</p>
           </div>
         )}
-      </div>
+      </SettingsCard>
     </div>
   );
 };

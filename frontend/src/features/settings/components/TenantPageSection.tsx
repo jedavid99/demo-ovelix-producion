@@ -21,37 +21,19 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { toast } from '@/shared/components/ui/use-toast';
+import { Switch } from '@/shared/components/ui/switch';
+import { Button } from '@/shared/components/ui/button';
 import type { TenantPageConfig, TenantPageResponse } from '../types/tenantPage/tenantPage.types';
 import { tenantPagesApi } from '../services/tenantPagesApi';
-
-function Field({
-  label, value, onChange, type = 'text', placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">{label}</label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"
-      />
-    </div>
-  );
-}
+import { getSectionMeta } from '../constants/settings.constants';
+import { SectionHeader } from './ui/SectionHeader';
+import { Field } from './ui/Field';
 
 function Card({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
       <div className="p-6 border-b border-border flex items-center gap-3">
-        <div className="size-10 bg-primary/5 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+        <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center">
           <span className="text-primary">{icon}</span>
         </div>
         <h3 className="text-lg font-bold text-foreground">{title}</h3>
@@ -86,6 +68,7 @@ const DEFAULT_THEME: TenantPageConfig['theme'] = {
 };
 
 export const TenantPageSection: React.FC = () => {
+  const meta = getSectionMeta('tenantPage');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<TenantPageConfig | null>(null);
@@ -315,34 +298,25 @@ export const TenantPageSection: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24">
-      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Página de presupuesto</h2>
-            <p className="text-sm text-muted-foreground">
-              Configurá la página pública que se muestra en{' '}
-              <span className="font-mono">{company?.slug ? `${company.slug}.presupuesto.com` : 'tu subdominio'}</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm font-semibold text-foreground cursor-pointer">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="size-4"
-              />
-              Publicada
-            </label>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-all disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </div>
+      <SectionHeader icon={meta.icon} eyebrow={meta.eyebrow} title={meta.label} description={meta.description} />
+
+      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <p className="font-semibold text-foreground">Estado de publicación</p>
+          <p className="text-sm text-muted-foreground">
+            {enabled ? 'La página está publicada en ' : 'Activá la publicación para mostrarla en '}
+            <span className="font-mono">{company?.slug ? `${company.slug}.presupuesto.com` : 'tu subdominio'}</span>
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-4">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
+            <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Publicar página" />
+            Publicada
+          </label>
+          <Button onClick={save} disabled={saving}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </Button>
         </div>
       </div>
 

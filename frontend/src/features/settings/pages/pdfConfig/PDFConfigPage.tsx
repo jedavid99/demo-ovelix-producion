@@ -5,6 +5,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import ServiceOrderPreview from '@/features/settings/ServiceOrderPreview';
 import { usePDFConfig } from '../../hooks/pdfConfig/usePDFConfig';
+import { getSectionMeta } from '../../constants/settings.constants';
+import { SectionHeader } from '../../components/ui/SectionHeader';
 import { CompanySection } from '../../components/pdfConfig/CompanySection';
 import { WarrantySection } from '../../components/pdfConfig/WarrantySection';
 import { WatermarkSection } from '../../components/pdfConfig/WatermarkSection';
@@ -12,22 +14,25 @@ import { ConfigActions } from '../../components/pdfConfig/ConfigActions';
 
 export default function PDFConfigPage() {
   const { data, isGenerating, previewRef, handleChange, resetData, handleSave, generatePDF, handlePrint } = usePDFConfig();
+  const meta = getSectionMeta('pdf');
 
   return (
     <div className="space-y-6 pb-24">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Generador de Orden de Servicio</h2>
-          <p className="text-muted-foreground">Personaliza la empresa, garantía y marca de agua</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handlePrint} variant="outline" className="gap-2"><Printer size={18} /> Imprimir</Button>
-          <Button onClick={generatePDF} disabled={isGenerating} className="gap-2">
-            {isGenerating ? <span className="animate-spin">⟳</span> : <Download size={18} />}
-            {isGenerating ? 'Generando...' : 'Descargar PDF'}
-          </Button>
-        </div>
-      </div>
+      <SectionHeader
+        icon={meta.icon}
+        eyebrow={meta.eyebrow}
+        title={meta.label}
+        description={meta.description}
+        actions={
+          <div className="flex gap-2">
+            <Button onClick={handlePrint} variant="outline"><Printer size={16} /> Imprimir</Button>
+            <Button onClick={generatePDF} disabled={isGenerating}>
+              {isGenerating ? <span className="animate-spin">⟳</span> : <Download size={16} />}
+              {isGenerating ? 'Generando...' : 'Descargar PDF'}
+            </Button>
+          </div>
+        }
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <div className="sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 space-y-4">

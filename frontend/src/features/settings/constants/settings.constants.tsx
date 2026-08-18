@@ -1,16 +1,81 @@
 import React from 'react';
-import { Cloud, Clock, Plus, Key, Bell, FileText, CreditCard, Globe } from 'lucide-react';
-import type { Section } from '../types/settings.types';
+import { Building2, Globe, FileText, Tags, Percent, Bell, Cloud, Crown } from 'lucide-react';
+import type { Section, SectionGroup } from '../types/settings.types';
+
+export const SECTION_GROUPS: { id: SectionGroup; label: string }[] = [
+  { id: 'negocio', label: 'Negocio' },
+  { id: 'operacion', label: 'Operación' },
+  { id: 'sistema', label: 'Sistema' },
+];
+
+export function getSectionMeta(id: string): { icon: React.ReactNode; eyebrow: string; label: string; description: string } {
+  const section = SECTIONS.find((s) => s.id === id) ?? SECTIONS[0];
+  const group = SECTION_GROUPS.find((g) => g.id === section.group);
+  return {
+    icon: section.icon,
+    eyebrow: group?.label ?? '',
+    label: section.label,
+    description: section.description,
+  };
+}
 
 export const SECTIONS: Section[] = [
-  { id: 'business', label: 'Perfil del negocio', icon: <Clock size={16} /> },
-  { id: 'tenantPage', label: 'Página de presupuesto', icon: <Globe size={16} /> },
-  { id: 'Categoria', label: 'Categorías de stock', icon: <Plus size={16} /> },
-  { id: 'taxes', label: 'Impuestos y pagos', icon: <Key size={16} /> },
-  { id: 'notificationes', label: 'Notificaciones', icon: <Bell size={16} /> },
-  { id: 'api', label: 'API e integraciones', icon: <Cloud size={16} /> },
-  { id: 'plan', label: 'Plan', icon: <CreditCard size={16} /> },
-  { id: 'pdf', label: 'Configuración PDF', icon: <FileText size={16} /> },
+  {
+    id: 'business',
+    label: 'Perfil del negocio',
+    icon: <Building2 size={16} />,
+    group: 'negocio',
+    description: 'Datos de tu negocio, estados de reparación y métodos de pago aceptados.',
+  },
+  {
+    id: 'tenantPage',
+    label: 'Página de presupuesto',
+    icon: <Globe size={16} />,
+    group: 'negocio',
+    description: 'La página pública que tus clientes usan para valuar, consultar y reservar.',
+  },
+  {
+    id: 'pdf',
+    label: 'Configuración PDF',
+    icon: <FileText size={16} />,
+    group: 'negocio',
+    description: 'Personalizá la orden de servicio que se genera para cada reparación.',
+  },
+  {
+    id: 'Categoria',
+    label: 'Categorías de stock',
+    icon: <Tags size={16} />,
+    group: 'operacion',
+    description: 'Organizá el inventario por categorías para encontrarlo más rápido.',
+  },
+  {
+    id: 'taxes',
+    label: 'Impuestos y pagos',
+    icon: <Percent size={16} />,
+    group: 'operacion',
+    description: 'Porcentajes de impuestos y cuentas bancarias para cobros y facturas.',
+  },
+  {
+    id: 'notificationes',
+    label: 'Notificaciones',
+    icon: <Bell size={16} />,
+    group: 'operacion',
+    description: 'Elegí qué eventos generan alertas dentro del sistema.',
+  },
+  {
+    id: 'api',
+    label: 'API e integraciones',
+    icon: <Cloud size={16} />,
+    group: 'sistema',
+    description: 'Servicios de terceros conectados a tu cuenta.',
+  },
+  {
+    id: 'plan',
+    label: 'Plan',
+    icon: <Crown size={16} />,
+    group: 'sistema',
+    description: 'Plan contratado, vencimiento y renovación de tu cuenta.',
+  },
 ];
 
 export const CURRENCY_OPTIONS = [

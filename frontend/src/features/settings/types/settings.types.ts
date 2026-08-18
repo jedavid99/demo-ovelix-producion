@@ -6,10 +6,14 @@ export interface GeneralForm {
   zona_horaria: string;
 }
 
+export type SectionGroup = 'negocio' | 'operacion' | 'sistema';
+
 export interface Section {
   id: string;
   label: string;
   icon: React.ReactNode;
+  group: SectionGroup;
+  description: string;
 }
 
 export interface PaymentMethod {
