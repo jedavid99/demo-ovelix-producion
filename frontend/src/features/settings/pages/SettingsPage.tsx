@@ -49,6 +49,30 @@ function LeftNav({ current, onChange, plan }: { current: string; onChange: (id: 
   );
 }
 
+function MobileSectionNav({ current, onChange }: { current: string; onChange: (id: string) => void }) {
+  return (
+    <nav className="lg:hidden -mx-1 mb-6 overflow-x-auto pb-1" aria-label="Secciones de configuración">
+      <div className="flex gap-2 px-1 w-max">
+        {SECTIONS.map(s => (
+          <button
+            key={s.id}
+            onClick={() => onChange(s.id)}
+            aria-pressed={current === s.id}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              current === s.id
+                ? 'border-primary bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-blue-300'
+                : 'border-border bg-card text-foreground hover:bg-muted'
+            }`}
+          >
+            <span className="text-muted-foreground">{s.icon}</span>
+            {s.label}
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 const resolveUser = (u: any) => (u?.data && u?.statusCode ? u.data : u);
 
 export default function SettingsPage() {
@@ -73,10 +97,11 @@ export default function SettingsPage() {
   const isDeveloper = userRol === 'DESARROLLADOR';
 
   return (
-    <div className="min-h-screen bg-muted  p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto flex gap-6">
+    <div className="min-h-screen bg-muted">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
         <LeftNav current={section} onChange={setSection} plan={plan} />
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
+          <MobileSectionNav current={section} onChange={setSection} />
           <div className="mb-6" />
           {configError && !sectionLoading && (
             <div className="mb-4 flex items-center justify-between gap-4 bg-destructive/10 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">

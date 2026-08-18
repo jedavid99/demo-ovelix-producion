@@ -55,7 +55,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-card/80 backdrop-blur-md sticky top-0">
               <tr className="text-left text-sm text-muted-foreground">
                 <th className="pb-3 font-medium">ID</th>
@@ -121,7 +121,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
           </table>
         </div>
         {/* Paginación */}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
           <p className="text-sm text-muted-foreground">
             Mostrando {(currentPage - 1) * itemsPerPage + 1} -{' '}
             {Math.min(currentPage * itemsPerPage, totalFiltered)} de{' '}

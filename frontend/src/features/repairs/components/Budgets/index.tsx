@@ -98,7 +98,7 @@ export default function Budgets() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="p-6 space-y-6"
+      className="space-y-6"
     >
       {/* Header */}
       <BudgetsHeader

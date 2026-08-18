@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 
 export function InventoryHeader() {
   return (
-    <div className="flex items-center justify-between mb-8">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Inventario iPhone</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Inventario iPhone</h2>
         <p className="text-muted-foreground dark:text-muted-foreground">Monitoreo de stock y gesti\u00F3n de activos en tiempo real</p>
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button className="flex items-center gap-2 px-4 py-2 border border-border  rounded-lg text-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted transition-all font-medium">
           <Download size={18} />
           <span>Exportar CSV</span>

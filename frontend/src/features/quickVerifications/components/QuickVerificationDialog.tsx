@@ -23,7 +23,7 @@ export function QuickVerificationDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg" className="bg-card">
+      <DialogContent size="lg" className="bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Verificaciones rápidas</DialogTitle>
           <DialogDescription>

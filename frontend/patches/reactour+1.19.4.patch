@@ -1,0 +1,80 @@
+diff --git a/node_modules/reactour/dist/reactour.cjs.js b/node_modules/reactour/dist/reactour.cjs.js
+index 38d4473..0fece02 100644
+--- a/node_modules/reactour/dist/reactour.cjs.js
++++ b/node_modules/reactour/dist/reactour.cjs.js
+@@ -1156,26 +1156,26 @@ var Tour = /*#__PURE__*/function (_Component) {
+       }
+     }
+   }, {
+-    key: "UNSAFE_componentWillReceiveProps",
+-    value: function UNSAFE_componentWillReceiveProps(nextProps) {
++    key: "componentDidUpdate",
++    value: function componentDidUpdate(prevProps) {
+       var _this$props7 = this.props,
+         isOpen = _this$props7.isOpen,
+         update = _this$props7.update,
+         updateDelay = _this$props7.updateDelay;
+-      if (!isOpen && nextProps.isOpen) {
+-        this.open(nextProps.startAt);
+-      } else if (isOpen && !nextProps.isOpen) {
++      if (!prevProps.isOpen && isOpen) {
++        this.open(this.props.startAt);
++      } else if (prevProps.isOpen && !isOpen) {
+         this.close();
+       }
+-      if (isOpen && update !== nextProps.update) {
+-        if (nextProps.steps[this.state.current]) {
++      if (prevProps.isOpen && update !== prevProps.update) {
++        if (this.props.steps[this.state.current]) {
+           setTimeout(this.showStep, updateDelay);
+         } else {
+           this.props.onRequestClose();
+         }
+       }
+-      if (isOpen && nextProps.isOpen && this.state.current !== nextProps.goToStep) {
+-        this.gotoStep(nextProps.goToStep);
++      if (prevProps.isOpen && isOpen && prevProps.goToStep !== this.props.goToStep) {
++        this.gotoStep(this.props.goToStep);
+       }
+     }
+   }, {
+diff --git a/node_modules/reactour/dist/reactour.esm.js b/node_modules/reactour/dist/reactour.esm.js
+index e3974f3..05487d5 100644
+--- a/node_modules/reactour/dist/reactour.esm.js
++++ b/node_modules/reactour/dist/reactour.esm.js
+@@ -1141,26 +1141,26 @@ var Tour = /*#__PURE__*/function (_Component) {
+       }
+     }
+   }, {
+-    key: "UNSAFE_componentWillReceiveProps",
+-    value: function UNSAFE_componentWillReceiveProps(nextProps) {
++    key: "componentDidUpdate",
++    value: function componentDidUpdate(prevProps) {
+       var _this$props7 = this.props,
+         isOpen = _this$props7.isOpen,
+         update = _this$props7.update,
+         updateDelay = _this$props7.updateDelay;
+-      if (!isOpen && nextProps.isOpen) {
+-        this.open(nextProps.startAt);
+-      } else if (isOpen && !nextProps.isOpen) {
++      if (!prevProps.isOpen && isOpen) {
++        this.open(this.props.startAt);
++      } else if (prevProps.isOpen && !isOpen) {
+         this.close();
+       }
+-      if (isOpen && update !== nextProps.update) {
+-        if (nextProps.steps[this.state.current]) {
++      if (prevProps.isOpen && update !== prevProps.update) {
++        if (this.props.steps[this.state.current]) {
+           setTimeout(this.showStep, updateDelay);
+         } else {
+           this.props.onRequestClose();
+         }
+       }
+-      if (isOpen && nextProps.isOpen && this.state.current !== nextProps.goToStep) {
+-        this.gotoStep(nextProps.goToStep);
++      if (prevProps.isOpen && isOpen && prevProps.goToStep !== this.props.goToStep) {
++        this.gotoStep(this.props.goToStep);
+       }
+     }
+   }, {

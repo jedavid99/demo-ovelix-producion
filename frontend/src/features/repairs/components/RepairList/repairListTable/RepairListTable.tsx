@@ -52,7 +52,7 @@ export function RepairListTable({
     <Card className="border shadow-sm">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full min-w-[720px] text-xs">
             <RepairListTableHeader />
             <tbody className="divide-y divide-border/60">
               {paginatedRepairs.map((repair) => (

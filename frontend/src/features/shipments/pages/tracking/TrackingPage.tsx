@@ -49,15 +49,15 @@ export default function TrackingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="p-6">
+    <div className="bg-background">
+      <main>
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Seguimiento de Envíos</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Seguimiento de Envíos</h1>
               <p className="text-muted-foreground">Monitorea el estado de tus envíos en tiempo real</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button variant="outline" className="gap-2">
                 <Filter size={16} />
                 Filtros

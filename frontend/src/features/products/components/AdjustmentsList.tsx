@@ -132,7 +132,7 @@ export const AdjustmentsList: React.FC<AdjustmentsListProps> = ({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/10 border-t border-border text-xs text-muted-foreground">
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-muted/10 border-t border-border text-xs text-muted-foreground">
         <span>
           Mostrando <strong className="text-foreground">{filteredItems.length}</strong> de{' '}
           <strong className="text-foreground">{totalAdjustments}</strong> ajustes

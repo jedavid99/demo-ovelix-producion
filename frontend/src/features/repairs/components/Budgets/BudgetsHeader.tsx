@@ -14,12 +14,12 @@ export const BudgetsHeader: React.FC<BudgetsHeaderProps> = ({
   hasBudgets,
 }) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Presupuestos de Reparaciones</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Presupuestos de Reparaciones</h1>
         <p className="text-muted-foreground">Gestión de presupuestos y cotizaciones</p>
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button onClick={onExport} variant="outline" className="gap-2" disabled={!hasBudgets}>
           <MdFileDownload size={18} />
           Exportar

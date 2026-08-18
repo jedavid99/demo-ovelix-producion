@@ -125,12 +125,12 @@ export default function InvoicesList() {
   };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Facturas</h1>
           <p className="text-muted-foreground">Gestiona tus facturas electrónicas y estado ARCA</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button variant="outline" disabled title="La exportación estará disponible próximamente">
             <Download size={16} className="mr-2" />
             Exportar

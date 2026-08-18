@@ -17,8 +17,8 @@ export default function IPhoneInventoryList() {
   } = useInventoryState();
 
   return (
-    <div className="min-h-screen bg-muted  flex flex-col">
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+    <div className="flex flex-col">
+      <main className="flex-1 max-w-7xl mx-auto w-full">
         <InventoryHeader />
         <KPICards
           totalUnits={total}

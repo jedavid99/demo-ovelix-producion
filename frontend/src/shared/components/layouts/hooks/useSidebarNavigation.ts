@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 import { navItems } from '../constants/sidebar.constants';
@@ -22,10 +22,13 @@ export function useSidebarNavigation() {
     }).filter((item): item is NavItem => item !== null);
   }, [canAccessRoute]);
 
-  const filteredNavItems = navItems.map(section => ({
-    ...section,
-    children: filterNavItems(section.children || [])
-  })).filter(section => section.children && section.children.length > 0);
+  const filteredNavItems = useMemo(
+    () => navItems.map(section => ({
+      ...section,
+      children: filterNavItems(section.children || [])
+    })).filter(section => section.children && section.children.length > 0),
+    [filterNavItems]
+  );
 
   const toggleSection = (key: string) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -34,7 +37,7 @@ export function useSidebarNavigation() {
   useEffect(() => {
     const path = location.pathname;
     const newOpenSections: Record<string, boolean> = {};
-    filteredNavItems.forEach(section => {
+    navItems.forEach(section => {
       const expandSection = section.children?.some(item => {
         if (item.href === path) return true;
         if (item.children) return item.children.some(subItem => subItem.href === path);
@@ -43,7 +46,7 @@ export function useSidebarNavigation() {
       if (expandSection) newOpenSections[section.title] = true;
     });
     setOpenSections(prev => ({ ...prev, ...newOpenSections }));
-  }, [location.pathname, filteredNavItems]);
+  }, [location.pathname]);
 
   const isActive = (href: string) => location.pathname === href;
 

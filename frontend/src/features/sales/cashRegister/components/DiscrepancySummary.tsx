@@ -37,12 +37,12 @@ export function DiscrepancySummary({ discrepancy, hasDiscrepancy, onSaveProgress
             <span className="text-lg font-bold text-foreground">Alex Thompson</span>
           </div>
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <Button onClick={onSaveProgress} variant="outline" size="lg">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <Button onClick={onSaveProgress} variant="outline" size="lg" className="w-full sm:w-auto">
             <Save size={18} className="mr-2" />
             Guardar progreso
           </Button>
-          <Button onClick={onFinalize} size="lg">
+          <Button onClick={onFinalize} size="lg" className="w-full sm:w-auto">
             <Lock size={18} className="mr-2" />
             Finalizar y cerrar día
           </Button>

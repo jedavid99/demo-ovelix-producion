@@ -25,16 +25,16 @@ export const RemisesForm: React.FC<RemisesFormProps> = ({
 }) => {
   return (
     <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
               <Plus size={20} className="text-white" />
             </div>
             Nuevo Remise
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[calc(100vh-250px)] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto py-4 min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="plate" className="text-sm font-medium">Placa *</Label>

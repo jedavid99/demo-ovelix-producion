@@ -39,7 +39,7 @@ export const RemisesList: React.FC<RemisesListProps> = ({
     <Card>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[640px]">
             <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
               <tr className="border-b border-border text-left text-sm text-muted-foreground">
                 <th className="px-6 py-4 font-medium">Placa</th>
@@ -106,7 +106,7 @@ export const RemisesList: React.FC<RemisesListProps> = ({
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-t border-border">
             <p className="text-sm text-muted-foreground">
               Mostrando {(currentPage - 1) * 10 + 1} -{' '}
               {Math.min(currentPage * 10, filteredRemises.length)} de {filteredRemises.length}

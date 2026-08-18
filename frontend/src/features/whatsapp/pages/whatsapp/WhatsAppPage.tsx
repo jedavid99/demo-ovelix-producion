@@ -50,7 +50,7 @@ export default function WhatsAppPage() {
   return (
     <div className="h-full">
       {qr.isConnected && <ConnectedIndicator onLogout={qr.handleLogout} />}
-      <div className="flex flex-col lg:flex-row h-full">
+      <div className="flex flex-col lg:flex-row h-full min-h-0">
           <div className={`w-full lg:w-80 lg:flex-shrink-0 ${qr.selectedContact ? 'hidden lg:block' : ''}`}>
             <ContactList
               contacts={qr.activeChats}

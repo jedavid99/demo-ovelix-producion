@@ -107,11 +107,11 @@ export default function DataTable<T>({
       </div>
       {/* Pagination */}
       {!loading && data.length > 0 && (
-        <div className="bg-muted/30 border-t border-border px-4 py-3 flex items-center justify-between">
+        <div className="bg-muted/30 border-t border-border px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted-foreground">
             Página <span className="font-semibold text-foreground">{currentPage}</span> de <span className="font-semibold text-foreground">{totalPages}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <Button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}

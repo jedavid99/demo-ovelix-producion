@@ -86,7 +86,10 @@ export const AdminTopBar = ({
     try {
       const data = await notificationService.getAll()
       const list = Array.isArray(data) ? data : []
-      setNotifications(list)
+      setNotifications(prev => {
+        if (prev.length === list.length && prev.every((n, i) => n.id === list[i].id)) return prev
+        return list
+      })
       list.forEach((notification) => {
         if (notification.tipo !== 'nuevo_presupuesto') return
         if (!hasLoadedFirstBatch.current) {

@@ -32,11 +32,11 @@ export function RepairListTablePagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t">
       <div className="text-[11px] text-muted-foreground">
         Mostrando {pageSize} de {totalFiltered} reparaciones
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-x-auto">
         <Button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}

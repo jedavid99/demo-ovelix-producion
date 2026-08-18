@@ -27,9 +27,9 @@ export const TrackingModal = ({ shipment, onClose }: TrackingModalProps) => {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent hideClose className="sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="relative">
+        <div className="flex flex-col gap-3 p-4 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative shrink-0">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Truck size={20} className="text-white" />
               </div>
@@ -39,18 +39,18 @@ export const TrackingModal = ({ shipment, onClose }: TrackingModalProps) => {
                 shipment.status === 'delivery' ? 'bg-purple-500' : 'bg-amber-500'
               }`} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-lg font-bold text-foreground">{shipment.id}</h2>
                 <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(shipment.status)}`}>
                   {getStatusIcon(shipment.status)}
                   {getStatusText(shipment.status)}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">{shipment.description}</p>
+              <p className="text-xs text-muted-foreground truncate">{shipment.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 sm:justify-end">
             <div className="flex bg-muted rounded-lg p-0.5">
               {(['details', 'map', 'timeline'] as const).map((view) => (
                 <button

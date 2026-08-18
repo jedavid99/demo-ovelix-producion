@@ -49,7 +49,7 @@ export function InventoryTable({ iphones, loading, error, onRetry }: InventoryTa
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left">
+      <table className="w-full min-w-[720px] text-left">
         <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
           <tr className="bg-muted dark:bg-muted/50 border-b border-border ">
             <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Producto</th>

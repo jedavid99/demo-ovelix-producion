@@ -23,7 +23,7 @@ export function CostFormDialog({
 }: CostFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initial ? 'Editar costo de reparación' : 'Nuevo costo de reparación'}</DialogTitle>
           <DialogDescription>
