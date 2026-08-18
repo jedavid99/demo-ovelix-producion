@@ -25,15 +25,16 @@ async function bootstrap() {
   // CORS
   const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
     .split(',')
-    .map(o => o.trim())
+    .map(o => o.trim().replace(/\/+$/, ''))
     .filter(Boolean);
   app.enableCors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
+      const normalizedOrigin = origin.replace(/\/+$/, '');
       if (
-        corsOrigins.includes(origin) ||
-        origin === 'http://localhost:5174' ||
-        /^http:\/\/([a-z0-9-]+\.)?localhost:5174$/.test(origin)
+        corsOrigins.includes(normalizedOrigin) ||
+        normalizedOrigin === 'http://localhost:5174' ||
+        /^http:\/\/([a-z0-9-]+\.)?localhost:5174$/.test(normalizedOrigin)
       ) {
         return callback(null, true);
       }
