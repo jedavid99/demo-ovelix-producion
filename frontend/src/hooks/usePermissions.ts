@@ -230,10 +230,6 @@ export const usePermissions = () => {
 
   const permissions: string[] = user?.permissions || [];
 
-  console.log('usePermissions - user:', user);
-  console.log('usePermissions - permissions:', permissions);
-  console.log('usePermissions - isLoading:', isLoading);
-
   /**
    * Verifica si el usuario tiene un permiso específico
    */
@@ -261,13 +257,8 @@ export const usePermissions = () => {
   const canAccessRoute = (path: string): boolean => {
     const requiredPermissions = ROUTE_PERMISSIONS[path];
     
-    console.log('canAccessRoute - path:', path);
-    console.log('canAccessRoute - requiredPermissions:', requiredPermissions);
-    console.log('canAccessRoute - user permissions:', permissions);
-    
     // Si aún está cargando, permitir acceso temporalmente para evitar bloqueos
     if (isLoading) {
-      console.log('canAccessRoute - isLoading true, permitiendo acceso temporal');
       return true;
     }
     
@@ -276,7 +267,6 @@ export const usePermissions = () => {
     }
 
     const hasAccess = hasAnyPermission(requiredPermissions);
-    console.log('canAccessRoute - hasAccess:', hasAccess);
     return hasAccess;
   };
 

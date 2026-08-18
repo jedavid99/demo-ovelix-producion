@@ -28,8 +28,6 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     
-    console.log('Iniciando login con:', { email: formData.email, codigoEmpresa: formData.codigoEmpresa });
-    
     try {
       // Llamamos al login del AuthContext
       await login(
@@ -37,7 +35,6 @@ export default function Login() {
         formData.password,
         formData.codigoEmpresa
       );
-      console.log('Login exitoso, navegando al dashboard');
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Error en login:', error);

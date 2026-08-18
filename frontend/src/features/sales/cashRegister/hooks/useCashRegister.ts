@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/use-toast';
 import { useCashClosingMutations, useCashClosingByDate } from '@/hooks/useCashClosing';
 import { CashClosingData } from '@/types/cashClosing.types';
-import { logger } from '@/utils/logger';
 import type { CashForm } from '../types';
 
 export function useCashRegister() {
@@ -77,7 +76,6 @@ export function useCashRegister() {
 
   const handleSaveProgress = async () => {
     const closingData = buildClosingData();
-    logger.log('Guardando progreso de cierre de caja:', closingData);
     if (existingClosing?.id) {
       await updateCashClosing(existingClosing.id, closingData);
     } else {
@@ -87,7 +85,6 @@ export function useCashRegister() {
 
   const handleFinalize = async () => {
     const closingData = buildClosingData();
-    logger.log('Finalizando cierre de caja:', closingData);
     const result = existingClosing?.id
       ? await updateCashClosing(existingClosing.id, closingData)
       : await createCashClosing(closingData);

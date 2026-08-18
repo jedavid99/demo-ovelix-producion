@@ -25,8 +25,6 @@ export default function QRScanner() {
 
     const onScanSuccess = (decodedText: string) => {
       try {
-        console.log('QR escaneado:', decodedText);
-        
         // El QR contiene un JSON con el campo "orden"
         const qrData = JSON.parse(decodedText);
         const orderNumber = qrData.orden;

@@ -66,9 +66,7 @@ export const useClientMutations = () => {
     setGlobalMessage('Creando cliente...');
     setError(null);
     try {
-      logger.log('useClientMutations.createClient - Iniciando creación con datos:', data);
       const response = await clientService.create(data);
-      logger.log('useClientMutations.createClient - Cliente creado exitosamente:', response);
       return response;
     } catch (err: any) {
       logger.error('useClientMutations.createClient - Error completo:', err);

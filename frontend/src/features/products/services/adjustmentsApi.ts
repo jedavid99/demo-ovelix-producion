@@ -7,15 +7,12 @@ export async function getAdjustments(): Promise<AdjustmentItem[]> {
 }
 
 export async function createAdjustment(data: NewAdjustmentForm): Promise<void> {
-  console.log('Nuevo ajuste:', data)
 }
 
 export async function updateAdjustment(id: number, data: Partial<NewAdjustmentForm>): Promise<void> {
-  console.log('Actualizar ajuste:', id, data)
 }
 
 export async function deleteAdjustment(id: number): Promise<void> {
-  console.log('Eliminar ajuste:', id)
 }
 
 export async function getProductosParaAjuste(): Promise<string[]> {

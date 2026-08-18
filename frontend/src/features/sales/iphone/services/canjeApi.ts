@@ -16,6 +16,5 @@ export async function getNewDevices(): Promise<NewDeviceOption[]> {
 
 export async function createCanje(data: { deviceId: string; imei: string; tradeInCredit: number }): Promise<string> {
   const id = `TC-${Math.floor(Math.random() * 900000) + 100000}`
-  console.log('Canje creado:', { id, ...data })
   return id
 }

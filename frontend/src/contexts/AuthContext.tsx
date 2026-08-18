@@ -61,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           let decodedToken: DecodedToken = {};
           try {
             decodedToken = jwtDecode<DecodedToken>(token);
-            logger.log('Token decodificado en initAuth:', decodedToken);
           } catch (error) {
             logger.error('Error al decodificar token en initAuth:', error);
           }
@@ -101,9 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
   const login = async (email: string, password: string, codigoEmpresa: string) => {
-    logger.log('AuthContext.login llamado con:', { email, codigoEmpresa });
     const response = await loginService(email, password, codigoEmpresa);
-    logger.log('Respuesta completa del login:', response);
 
     // El backend devuelve {data: {data: {access_token, refresh_token, user}}}
     const token = response?.data?.data?.access_token ||
@@ -117,14 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let decodedToken: DecodedToken = {};
       try {
         decodedToken = jwtDecode<DecodedToken>(token);
-        logger.log('Token decodificado:', decodedToken);
       } catch (error) {
         logger.error('Error al decodificar token:', error);
       }
 
       // El usuario viene en response.data.data.user
       const usuario = response?.data?.data?.user || response?.data?.user || response?.user;
-      logger.log('Usuario obtenido de la respuesta:', usuario);
       
       // Agregar permisos del token al usuario
       if (decodedToken.permissions && usuario) {
@@ -136,16 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(true);
     } else {
       logger.error('No se recibió token en la respuesta');
-      logger.error('Estructura completa de response:', JSON.stringify(response, null, 2));
     }
   };
   const logout = useCallback(() => {
-    logger.log('AuthContext.logout: Limpiando tokens y estado local');
     clearAuthToken();
     localStorage.removeItem('user_data');
     setUser(null);
     setIsAuthenticated(false);
-    logger.log('AuthContext.logout: Redirigiendo a /login');
     window.location.href = '/login';
   }, []);
 

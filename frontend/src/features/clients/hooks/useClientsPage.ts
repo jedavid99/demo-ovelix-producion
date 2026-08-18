@@ -25,17 +25,11 @@ export function useClientsPage() {
   const { deleteClient, activateClient, deactivateClient, loading: mutationLoading } = useClientMutations();
 
   const extractClients = useCallback((response: unknown): Client[] => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Clients] API response structure:', JSON.stringify(response, null, 2).slice(0, 500));
-    }
     const r = response as Record<string, unknown>;
     const d = r?.data as Record<string, unknown> | undefined;
     let arr = d?.data as Client[] | undefined;
     if (!Array.isArray(arr)) arr = d?.clientes as Client[] | undefined;
     if (!Array.isArray(arr)) arr = d as unknown as Client[];
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Clients] Extracted count:', Array.isArray(arr) ? arr.length : 0);
-    }
     return Array.isArray(arr) ? arr : [];
   }, []);
 

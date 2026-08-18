@@ -13,15 +13,12 @@ export async function createShipment(data: NewRemiseForm): Promise<Remise> {
 }
 
 export async function updateShipment(id: string, data: Partial<NewRemiseForm>): Promise<void> {
-  console.log('Actualizar remise:', id, data)
 }
 
 export async function deleteShipment(id: string): Promise<void> {
-  console.log('Eliminar remise:', id)
 }
 
 export async function updateTrackingStatus(id: string, status: string): Promise<void> {
-  console.log('Actualizar estado:', id, status)
 }
 
 export async function getTransportistas(): Promise<string[]> {

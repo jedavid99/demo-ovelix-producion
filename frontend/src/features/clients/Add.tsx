@@ -57,7 +57,6 @@ export default function ClientAdd() {
   }
 
   const onSubmit = async (data: ClientCreateFormData) => {
-    logger.log('ClientAdd - Datos del formulario validados:', data)
     
     // Si no se incluye dirección, enviar undefined en lugar de string vacío
     const submitData = {
@@ -68,7 +67,6 @@ export default function ClientAdd() {
     
     const result = await createClient(submitData)
     if (result) {
-      logger.log('ClientAdd - Cliente creado exitosamente')
       navigate('/clients')
     } else {
       logger.error('ClientAdd - Error al crear cliente:', error)

@@ -47,7 +47,6 @@ export const useRepairEdit = (id: string | undefined) => {
       });
 
       const totalReparacionValue = parseFloat(orderData.total_reparacion) || parseFloat(orderData.costo_estimado) || 0;
-      console.log('Valor calculado para total_reparacion:', totalReparacionValue);
       
       setFormData({
         problema_reportado: orderData.problema_reportado || '',
@@ -222,7 +221,6 @@ export const useRepairEdit = (id: string | undefined) => {
         payload.repuestos = repuestos;
       }
 
-      console.log('Payload enviado:', payload);
       await repairService.update(repairData.id, payload);
       toast({ title: 'Éxito', description: 'Reparación actualizada correctamente' });
       navigate('/reparaciones/list');

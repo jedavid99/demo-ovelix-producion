@@ -111,7 +111,6 @@ export const registerUserService = async (params: {
     timestamp: new Date().toISOString(),
   };
   localStorage.setItem('registrationData', JSON.stringify(registrationData));
-  console.log('Registration completed:', registrationData);
 };
 
 // --- Code Generator API ---

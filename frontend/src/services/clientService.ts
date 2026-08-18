@@ -1,5 +1,4 @@
 import api from './api';
-import { logger } from '@/utils/logger';
 import { Client, ClientCreate, ClientUpdate, ClientFilters, PaginatedResponse, ClientPurchase } from '@/types/client.types';
 
 export const clientService = {
@@ -15,9 +14,7 @@ export const clientService = {
 
   // Crear un nuevo cliente
   create: (data: ClientCreate): Promise<Client> => {
-    console.log('clientService.create - Enviando datos:', data);
     return api.post('/clients', data).then(res => {
-      console.log('clientService.create - Respuesta del backend:', res.data);
       return res.data;
     }).catch(err => {
       console.error('clientService.create - Error completo:', err);

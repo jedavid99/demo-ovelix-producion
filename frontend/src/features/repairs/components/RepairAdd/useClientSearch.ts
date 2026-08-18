@@ -15,7 +15,6 @@ export const useClientSearch = () => {
     const fetchLastClient = async () => {
       try {
         const response = await clientService.list({ limit: 1, sort: 'created_at:desc' }) as any;
-        console.log('Respuesta último cliente:', response);
         
         let clientesArray = response?.data?.data?.clientes ||
                            response?.data?.data?.data ||
@@ -42,7 +41,6 @@ export const useClientSearch = () => {
         setSearching(true);
         try {
           const response = await clientService.list({ search: search, limit: 10 });
-          console.log('Respuesta búsqueda:', response);
           
           let clientesArray = response?.data?.data?.clientes ||
                              response?.data?.data?.data ||
