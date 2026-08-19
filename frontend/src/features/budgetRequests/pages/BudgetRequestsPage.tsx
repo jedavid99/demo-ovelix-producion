@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -29,6 +29,8 @@ import {
   DialogFooter,
 } from '@/shared/components/ui/dialog';
 import { budgetRequestsApi } from '../services/budgetRequestsApi';
+import { useListCache } from '@/shared/hooks/useListCache';
+import { budgetRequestsCacheKey, budgetRequestsData } from '@/shared/lib/dataCaches';
 import type { BudgetRequest, BudgetRequestEstado } from '../types/budgetRequests.types';
 
 function formatARS(n: number): string {
@@ -322,39 +324,22 @@ function DetailDialog({
 }
 
 export default function BudgetRequestsPage() {
-  const [requests, setRequests] = useState<BudgetRequest[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState<'all' | BudgetRequestEstado>('all');
   const [selected, setSelected] = useState<BudgetRequest | null>(null);
 
-  const reload = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const estadoParam = estadoFilter === 'all' ? undefined : estadoFilter;
 
-  useEffect(() => {
-    let cancelled = false;
-    budgetRequestsApi
-      .getRequests({ page, limit, estado: estadoFilter === 'all' ? undefined : estadoFilter })
-      .then((res) => {
-        if (cancelled) return;
-        setRequests(res.data);
-        setTotal(res.meta.total);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(errMsg(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [page, limit, estadoFilter, refreshKey]);
+  const { data: cached, loading, error, refresh } = useListCache<{ data: BudgetRequest[]; total: number }>(
+    budgetRequestsCacheKey(page, limit, estadoParam),
+    () => budgetRequestsData(page, limit, estadoParam),
+  );
+
+  const requests = useMemo(() => cached?.data ?? [], [cached]);
+  const total = useMemo(() => cached?.total ?? 0, [cached]);
+  const reload = () => { void refresh(); };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -368,7 +353,7 @@ export default function BudgetRequestsPage() {
 
   const onSaved = (updated: BudgetRequest) => {
     setSelected(updated);
-    setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    reload();
   };
 
   const counts = useMemo(() => {

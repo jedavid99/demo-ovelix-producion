@@ -1,19 +1,14 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { clientService } from '@/services/clientService';
+import { useState, useMemo } from 'react';
 import { useClientMutations } from '@/hooks/useClients';
+import { useListCache } from '@/shared/hooks/useListCache';
+import { clientsCacheKey, clientsData } from '@/shared/lib/dataCaches';
 import type { Client, StatusFilter } from '../types/clients.types';
-import { PaginatedResponse } from '@/types/client.types';
 
 export function useClientsPage() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const pageSize = 5;
-
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -24,34 +19,12 @@ export function useClientsPage() {
 
   const { deleteClient, activateClient, deactivateClient, loading: mutationLoading } = useClientMutations();
 
-  const extractClients = useCallback((response: unknown): Client[] => {
-    const r = response as Record<string, unknown>;
-    const d = r?.data as Record<string, unknown> | undefined;
-    let arr = d?.data as Client[] | undefined;
-    if (!Array.isArray(arr)) arr = d?.clientes as Client[] | undefined;
-    if (!Array.isArray(arr)) arr = d as unknown as Client[];
-    return Array.isArray(arr) ? arr : [];
-  }, []);
+  const { data: cachedClients, loading, error, refresh: refreshClients } = useListCache<Client[]>(
+    clientsCacheKey(),
+    () => clientsData(),
+  );
 
-  const fetchClients = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await clientService.list({ page: 1, limit: 100 });
-      const arr = extractClients(response);
-      setClients(arr);
-      setTotal(arr.length);
-    } catch (err: unknown) {
-      console.error('[Clients] Error completo:', err);
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e?.response?.data?.message || 'Error al cargar clientes');
-      setClients([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [extractClients]);
-
-  useEffect(() => { fetchClients(); }, [fetchClients]);
+  const clients = useMemo(() => cachedClients ?? [], [cachedClients]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -74,13 +47,6 @@ export function useClientsPage() {
     setDeactivateAction(client.estado === 'activo' ? 'deactivate' : 'activate');
     setDeactivateDialogOpen(true);
   };
-
-  const refreshClients = useCallback(async () => {
-    const response = await clientService.list({ page: 1, limit: 100 });
-    const arr = extractClients(response);
-    setClients(arr);
-    setTotal(arr.length);
-  }, [extractClients]);
 
   const handleDeleteConfirm = async () => {
     if (!selectedClient?.id) return;

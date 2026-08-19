@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Calendar, CreditCard, ShoppingCart, TrendingUp, DollarSign, Package, RotateCcw } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -28,13 +28,18 @@ export default function Sales() {
   const [fechaHasta, setFechaHasta] = useState('')
   const [metodoPago, setMetodoPago] = useState('')
 
-  const { data, total, totalPages, loading, error, refetch } = useSales({
-    page,
-    limit: 10,
-    fecha_desde: fechaDesde || undefined,
-    fecha_hasta: fechaHasta || undefined,
-    metodo_pago: metodoPago || undefined,
-  })
+  const filters = useMemo(
+    () => ({
+      page,
+      limit: 10,
+      fecha_desde: fechaDesde || undefined,
+      fecha_hasta: fechaHasta || undefined,
+      metodo_pago: metodoPago || undefined,
+    }),
+    [page, fechaDesde, fechaHasta, metodoPago],
+  )
+
+  const { data, total, totalPages, loading, error, refetch } = useSales(filters)
 
   const clearFilters = () => {
     setFechaDesde('')

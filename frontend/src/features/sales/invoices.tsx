@@ -66,12 +66,17 @@ export default function InvoicesList() {
 
   const range = useMemo(() => dateRangeToFilter(dateRange), [dateRange]);
 
-  const { data, total, totalPages, loading, error, refetch } = useSales({
-    page: currentPage,
-    limit: 10,
-    ...range,
-    estado: arcaStatus === 'Error' ? 'anulada' : arcaStatus === 'Autorizada' ? 'completada' : undefined,
-  });
+  const filters = useMemo(
+    () => ({
+      page: currentPage,
+      limit: 10,
+      ...range,
+      estado: arcaStatus === 'Error' ? 'anulada' : arcaStatus === 'Autorizada' ? 'completada' : undefined,
+    }),
+    [currentPage, range, arcaStatus],
+  );
+
+  const { data, total, totalPages, loading, error, refetch } = useSales(filters);
 
   useEffect(() => {
     setCurrentPage(1);

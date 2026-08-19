@@ -7,6 +7,8 @@ import { Toaster } from "@/shared/components/ui/toaster"
 import { TutorialProvider } from "@/features/tutorial"
 import { GuidedTour, HelpTourButton } from "@/features/tutorial"
 import { TourProvider } from "@/features/tutorial"
+import { RepairsPrefetch } from "@/features/repairs/RepairsPrefetch"
+import { DataPrefetch } from "@/app/DataPrefetch"
 function LayoutContent({ children }: { children: React.ReactNode }) {
   return <main className="min-h-screen bg-background text-foreground">{children}</main>
 }
@@ -16,6 +18,8 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       <AppProvider>
         <LoadingProvider>
           <AuthProvider>
+            <RepairsPrefetch />
+            <DataPrefetch />
             <TutorialProvider>
               <TourProvider>
                 <GlobalLoader />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   Calculator,
@@ -18,7 +18,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Input } from '@/shared/components/ui/input';
 import { useToast } from '@/shared/components/ui/use-toast';
-import { settingsApi } from '@/features/settings/services/settingsApi';
+import { useListCache } from '@/shared/hooks/useListCache';
+import { repairCostsCacheKey, repairCostsData } from '@/shared/lib/dataCaches';
 import { repairCostsApi } from '../services/repairCostsApi';
 import { CostFormDialog } from '../components/CostFormDialog';
 import type { RepairCost, RepairCostForm, TaxRate } from '../types/repairCosts.types';
@@ -53,12 +54,6 @@ function StatementRow({ label, value, icon }: { label: string; value: string; ic
 export default function RepairCostsPage() {
   const { toast } = useToast();
 
-  const [costs, setCosts] = useState<RepairCost[]>([]);
-  const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [onlyActive, setOnlyActive] = useState(false);
@@ -69,29 +64,14 @@ export default function RepairCostsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([repairCostsApi.getRepairCosts(), settingsApi.getTaxRates()])
-      .then(([costsData, ratesData]) => {
-        if (cancelled) return;
-        setCosts(costsData);
-        setTaxRates((ratesData || []).map((r: TaxRate) => ({ ...r, porcentaje: Number(r.porcentaje) || 0 })));
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) return;
-        setError(errMsg(err));
-      })
-      .finally(() => {
-        if (!cancelled) return;
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshKey]);
+  const { data: cached, loading, error, refresh } = useListCache<{ costs: RepairCost[]; taxRates: TaxRate[] }>(
+    repairCostsCacheKey(),
+    () => repairCostsData(),
+  );
 
-  const reload = () => setRefreshKey((k) => k + 1);
+  const costs = useMemo(() => cached?.costs ?? [], [cached]);
+  const taxRates = useMemo(() => cached?.taxRates ?? [], [cached]);
+  const reload = () => { void refresh(); };
 
   const categories = useMemo(() => Array.from(new Set(costs.map((c) => c.categoria))).sort(), [costs]);
 
@@ -157,7 +137,7 @@ export default function RepairCostsPage() {
     setTogglingId(cost.id);
     try {
       await repairCostsApi.updateRepairCost(cost.id, { activo: !cost.activo });
-      setCosts((prev) => prev.map((c) => (c.id === cost.id ? { ...c, activo: !c.activo } : c)));
+      reload();
     } catch (err: unknown) {
       toast({ title: 'Error', description: errMsg(err), variant: 'destructive' });
     } finally {
@@ -170,7 +150,7 @@ export default function RepairCostsPage() {
     setDeletingId(cost.id);
     try {
       await repairCostsApi.deleteRepairCost(cost.id);
-      setCosts((prev) => prev.filter((c) => c.id !== cost.id));
+      reload();
       toast({ title: 'Costo eliminado' });
     } catch (err: unknown) {
       toast({ title: 'Error', description: errMsg(err), variant: 'destructive' });

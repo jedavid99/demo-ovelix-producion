@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { ExpensesHeader } from './components/ExpensesHeader';
@@ -62,13 +62,18 @@ export default function Expenses() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
 
-  const { data, totalPages, total, loading, error, refetch } = useExpenses({
-    page: 1,
-    limit: 50,
-    ...dateRange(dateFilter),
-    categoria: categoryFilter !== 'all' ? categoryFilter : undefined,
-    metodo_pago: paymentFilter !== 'all' ? paymentFilter : undefined,
-  });
+  const filters = useMemo(
+    () => ({
+      page: 1,
+      limit: 50,
+      ...dateRange(dateFilter),
+      categoria: categoryFilter !== 'all' ? categoryFilter : undefined,
+      metodo_pago: paymentFilter !== 'all' ? paymentFilter : undefined,
+    }),
+    [dateFilter, categoryFilter, paymentFilter],
+  );
+
+  const { data, totalPages, total, loading, error, refetch } = useExpenses(filters);
   const { data: summary } = useExpenseSummary();
 
   const expenses = data.map(mapExpenseToView);

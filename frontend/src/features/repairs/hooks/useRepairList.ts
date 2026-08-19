@@ -1,46 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { repairApi } from '../services/repairApi';
 import { useRepairFilters } from './useRepairFilters';
 import { useRepairPagination } from './useRepairPagination';
 import { useRepairMutations } from './useRepairMutations';
 import { toast } from '@/shared/components/ui/use-toast';
+import { fetchRepairsData, getRepairsCache } from '../services/repairsCache';
 import type { Repair } from '../types/repairs.types';
 
 export const useRepairList = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [allRepairs, setAllRepairs] = useState<Repair[]>([]);
-  const [totalRepairs, setTotalRepairs] = useState(0);
+  const [loading, setLoading] = useState(() => !getRepairsCache());
+  const [allRepairs, setAllRepairs] = useState<Repair[]>(() => getRepairsCache()?.repairs || []);
+  const [totalRepairs, setTotalRepairs] = useState(() => getRepairsCache()?.total || 0);
   const [error, setError] = useState<string | null>(null);
 
   const loadRepairs = useCallback(async () => {
     try {
-      setLoading(true);
+      const cached = getRepairsCache();
+      if (!cached) setLoading(true);
       setError(null);
-      const clientsResponse = await repairApi.getClients(1000);
-      const clientDniMap = (Array.isArray(clientsResponse) ? clientsResponse : []).reduce((acc: any, client: any) => {
-        if (client.id) acc[client.id] = client.dni || null;
-        return acc;
-      }, {});
-      const rawArray = await repairApi.getRepairs(1000, 'updated_at:desc');
-      const repairsArray = (Array.isArray(rawArray) ? rawArray : []).map((r: any) => ({
-        ...r,
-        cliente_nombre: r.cliente_nombre || r.cliente?.nombre_completo || 'Cliente no especificado',
-        dni: r.dni || r.cliente?.dni || clientDniMap[r.cliente_id] || null,
-        problema_reportado: r.problema_reportado || 'Sin problema',
-        categoria_dispositivo: r.categoria_dispositivo || 'Sin categoría',
-        estado: r.estado?.toLowerCase() || r.estado,
-      }));
-      setAllRepairs(repairsArray);
-      setTotalRepairs(
-        (rawArray as any)?.total || repairsArray.length
-      );
+      const data = await fetchRepairsData();
+      setAllRepairs(data.repairs);
+      setTotalRepairs(data.total);
     } catch (error: any) {
       console.error('Error al cargar reparaciones:', error);
-      setError(error?.response?.data?.message || error?.message || 'No se pudieron cargar las reparaciones');
       toast({ title: 'Error', description: 'No se pudieron cargar las reparaciones', variant: 'destructive' });
+      if (!getRepairsCache()) {
+        setError(error?.response?.data?.message || error?.message || 'No se pudieron cargar las reparaciones');
+      }
     } finally {
       setLoading(false);
     }
