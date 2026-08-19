@@ -258,7 +258,11 @@ export async function submitBudgetRequest(payload: BudgetRequestPayload): Promis
   })
   const json = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error(json?.message ?? json?.error ?? 'No se pudo guardar la solicitud')
+    const error = new Error(
+      json?.message ?? json?.error ?? `No se pudo guardar la solicitud (HTTP ${res.status})`,
+    ) as Error & { status?: number }
+    error.status = res.status
+    throw error
   }
   return (json?.data ?? json) as BudgetRequestResponse
 }

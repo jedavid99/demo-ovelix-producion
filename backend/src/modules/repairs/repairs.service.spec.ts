@@ -63,6 +63,9 @@ describe('RepairsService', () => {
       repairStateHistory: {
         findMany: jest.fn(),
       },
+      tenantPage: {
+        findUnique: jest.fn(),
+      },
       $transaction: jest.fn((cb) => cb(tx)),
     };
 
@@ -287,6 +290,9 @@ describe('RepairsService', () => {
 
     it('should set fecha_entrega when the new state is a delivered state', async () => {
       prisma.repair.findUnique.mockResolvedValue({ ...repair, estado: EstadoReparacion.LISTO_PARA_RETIRAR });
+      prisma.tenantPage.findUnique.mockResolvedValue({
+        config: { warranty: { enabled: false, duration: 6, unit: 'MESES' } },
+      });
       tx.repair.update.mockResolvedValue({ ...repair, estado: EstadoReparacion.ENTREGADO_AL_CLIENTE });
       tx.repairStateHistory.create.mockResolvedValue({ id: 'h-1' });
 
@@ -303,6 +309,62 @@ describe('RepairsService', () => {
           fecha_entrega: expect.any(Date),
         }),
       });
+    });
+
+    it('should activate the company warranty when delivering a repair without warranty', async () => {
+      prisma.repair.findUnique.mockResolvedValue({ ...repair, estado: EstadoReparacion.LISTO_PARA_RETIRAR, tiene_garantia: false });
+      prisma.tenantPage.findUnique.mockResolvedValue({
+        config: { warranty: { enabled: true, duration: 3, unit: 'MESES' } },
+      });
+      tx.repair.update.mockResolvedValue({ ...repair, estado: EstadoReparacion.ENTREGADO_AL_CLIENTE });
+      tx.repairStateHistory.create.mockResolvedValue({ id: 'h-1' });
+
+      await service.updateStatus(
+        'repair-1',
+        { estado: EstadoReparacion.ENTREGADO_AL_CLIENTE },
+        userEmp1,
+      );
+
+      expect(tx.repair.update).toHaveBeenCalledWith({
+        where: { id: 'repair-1' },
+        data: expect.objectContaining({
+          estado: EstadoReparacion.ENTREGADO_AL_CLIENTE,
+          fecha_entrega: expect.any(Date),
+          tiene_garantia: true,
+          garantia_duracion: 3,
+          garantia_unidad: 'MESES',
+          garantia_meses: 3,
+          fecha_inicio_garantia: expect.any(Date),
+          fecha_fin_garantia: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should NOT overwrite an existing warranty when delivering', async () => {
+      prisma.repair.findUnique.mockResolvedValue({
+        ...repair,
+        estado: EstadoReparacion.LISTO_PARA_RETIRAR,
+        tiene_garantia: true,
+        garantia_duracion: 12,
+        garantia_unidad: 'MESES',
+      });
+      tx.repair.update.mockResolvedValue({ ...repair, estado: EstadoReparacion.ENTREGADO_AL_CLIENTE });
+      tx.repairStateHistory.create.mockResolvedValue({ id: 'h-1' });
+
+      await service.updateStatus(
+        'repair-1',
+        { estado: EstadoReparacion.ENTREGADO_AL_CLIENTE },
+        userEmp1,
+      );
+
+      expect(tx.repair.update).toHaveBeenCalledWith({
+        where: { id: 'repair-1' },
+        data: expect.objectContaining({
+          estado: EstadoReparacion.ENTREGADO_AL_CLIENTE,
+          fecha_entrega: expect.any(Date),
+        }),
+      });
+      expect(prisma.tenantPage.findUnique).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when repair does not exist', async () => {
@@ -371,6 +433,31 @@ describe('RepairsService', () => {
       const result = await service.findOne('repair-1', tecnicoUser);
 
       expect(result).toEqual(repair);
+    });
+  });
+
+  describe('update', () => {
+    it('should throw BadRequestException when trying to unmark an already paid repair', async () => {
+      prisma.repair.findUnique.mockResolvedValue({ ...repair, pagado: true });
+
+      await expect(
+        service.update('repair-1', { pagado: false }, userEmp1),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow keeping pagado as true on an already paid repair', async () => {
+      prisma.repair.findUnique.mockResolvedValue({ ...repair, pagado: true });
+      prisma.repair.update = jest.fn().mockResolvedValue({ ...repair, pagado: true });
+
+      const result = await service.update('repair-1', { pagado: true }, userEmp1);
+
+      expect(prisma.repair.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'repair-1' },
+          data: expect.objectContaining({ pagado: true }),
+        }),
+      );
+      expect(result.pagado).toBe(true);
     });
   });
 

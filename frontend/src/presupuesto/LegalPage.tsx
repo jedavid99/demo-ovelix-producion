@@ -1,7 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Clock, MapPin } from 'lucide-react'
-import { useTenantPage, tenantHref } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
+import { tenantHref } from './tenantConfig'
 
 export default function LegalPage({ slug: slugProp }: { slug?: string } = {}) {
   const { slug: slugParam } = useParams<{ slug: string }>()

@@ -21,7 +21,7 @@ import {
   ChevronRight,
   FileQuestion,
 } from 'lucide-react'
-import { useTenantPage } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
 import { parseSchedule, buildBusinessSlots, businessDaysLabel, hoursLabel } from './schedule'
 import { savePendingQuote, formatARS, type TenantQuoteSelection } from './tenant'
 import {
@@ -371,7 +371,7 @@ export default function PresupuestoFlow() {
     window.open(buildWhatsAppUrl(quote), '_blank')
 
     // Persistimos la solicitud en el backend para generar número de orden y seguimiento.
-    const slug = resolveTenantSlug()
+    const slug = resolveTenantSlug() ?? (tenant.slug && tenant.slug !== 'ovelix' ? tenant.slug : null)
     if (slug) {
       try {
         const precio = quote.precio ?? null
@@ -409,6 +409,10 @@ export default function PresupuestoFlow() {
         console.warn('No se pudo guardar la reserva en el backend:', err)
         setSaveFailed(true)
       }
+    } else {
+      // Sin empresa asociada (plantilla) el backend no puede guardar: no fallar en silencio.
+      console.warn('No se pudo guardar la reserva: no hay slug de empresa asociado a esta página.')
+      setSaveFailed(true)
     }
   }
 

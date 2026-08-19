@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { login as loginService, getMe } from '../services/auth.service';
-import { clearAuthToken } from '../services/api';
+import { clearAuthToken, isPublicPage } from '../services/api';
 import { logger } from '@/utils/logger';
 import { jwtDecode } from 'jwt-decode';
 
@@ -52,47 +52,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('access_token');
-      
-      if (token) {
-        try {
-          const currentUser = await getMe();
-          
-          // Decodificar el token para obtener los permisos
-          let decodedToken: DecodedToken = {};
-          try {
-            decodedToken = jwtDecode<DecodedToken>(token);
-          } catch (error) {
-            logger.error('Error al decodificar token en initAuth:', error);
-          }
-          
-          // Agregar permisos del token al usuario
-          if (decodedToken.permissions && currentUser) {
-            currentUser.permissions = decodedToken.permissions;
-          }
-          
-          setUser(currentUser);
-          localStorage.setItem('user_data', JSON.stringify(currentUser));
-          setIsAuthenticated(true);
-        } catch (error) {
-          logger.error('Error al obtener usuario en initAuth:', error);
-          const cached = localStorage.getItem('user_data');
-          if (cached) {
-            try {
-              setUser(JSON.parse(cached));
-            } catch {
-              setUser(null);
-            }
-            setIsAuthenticated(true);
-          } else {
-            clearAuthToken();
-            setUser(null);
-            setIsAuthenticated(false);
-          }
-        }
-      } else {
+
+      if (!token) {
         localStorage.removeItem('user_data');
         setUser(null);
         setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
+
+      // En páginas públicas (presupuesto, repair-status, etc.) no se valida el
+      // token contra el backend: evita que un 401 cierre la sesión o redirija
+      // al login del sistema de gestión.
+      if (isPublicPage(window.location.pathname)) {
+        const cached = localStorage.getItem('user_data');
+        if (cached) {
+          try {
+            setUser(JSON.parse(cached));
+            setIsAuthenticated(true);
+          } catch {
+            setUser(null);
+          }
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const currentUser = await getMe();
+        
+        // Decodificar el token para obtener los permisos
+        let decodedToken: DecodedToken = {};
+        try {
+          decodedToken = jwtDecode<DecodedToken>(token);
+        } catch (error) {
+          logger.error('Error al decodificar token en initAuth:', error);
+        }
+        
+        // Agregar permisos del token al usuario
+        if (decodedToken.permissions && currentUser) {
+          currentUser.permissions = decodedToken.permissions;
+        }
+        
+        setUser(currentUser);
+        localStorage.setItem('user_data', JSON.stringify(currentUser));
+        setIsAuthenticated(true);
+      } catch (error) {
+        logger.error('Error al obtener usuario en initAuth:', error);
+        const cached = localStorage.getItem('user_data');
+        if (cached) {
+          try {
+            setUser(JSON.parse(cached));
+          } catch {
+            setUser(null);
+          }
+          setIsAuthenticated(true);
+        } else {
+          clearAuthToken();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
       
       setIsLoading(false);
@@ -152,6 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const resetTimer = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
+        // No cerrar la sesión en páginas públicas (presupuesto, etc.)
+        if (isPublicPage(window.location.pathname)) return;
         logger.warn('AuthContext: sesión expirada por inactividad (2 min)');
         logout();
       }, INACTIVITY_TIMEOUT_MS);

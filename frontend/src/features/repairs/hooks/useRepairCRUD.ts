@@ -29,7 +29,7 @@ export function useRepairCRUD(onSuccess: () => void) {
   const markAsDelivered = async (repairId: string) => {
     setIsMarkingDelivered(true);
     try {
-      await repairApi.updateRepairStatus(repairId, { estado: 'delivered' });
+      await repairApi.updateRepairStatus(repairId, { estado: 'ENTREGADO_AL_CLIENTE' });
       toast({ title: 'Éxito', description: 'Reparación marcada como entregada' });
       onSuccess();
       return true;

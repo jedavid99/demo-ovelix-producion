@@ -48,9 +48,13 @@ export function useRepairPreview(repairId: string, isOpen: boolean) {
   const getPriorityBadge = (priority: string) => {
     const map: Record<string, { variant: 'default' | 'warning' | 'destructive'; label: string }> = {
       low: { variant: 'default', label: 'Baja' },
-      medium: { variant: 'default', label: 'Normal' },
+      baja: { variant: 'default', label: 'Baja' },
+      medium: { variant: 'default', label: 'Media' },
+      media: { variant: 'default', label: 'Media' },
       high: { variant: 'warning', label: 'Alta' },
+      alta: { variant: 'warning', label: 'Alta' },
       critical: { variant: 'destructive', label: 'Crítica' },
+      urgente: { variant: 'destructive', label: 'Urgente' },
     };
     return map[priority] ?? { variant: 'default' as const, label: priority };
   };

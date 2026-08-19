@@ -74,7 +74,7 @@ export function useRepairCreate(data: RepairData | undefined, updateData: ((upda
       if (state.aestheticCondition) payload.condicion_estetica = state.aestheticCondition;
       if (state.accessories && state.accessories.length > 0) payload.accesorios_incluidos = state.accessories;
       if (state.priority) {
-        const pMap: Record<string, string> = { Normal: 'medium', Baja: 'low', Alta: 'high' };
+        const pMap: Record<string, string> = { Media: 'medium', Baja: 'low', Alta: 'high' };
         payload.prioridad = pMap[state.priority] || 'critical';
       }
       if (state.estimatedDays) {

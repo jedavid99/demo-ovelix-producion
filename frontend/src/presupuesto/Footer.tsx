@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Clock, MapPin, Instagram, Facebook } from 'lucide-react'
-import { useTenantPage, tenantHref } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
+import { tenantHref } from './tenantConfig'
 
 function WhatsAppIcon({ size = 16 }: { size?: number }) {
   return (

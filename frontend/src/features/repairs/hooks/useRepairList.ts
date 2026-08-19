@@ -58,10 +58,10 @@ export const useRepairList = () => {
   const { currentPage, setCurrentPage, paginatedRepairs, totalPages, totalFiltered } = useRepairPagination(filteredRepairs);
   const mutations = useRepairMutations(loadRepairs, allRepairs);
 
-  const pendingToday = allRepairs.filter((r) => r.estado === 'pending' || r.estado === 'diagnostic').length;
-  const expiringSoon = allRepairs.filter((r) => r.estado === 'waiting_parts').length;
-  const readyToPickup = allRepairs.filter((r) => r.estado === 'ready').length;
-  const totalRevenue = allRepairs.filter((r) => r.estado === 'delivered' && r.total_reparacion)
+  const pendingToday = allRepairs.filter((r) => r.estado === 'ingresado').length;
+  const expiringSoon = allRepairs.filter((r) => r.estado === 'esperando_repuesto_local' || r.estado === 'esperando_repuesto_importacion').length;
+  const readyToPickup = allRepairs.filter((r) => r.estado === 'listo_para_retirar').length;
+  const totalRevenue = allRepairs.filter((r) => r.estado === 'entregado_al_cliente' && r.total_reparacion)
     .reduce((sum, r) => sum + (Number(r.total_reparacion) || 0), 0);
 
   useEffect(() => {

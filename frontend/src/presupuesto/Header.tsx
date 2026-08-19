@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
-import { useTenantPage, tenantHref } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
+import { tenantHref } from './tenantConfig'
 
 export default function Header() {
   const { brand, nav } = useTenantPage()

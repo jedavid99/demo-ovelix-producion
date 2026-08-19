@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useState } from 'react'
-
 /* =====================================================================
    CONFIG PÚBLICA DE LA PÁGINA DE PRESUPUESTO
    Fuente primaria: GET /public/tenant-pages/:slug (backend Overlix).
@@ -132,6 +130,11 @@ export interface TenantPageConfig {
     confirmed: string
     guaranteeTitle: string
     guaranteeText: string
+  }
+  warranty?: {
+    enabled: boolean
+    duration: number
+    unit: 'DIAS' | 'MESES'
   }
 }
 
@@ -340,18 +343,34 @@ export const DEFAULT_CONFIG: TenantPageConfig = {
     guaranteeTitle: 'GARANTÍA',
     guaranteeText: 'Todos los trabajos incluyen garantía por escrito con repuestos originales.',
   },
+  warranty: {
+    enabled: true,
+    duration: 6,
+    unit: 'MESES',
+  },
 }
 
-/** Devuelve el slug de empresa según el subdominio, VITE_PAGE_SLUG o ?slug= (dev en localhost). */
+/** Devuelve el slug de empresa. Prioriza la ruta por empresa (/presupuesto.<empresa>)
+ *  y el subdominio. La plantilla /presupuesto* SIEMPRE es la plantilla: nunca
+ *  hereda el slug persistido en la sesión para no mezclar datos entre sitios. */
 export function resolveTenantSlug(): string | null {
   const envSlug = (import.meta.env.VITE_PAGE_SLUG as string | undefined)?.trim()
   if (envSlug) return envSlug.toLowerCase()
   if (typeof window === 'undefined') return null
+
+  // Dev en localhost: la empresa va en la URL, /presupuesto.<empresa>[/...]
+  const tenantPath = /^\/presupuesto\.([^/]+)/.exec(window.location.pathname)
+  if (tenantPath) return tenantPath[1].toLowerCase()
+
   const host = window.location.hostname || ''
   const parts = host.split('.')
   const sub = parts[0]?.toLowerCase()
   if (sub && sub !== 'www' && sub !== 'localhost') return sub
-  // Dev en localhost: ?slug=EMP001 (se persiste en la sesión para el resto del sitio)
+
+  // Ruta plantilla: aislamiento total, no se aplica ?slug= ni el slug de sesión.
+  if (/^\/presupuesto\/?/.test(window.location.pathname)) return null
+
+  // Dev en localhost (rutas no-plantilla): ?slug=EMP001 persistido en la sesión.
   const urlSlug = new URLSearchParams(window.location.search).get('slug')
   if (urlSlug?.trim()) {
     try {
@@ -379,7 +398,7 @@ export function tenantHref(to: string): string {
 }
 
 /** Trae la config pública publicada por la empresa; fallback a demo. */
-async function fetchTenantPage(slug: string | null): Promise<TenantPageConfig> {
+export async function fetchTenantPage(slug: string | null): Promise<TenantPageConfig> {
   if (!slug) return DEFAULT_CONFIG
   try {
     const res = await fetch(`${API_BASE}/public/tenant-pages/${encodeURIComponent(slug)}`)
@@ -396,45 +415,9 @@ async function fetchTenantPage(slug: string | null): Promise<TenantPageConfig> {
       contact: { ...DEFAULT_CONFIG.contact, ...(config.contact ?? {}) },
       booking: { ...DEFAULT_CONFIG.booking, ...(config.booking ?? {}) },
       checkout: config.checkout ?? DEFAULT_CONFIG.checkout,
+      warranty: { ...DEFAULT_CONFIG.warranty, ...(config.warranty ?? {}) },
     }
   } catch {
     return DEFAULT_CONFIG
   }
-}
-
-/** Hook: resuelve el slug, busca la config pública y aplica el theme en CSS vars. */
-export function useTenantPage() {
-  const [config, setConfig] = useState<TenantPageConfig>(DEFAULT_CONFIG)
-  const slug = useMemo(() => resolveTenantSlug(), [])
-
-  useEffect(() => {
-    let cancelled = false
-    fetchTenantPage(slug).then(c => {
-      if (!cancelled) setConfig(c)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [slug])
-
-  useEffect(() => {
-    const root = document.documentElement
-    const t = config.theme
-    const vars: Record<string, string> = {
-      '--tc-primary': t.primaryColor,
-      '--tc-on-primary': t.onPrimary,
-      '--tc-accent': t.accentText,
-      '--tc-accent-fill': t.accentFill,
-      '--tc-on-accent-fill': t.onAccentFill,
-      '--tc-accent-hover': t.accentHover,
-      '--tc-secondary-fill': t.secondaryFill,
-      '--tc-on-secondary-fill': t.onSecondaryFill,
-      '--tc-secondary-hover': t.secondaryHover,
-    }
-    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v))
-    root.lang = 'es-AR'
-    document.title = `${config.brand.name} | Presupuesto`
-  }, [config])
-
-  return config
 }

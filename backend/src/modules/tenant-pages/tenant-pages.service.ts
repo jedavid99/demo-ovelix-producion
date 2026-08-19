@@ -1,9 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import type { TenantPageConfigDto, UpdateTenantPageDto } from './dto/tenant-pages.dto';
 
 const PLACEHOLDER_IMG =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuBhqgrFbPNZs2zFtmho7lZ4fcJwHn1we56cCRq9lxJaxws7Wi_CvhbT62c9OD2I1aPkT_6sQWwxC7fHktSGU5fej1TiiwE95l9ekWnmGhNpmb--7nAGSNihSOZY8TWjmmVMGEw_jpPaVf5L411xLyFwUNRXoGeeAmaVIGdxFj_k6_1pKpet1t4nTzAFN-phOUnnUa22zEmOa3_Gi3-jyrVDpnsCG-xTht9kyGyP5ieWrn7SndCSdZAapfuYQV2adUBCe61Hj7MSz3GS';
+
+/** Garantía por defecto de las reparaciones reservadas (la activa el admin desde el dashboard). */
+export type TenantWarranty = { enabled: boolean; duration: number; unit: 'DIAS' | 'MESES' };
+
+export const DEFAULT_WARRANTY: TenantWarranty = { enabled: true, duration: 6, unit: 'MESES' };
+
+/** Garantía normalizada (aplica defaults si la config guardada no la define). */
+export function normalizeWarranty(raw: Partial<TenantWarranty> | undefined): TenantWarranty {
+  return {
+    ...DEFAULT_WARRANTY,
+    ...(raw?.enabled !== undefined ? { enabled: raw.enabled } : {}),
+    ...(raw?.duration != null ? { duration: raw.duration } : {}),
+    ...(raw?.unit ? { unit: raw.unit } : {}),
+  };
+}
 
 export function buildDefaultConfig(slug: string, companyName?: string): TenantPageConfigDto {
   const name = companyName || 'Mi negocio';
@@ -215,6 +230,7 @@ export function buildDefaultConfig(slug: string, companyName?: string): TenantPa
       guaranteeTitle: 'GARANTÍA',
       guaranteeText: 'Todos los trabajos incluyen garantía por escrito con repuestos originales.',
     },
+    warranty: { ...DEFAULT_WARRANTY },
   };
 }
 
@@ -224,6 +240,9 @@ export class TenantPagesService {
 
   /** Config editable desde el dashboard (por empresa del token) */
   async getForCompany(empresaId: string) {
+    if (!empresaId) {
+      throw new BadRequestException('Necesitás seleccionar una empresa para configurar su página de presupuesto');
+    }
     const company = await this.prisma.company.findUnique({
       where: { id: empresaId },
       include: {
@@ -258,6 +277,9 @@ export class TenantPagesService {
 
   /** Persiste la config del dashboard (upsert) */
   async upsert(empresaId: string, body: UpdateTenantPageDto) {
+    if (!empresaId) {
+      throw new BadRequestException('Necesitás seleccionar una empresa para configurar su página de presupuesto');
+    }
     const existing = await this.prisma.tenantPage.findUnique({
       where: { empresa_id: empresaId },
     });
@@ -375,6 +397,7 @@ export class TenantPagesService {
 
     return {
       ...config,
+      warranty: normalizeWarranty(config.warranty),
       contact: {
         ...config.contact,
         ...(phone ? { phone } : {}),

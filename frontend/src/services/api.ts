@@ -38,29 +38,49 @@ export const clearAuthToken = () => {
 // Rutas públicas que no deben redirigir en caso de 401
 const publicRoutes = ['/auth/login', '/auth/register'];
 
+/** Páginas del frontend que NO pertenecen al sistema de gestión
+ *  (sitio público de presupuesto, status de reparación, auth, previews).
+ *  En ellas no se cierra la sesión ni se redirige a /login. */
+export function isPublicPage(pathname: string): boolean {
+  return (
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/unauthorized' ||
+    pathname === '/admin/login' ||
+    pathname === '/admin/generate-codes' ||
+    pathname === '/admin/activation-codes' ||
+    pathname === '/repair-status' ||
+    pathname === '/presupuesto' ||
+    pathname.startsWith('/presupuesto/') ||
+    pathname.startsWith('/presupuesto.') ||
+    pathname === '/presupuesto-piloto' ||
+    pathname.startsWith('/developer/templates/')
+  );
+}
+
 // Interceptor response: maneja 401 solo en rutas protegidas
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const originalRequest = error.config;
-    
+
     // Verificar si es 401 y NO es una ruta pública
     if (error.response?.status === 401) {
-      const isPublicRoute = publicRoutes.some(route => 
+      const isPublicRoute = publicRoutes.some(route =>
         originalRequest.url?.includes(route)
       );
-      
-      if (!isPublicRoute) {
+
+      if (!isPublicRoute && !isPublicPage(window.location.pathname)) {
         // Eliminar token y redirigir solo en rutas protegidas
         clearAuthToken();
         // Disparar evento para notificar al AuthContext
         window.dispatchEvent(new CustomEvent('auth:logout'));
         window.location.href = '/login';
       }
-    } else if (error.response?.status === 403) {
+    } else if (error.response?.status === 403 && !isPublicPage(window.location.pathname)) {
       window.location.href = '/unauthorized';
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -206,6 +206,12 @@ export const tenantCheckoutSchema = z.object({
   accountNumber: z.string().max(60),
 });
 
+export const tenantWarrantySchema = z.object({
+  enabled: z.boolean(),
+  duration: z.number().int().min(1).max(120),
+  unit: z.enum(['DIAS', 'MESES']),
+});
+
 export const tenantPageConfigSchema = z.object({
   slug: z.string().max(80),
   enabled: z.boolean(),
@@ -228,6 +234,7 @@ export const tenantPageConfigSchema = z.object({
   tracking: tenantTrackingSchema,
   booking: tenantBookingSchema,
   checkout: tenantCheckoutSchema,
+  warranty: tenantWarrantySchema.optional(),
 });
 
 export const updateTenantPageSchema = z.object({

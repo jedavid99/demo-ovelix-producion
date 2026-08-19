@@ -8,6 +8,7 @@ import { GenerateConfigPdfDto } from './dto/generate-config-pdf.dto';
 import { Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import { EstadoReparacion } from './enums/estado-reparacion.enum';
+import { normalizeWarranty } from '../tenant-pages/tenant-pages.service';
 
 @Injectable()
 export class RepairsService {
@@ -315,6 +316,11 @@ export class RepairsService {
       throw new ForbiddenException('No tienes permiso para editar esta reparación');
     }
 
+    // Una vez marcada como pagada, el estado de pago no se puede revertir
+    if (repair.pagado && validatedData.pagado === false) {
+      throw new BadRequestException('No se puede modificar el estado de pago de una reparación ya pagada');
+    }
+
     // Si se asigna un técnico, verificar que exista y pertenezca a la empresa
     if (validatedData.tecnico_asignado_id) {
       const technician = await this.prisma.user.findUnique({
@@ -452,12 +458,37 @@ export class RepairsService {
     const updateData: any = { estado: nuevoEstado };
 
     // Si el nuevo estado es "entregado" o similar, registrar fecha de entrega
-    if ([
+    const ESTADOS_ENTREGA = [
       EstadoReparacion.ENTREGADO_AL_CLIENTE,
       EstadoReparacion.IRREPARABLE_ENTREGADO,
       EstadoReparacion.GARANTIA_ENTREGADO,
-    ].includes(nuevoEstado)) {
+    ];
+    if (ESTADOS_ENTREGA.includes(nuevoEstado)) {
       updateData.fecha_entrega = new Date();
+    }
+
+    // Al entregar un equipo que no tiene garantía, activar la garantía configurada por la empresa
+    if (ESTADOS_ENTREGA.includes(nuevoEstado) && !repair.tiene_garantia) {
+      const tenantPage = await this.prisma.tenantPage.findUnique({
+        where: { empresa_id: repair.empresa_id },
+        select: { config: true },
+      });
+      const warranty = normalizeWarranty((tenantPage?.config as any)?.warranty);
+      if (warranty.enabled && warranty.duration > 0) {
+        const fechaInicio = new Date(updateData.fecha_entrega);
+        const fechaFin = new Date(fechaInicio);
+        if (warranty.unit === 'DIAS') {
+          fechaFin.setDate(fechaFin.getDate() + warranty.duration);
+        } else {
+          fechaFin.setMonth(fechaFin.getMonth() + warranty.duration);
+        }
+        updateData.tiene_garantia = true;
+        updateData.garantia_duracion = warranty.duration;
+        updateData.garantia_unidad = warranty.unit;
+        updateData.garantia_meses = warranty.unit === 'MESES' ? warranty.duration : null;
+        updateData.fecha_inicio_garantia = fechaInicio;
+        updateData.fecha_fin_garantia = fechaFin;
+      }
     }
 
     // 4. Actualizar la reparación + crear historial en una transacción

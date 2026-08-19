@@ -55,7 +55,19 @@ export const getPriorityBadge = (priority: string): PriorityStyle => {
       border: 'border-slate-300 dark:border-slate-600',
       label: 'Baja',
     },
+    low: {
+      bg: 'bg-slate-100 dark:bg-slate-800',
+      text: 'text-slate-600 dark:text-slate-300',
+      border: 'border-slate-300 dark:border-slate-600',
+      label: 'Baja',
+    },
     media: {
+      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      text: 'text-blue-700 dark:text-blue-300',
+      border: 'border-blue-300 dark:border-blue-700',
+      label: 'Media',
+    },
+    medium: {
       bg: 'bg-blue-100 dark:bg-blue-900/30',
       text: 'text-blue-700 dark:text-blue-300',
       border: 'border-blue-300 dark:border-blue-700',
@@ -67,11 +79,23 @@ export const getPriorityBadge = (priority: string): PriorityStyle => {
       border: 'border-orange-300 dark:border-orange-700',
       label: 'Alta',
     },
+    high: {
+      bg: 'bg-orange-100 dark:bg-orange-900/30',
+      text: 'text-orange-700 dark:text-orange-300',
+      border: 'border-orange-300 dark:border-orange-700',
+      label: 'Alta',
+    },
     urgente: {
       bg: 'bg-red-100 dark:bg-red-900/30',
       text: 'text-red-700 dark:text-red-300',
       border: 'border-red-300 dark:border-red-700',
-      label: 'urgente',
+      label: 'Urgente',
+    },
+    critical: {
+      bg: 'bg-red-100 dark:bg-red-900/30',
+      text: 'text-red-700 dark:text-red-300',
+      border: 'border-red-300 dark:border-red-700',
+      label: 'Crítica',
     },
   };
 

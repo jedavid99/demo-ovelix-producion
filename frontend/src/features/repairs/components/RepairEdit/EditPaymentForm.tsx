@@ -21,6 +21,7 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
   setFormData,
 }) => {
   const handleTogglePagado = () => {
+    if (formData.pagado) return;
     setFormData((prev) => {
       const nuevoPagado = !prev.pagado;
       return {
@@ -32,12 +33,15 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
   };
 
   const handleMontoPagadoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (formData.pagado) return;
     const value = parseFloat(e.target.value);
     setFormData((prev) => ({
       ...prev,
       monto_pagado: isNaN(value) ? 0 : value,
     }));
   };
+
+  const isPaidLocked = formData.pagado === true;
 
   return (
     <div className="space-y-4">
@@ -54,9 +58,12 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
         <button
           type="button"
           onClick={handleTogglePagado}
+          disabled={isPaidLocked}
+          aria-disabled={isPaidLocked}
+          title={isPaidLocked ? 'Una vez pagado, el estado de pago no se puede modificar' : undefined}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
             formData.pagado ? 'bg-success' : 'bg-muted'
-          }`}
+          } ${isPaidLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
@@ -65,6 +72,11 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
           />
         </button>
       </div>
+      {isPaidLocked && (
+        <p className="text-xs text-muted-foreground">
+          El estado de pago ya fue registrado como Pagado y no puede modificarse.
+        </p>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-foreground mb-1">
@@ -75,7 +87,8 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
           onChange={(e) =>
             setFormData({ ...formData, metodo_pago: e.target.value })
           }
-          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          disabled={isPaidLocked}
+          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
           <option value="">Seleccionar método</option>
           {METODO_PAGO_OPTIONS.map((opt) => (
@@ -105,7 +118,7 @@ export const EditPaymentForm: React.FC<EditPaymentFormProps> = ({
             value={formData.monto_pagado || 0}
             onChange={handleMontoPagadoChange}
             className="mt-1 h-8 text-lg font-bold bg-transparent border-0 p-0 focus-visible:ring-0"
-            disabled={!formData.pagado}
+            disabled={isPaidLocked}
           />
         </div>
       </div>

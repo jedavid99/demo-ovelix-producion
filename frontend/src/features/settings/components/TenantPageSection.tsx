@@ -19,10 +19,13 @@ import {
   Award,
   Cpu,
   CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from '@/shared/components/ui/use-toast';
 import { Switch } from '@/shared/components/ui/switch';
 import { Button } from '@/shared/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import api from '@/services/api';
 import type { TenantPageConfig, TenantPageResponse } from '../types/tenantPage/tenantPage.types';
 import { tenantPagesApi } from '../services/tenantPagesApi';
 import { getSectionMeta } from '../constants/settings.constants';
@@ -65,17 +68,42 @@ const DEFAULT_THEME: TenantPageConfig['theme'] = {
 
 export const TenantPageSection: React.FC = () => {
   const meta = getSectionMeta('tenantPage');
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const isGlobalDev = user?.rol === 'DESARROLLADOR' && !user?.empresa_id;
+  const [loading, setLoading] = useState(() => Boolean(user?.empresa_id));
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<TenantPageConfig | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [company, setCompany] = useState<TenantPageResponse['company'] | null>(null);
   const [copied, setCopied] = useState(false);
+  const [companies, setCompanies] = useState<{ id: string; codigo_empresa: string; razon_social: string }[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(() => Boolean(user?.rol === 'DESARROLLADOR' && !user?.empresa_id));
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>(user?.empresa_id ?? '');
+
+  // Un desarrollador global elige qué empresa configurar.
+  useEffect(() => {
+    if (!isGlobalDev) return;
+    let mounted = true;
+    api
+      .get('/companies')
+      .then((res) => {
+        if (mounted) setCompanies(res.data.data || res.data || []);
+      })
+      .catch(() => {
+        if (mounted)
+          toast({ title: 'Error', description: 'No se pudieron cargar las empresas', variant: 'destructive' });
+      })
+      .finally(() => mounted && setLoadingCompanies(false));
+    return () => {
+      mounted = false;
+    };
+  }, [isGlobalDev]);
 
   useEffect(() => {
+    if (!selectedEmpresaId) return;
     let mounted = true;
     tenantPagesApi
-      .get()
+      .get(isGlobalDev ? selectedEmpresaId : undefined)
       .then((res) => {
         if (!mounted) return;
         setConfig(JSON.parse(JSON.stringify(res.config)));
@@ -90,13 +118,16 @@ export const TenantPageSection: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedEmpresaId, isGlobalDev]);
 
   const save = async () => {
     if (!config) return;
     setSaving(true);
     try {
-      const saved = await tenantPagesApi.update({ config, enabled });
+      const saved = await tenantPagesApi.update(
+        { config, enabled },
+        isGlobalDev ? selectedEmpresaId : undefined,
+      );
       setEnabled(!!saved.enabled);
       setConfig(JSON.parse(JSON.stringify(saved.config)));
       toast({ title: 'Éxito', description: 'Página de presupuesto actualizada' });
@@ -295,6 +326,33 @@ export const TenantPageSection: React.FC = () => {
   return (
     <div className="space-y-6 pb-24">
       <SectionHeader icon={meta.icon} eyebrow={meta.eyebrow} title={meta.label} description={meta.description} />
+
+      {isGlobalDev && (
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <label className="block text-sm font-semibold text-foreground mb-1.5">Empresa a configurar</label>
+          <p className="text-sm text-muted-foreground mb-3">
+            Como desarrollador elegí la empresa para configurar su página de presupuesto.
+          </p>
+          <select
+            value={selectedEmpresaId}
+            onChange={(e) => {
+              setSelectedEmpresaId(e.target.value);
+              setConfig(null);
+              setCompany(null);
+              setLoading(!!e.target.value);
+            }}
+            disabled={loadingCompanies}
+            className="w-full md:w-96 rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"
+          >
+            <option value="">{loadingCompanies ? 'Cargando empresas...' : 'Seleccionar empresa'}</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.codigo_empresa} — {c.razon_social || 'Sin nombre'}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
@@ -712,6 +770,53 @@ export const TenantPageSection: React.FC = () => {
             onChange={(v) => setCheckoutField('accountNumber', v)}
             placeholder="0000000000001"
           />
+        </div>
+      </Card>
+
+      <Card title="Garantía de los equipos" icon={<ShieldCheck size={18} />}>
+        <p className="text-sm text-muted-foreground mb-4">
+          Se aplica automáticamente a las reparaciones creadas desde las reservas de tu página de presupuesto. Cuando
+          entregás el equipo, la garantía corre desde la fecha de entrega.
+        </p>
+        <div className="flex flex-col gap-4">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
+            <Switch
+              checked={config.warranty?.enabled ?? false}
+              onCheckedChange={(v) => setField('warranty', 'enabled', v)}
+              aria-label="Activar garantía"
+            />
+            Incluir garantía en las reparaciones reservadas
+          </label>
+          {(config.warranty?.enabled ?? false) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">
+                  Duración
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={config.warranty?.duration ?? 6}
+                  onChange={(e) => setField('warranty', 'duration', Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground dark:text-muted-foreground mb-1.5">
+                  Unidad
+                </label>
+                <select
+                  value={config.warranty?.unit ?? 'MESES'}
+                  onChange={(e) => setField('warranty', 'unit', e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"
+                >
+                  <option value="MESES">Meses</option>
+                  <option value="DIAS">Días</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

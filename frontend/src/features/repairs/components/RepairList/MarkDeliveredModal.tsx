@@ -38,6 +38,7 @@ export const MarkDeliveredModal: React.FC<MarkDeliveredModalProps> = ({
           <DialogDescription>
             ¿Estás seguro de que quieres marcar esta reparación como entregada?
             Esta acción cambiará el estado a "Entregado" y no se podrá deshacer.
+            Si el equipo no tiene garantía, se le activará la garantía configurada para la empresa.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

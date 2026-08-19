@@ -12,6 +12,11 @@ export const STATUS_MAP: Record<string, { label: string; color: string; icon: Re
 
 export const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
   alta: { label: 'Alta', color: '#EF4444' },
+  high: { label: 'Alta', color: '#EF4444' },
   media: { label: 'Media', color: '#F59E0B' },
+  medium: { label: 'Media', color: '#F59E0B' },
   baja: { label: 'Baja', color: '#10B981' },
+  low: { label: 'Baja', color: '#10B981' },
+  urgente: { label: 'Urgente', color: '#DC2626' },
+  critical: { label: 'Crítica', color: '#DC2626' },
 };

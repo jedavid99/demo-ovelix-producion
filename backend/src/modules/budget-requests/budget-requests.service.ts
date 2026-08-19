@@ -6,6 +6,7 @@ import { CreateBudgetRequestDto } from './dto/create-budget-request.dto';
 import { UpdateBudgetRequestDto } from './dto/update-budget-request.dto';
 import { PayBudgetRequestDto } from './dto/pay-budget-request.dto';
 import { BudgetRequestEstado } from './enums/budget-request-estado.enum';
+import { normalizeWarranty } from '../tenant-pages/tenant-pages.service';
 
 type BudgetRequestWithRepair = Prisma.BudgetRequestGetPayload<{
   include: { repair: { select: { numero_reparacion: true; estado: true } } };
@@ -207,6 +208,25 @@ export class BudgetRequestsService {
 
       const precioFinal = request.precio_ajustado ?? request.precio_ofertado;
 
+      // Garantía configurada por el admin en la página de presupuesto de la empresa.
+      const tenantPage = await tx.tenantPage.findUnique({
+        where: { empresa_id: request.empresa_id },
+        select: { config: true },
+      });
+      const warranty = normalizeWarranty((tenantPage?.config as any)?.warranty);
+
+      let fechaInicioGarantia: Date | null = null;
+      let fechaFinGarantia: Date | null = null;
+      if (warranty.enabled) {
+        fechaInicioGarantia = new Date();
+        fechaFinGarantia = new Date(fechaInicioGarantia);
+        if (warranty.unit === 'DIAS') {
+          fechaFinGarantia.setDate(fechaFinGarantia.getDate() + warranty.duration);
+        } else {
+          fechaFinGarantia.setMonth(fechaFinGarantia.getMonth() + warranty.duration);
+        }
+      }
+
       const repair = await tx.repair.create({
         data: {
           cliente_id: client.id,
@@ -219,12 +239,19 @@ export class BudgetRequestsService {
           problema_reportado:
             request.problema || request.descripcion || `Solicitud de presupuesto: ${request.dispositivo}`,
           estado: 'INGRESADO',
+          prioridad: 'medium',
           fecha_ingreso: new Date(),
           hora_ingreso: new Date().toTimeString().slice(0, 5),
           costo_estimado: request.precio_ofertado ?? null,
           total_reparacion: precioFinal ?? null,
           abono: request.sena_monto ?? null,
           forma_pago: request.plan_pago === 'half' ? '50% + 50%' : request.plan_pago === 'full' ? 'Pago completo' : null,
+          tiene_garantia: warranty.enabled,
+          garantia_duracion: warranty.enabled ? warranty.duration : null,
+          garantia_unidad: warranty.enabled ? warranty.unit : null,
+          garantia_meses: warranty.enabled && warranty.unit === 'MESES' ? warranty.duration : null,
+          fecha_inicio_garantia: fechaInicioGarantia,
+          fecha_fin_garantia: fechaFinGarantia,
           notas: [
             request.descripcion || null,
             request.sena_monto != null ? `Seña (${request.sena_metodo || '—'}): ${request.sena_monto} ${request.comprobante ? `(comprobante ${request.comprobante})` : ''}` : null,

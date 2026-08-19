@@ -69,7 +69,7 @@ export const RepairDiagnosticForm: React.FC<RepairDiagnosticFormProps> = ({
               onChange={(e) => onPriorityChange(e.target.value)}
               className="w-full bg-muted border border-border rounded-lg py-2 px-3 text-sm focus:ring-primary/10 focus:border-primary transition-all text-foreground"
             >
-              <option>Normal</option>
+              <option>Media</option>
               <option>Urgente</option>
               <option>Baja</option>
             </select>

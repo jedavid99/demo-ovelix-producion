@@ -137,31 +137,9 @@ export const useRepairEdit = (id: string | undefined) => {
     try {
       setSaving(true);
 
-      const validTransitions: Record<string, string[]> = {
-        pending: ['diagnostic', 'cancelled'],
-        diagnostic: ['in_progress', 'cancelled'],
-        in_progress: ['waiting_parts', 'ready', 'cancelled'],
-        waiting_parts: ['in_progress', 'ready', 'cancelled'],
-        ready: ['delivered'],
-        delivered: [],
-        cancelled: [],
-      };
-
       const payload: any = {};
 
-      if (formData.estado !== repairData.estado) {
-        const allowed = validTransitions[repairData.estado] || [];
-        if (!allowed.includes(formData.estado)) {
-          toast({
-            title: 'Error',
-            description: `No puedes cambiar de "${repairData.estado}" a "${formData.estado}". Transición no válida.`,
-            variant: 'destructive',
-          });
-          setSaving(false);
-          return;
-        }
-        payload.estado = formData.estado;
-      }
+      // El estado no se edita desde esta página; solo se modifica desde el modal "Cambiar estado".
 
       // Campos de diagnóstico
       if (formData.problema_reportado) payload.problema_reportado = formData.problema_reportado;
@@ -192,8 +170,8 @@ export const useRepairEdit = (id: string | undefined) => {
         payload.tiempo_estimado_minutos = formData.tiempo_estimado_minutos;
       }
 
-      // Pago
-      payload.pagado = formData.pagado;
+      // Pago (una vez pagado no se puede revertir)
+      payload.pagado = repairData.pagado ? true : formData.pagado;
       if (formData.metodo_pago) payload.metodo_pago = formData.metodo_pago;
       if (formData.monto_pagado > 0) payload.monto_pagado = formData.monto_pagado;
 

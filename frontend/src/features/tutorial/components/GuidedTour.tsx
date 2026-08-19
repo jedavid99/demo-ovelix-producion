@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { GraduationCap } from 'lucide-react'
 import { useTutorial } from '../hooks/useTutorial'
 import { getTutorialByRoute } from '../constants'
+import { isPublicPage } from '@/services/api'
 
 class TourBoundary extends Component<{ onReset: () => void; children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
@@ -71,7 +72,7 @@ export const GuidedTour: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  if (!isAuthenticated || !section || steps.length === 0) {
+  if (!isAuthenticated || isPublicPage(location.pathname) || !section || steps.length === 0) {
     return null
   }
 
@@ -142,7 +143,7 @@ export const HelpTourButton: React.FC = () => {
   const location = useLocation()
   const { isAuthenticated } = useAuth()
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || isPublicPage(location.pathname)) {
     return null
   }
 

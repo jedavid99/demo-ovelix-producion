@@ -19,7 +19,7 @@ import {
   Copy,
   Percent,
 } from 'lucide-react'
-import { useTenantPage } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
 import { getPendingQuote, formatARS, type TenantQuoteSelection } from './tenant'
 import { parseSchedule, buildBusinessSlots, businessDaysLabel, hoursLabel } from './schedule'
 import { submitBudgetRequest, resolveTenantSlug } from './services'
@@ -233,7 +233,7 @@ export default function BookingPage() {
     window.open(buildWhatsAppUrl(repair), '_blank')
 
     // Persistimos la reserva en el backend para generar número de orden y seguimiento.
-    const slug = resolveTenantSlug()
+    const slug = resolveTenantSlug() ?? (tenant.slug && tenant.slug !== 'ovelix' ? tenant.slug : null)
     if (slug) {
       try {
         const precio = repair.precio ?? null
@@ -270,6 +270,10 @@ export default function BookingPage() {
         console.warn('No se pudo guardar la reserva en el backend:', err)
         setSaveFailed(true)
       }
+    } else {
+      // Sin empresa asociada (plantilla) el backend no puede guardar: no fallar en silencio.
+      console.warn('No se pudo guardar la reserva: no hay slug de empresa asociado a esta página.')
+      setSaveFailed(true)
     }
   }
 
@@ -1166,18 +1170,23 @@ export default function BookingPage() {
                 </p>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.35, ease: 'easeOut' }}
-                className="bg-card border border-border rounded-xl p-7 flex items-start gap-4"
-              >
-                <ShieldCheck size={18} className="text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[11px] font-black text-foreground mb-1 tracking-widest">{booking.guaranteeTitle}</h4>
-                  <p className="text-[13px] text-muted-foreground leading-relaxed">
-                    {booking.guaranteeText}
-                  </p>
-                </div>
-              </motion.div>
+              {tenant.warranty?.enabled && (
+                <motion.div
+                  initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.35, ease: 'easeOut' }}
+                  className="bg-card border border-border rounded-xl p-7 flex items-start gap-4"
+                >
+                  <ShieldCheck size={18} className="text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-[11px] font-black text-foreground mb-1 tracking-widest">{booking.guaranteeTitle}</h4>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">
+                      {booking.guaranteeText}{' '}
+                      {tenant.warranty.unit === 'MESES'
+                        ? `Vigencia: ${tenant.warranty.duration} ${tenant.warranty.duration === 1 ? 'mes' : 'meses'} desde la entrega.`
+                        : `Vigencia: ${tenant.warranty.duration} ${tenant.warranty.duration === 1 ? 'día' : 'días'} desde la entrega.`}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </aside>
         </div>

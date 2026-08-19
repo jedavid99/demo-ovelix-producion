@@ -141,6 +141,11 @@ export interface TenantPageConfig {
     alias: string;
     accountNumber: string;
   };
+  warranty?: {
+    enabled: boolean;
+    duration: number;
+    unit: 'DIAS' | 'MESES';
+  };
 }
 
 export interface TenantPageResponse {

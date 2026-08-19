@@ -4,7 +4,7 @@ import axios from 'axios'
 import { useSearchParams } from 'react-router-dom'
 import { Search, Loader2, Smartphone, MessageCircle, AlertTriangle, CheckCircle2, CalendarClock, ShieldCheck, BadgeCheck, Trash2, Wallet, RefreshCw, QrCode, Landmark, Banknote, Percent } from 'lucide-react'
 import { API_BASE } from '@/services/api'
-import { useTenantPage } from './tenantConfig'
+import { useTenantPage } from './TenantProvider'
 import { resolveIcon } from './icons'
 import {
   fetchPublicBudgetRequest,

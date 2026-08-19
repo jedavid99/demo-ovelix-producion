@@ -71,6 +71,9 @@ describe('BudgetRequestsService', () => {
       repair: {
         create: jest.fn(),
       },
+      tenantPage: {
+        findUnique: jest.fn(),
+      },
       $transaction: jest.fn(),
     };
 
@@ -97,10 +100,16 @@ describe('BudgetRequestsService', () => {
       sena_monto: 212500,
     };
 
+    const today = new Date();
+    const prefix = `REQ-${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today
+      .getDate()
+      .toString()
+      .padStart(2, '0')}`;
+
     it('should create a PENDIENTE request with a generated numero', async () => {
       prisma.company.findUnique.mockResolvedValue(company);
       prisma.budgetRequest.findFirst.mockResolvedValue(null);
-      prisma.budgetRequest.create.mockResolvedValue({ ...request, id: 'req-new', numero: 'REQ-20260816-0001' });
+      prisma.budgetRequest.create.mockResolvedValue({ ...request, id: 'req-new', numero: `${prefix}-0001` });
       prisma.user.findMany.mockResolvedValue([]);
 
       const result = await service.createPublic(createDto as any);
@@ -110,25 +119,25 @@ describe('BudgetRequestsService', () => {
           data: expect.objectContaining({
             empresa_id: 'company-1',
             estado: 'PENDIENTE',
-            numero: 'REQ-20260816-0001',
+            numero: `${prefix}-0001`,
             nombre: 'Juan Pérez',
             dispositivo: 'iPhone 12',
           }),
         }),
       );
-      expect(result.numero).toBe('REQ-20260816-0001');
+      expect(result.numero).toBe(`${prefix}-0001`);
     });
 
     it('should increment the sequence from the last request', async () => {
       prisma.company.findUnique.mockResolvedValue(company);
-      prisma.budgetRequest.findFirst.mockResolvedValue({ numero: 'REQ-20260816-0007' });
+      prisma.budgetRequest.findFirst.mockResolvedValue({ numero: `${prefix}-0007` });
       prisma.budgetRequest.create.mockImplementation(({ data }) => Promise.resolve({ ...request, ...data }));
       prisma.user.findMany.mockResolvedValue([]);
 
       const result = await service.createPublic(createDto as any);
 
       expect(prisma.budgetRequest.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ numero: 'REQ-20260816-0008' }) }),
+        expect.objectContaining({ data: expect.objectContaining({ numero: `${prefix}-0008` }) }),
       );
     });
 
@@ -254,6 +263,10 @@ describe('BudgetRequestsService', () => {
             numero_reparacion: 'REQ-20260816-0001',
             cliente_id: 'client-1',
             estado: 'INGRESADO',
+            prioridad: 'medium',
+            tiene_garantia: true,
+            garantia_duracion: 6,
+            garantia_unidad: 'MESES',
           }),
         }),
       );
