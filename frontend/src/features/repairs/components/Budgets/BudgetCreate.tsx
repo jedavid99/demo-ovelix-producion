@@ -13,10 +13,12 @@ import {
   MdSave,
   MdAdd,
   MdClose,
+  MdCheck,
 } from 'react-icons/md';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { formatCurrency, DEVICE_TYPES } from './Budgets.types';
 import type { NewBudget, BudgetErrors, BudgetItem } from './Budgets.types';
 import type { TaxRate } from '@/features/settings/types/settings.types';
@@ -26,13 +28,13 @@ interface BudgetCreateProps {
   onClose: () => void;
   isEditing?: boolean;
   newBudget: NewBudget;
-  onBudgetChange: (field: string, value: string | number) => void;
+  onBudgetChange: (field: string, value: string | number | boolean) => void;
   onSave: () => void;
   errors: BudgetErrors;
   isSubmitting: boolean;
   taxRates: TaxRate[];
   deviceCategories: string[];
-  onItemChange: (id: string, field: 'deviceType' | 'device' | 'price', value: string | number) => void;
+  onItemChange: (id: string, field: 'deviceType' | 'device' | 'price' | 'aplicaPorcentaje', value: string | number | boolean) => void;
   onAddItem: () => void;
   onRemoveItem: (id: string) => void;
 }
@@ -136,6 +138,10 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
 
   const filledReceiptItems = items.filter((it) => it.device.trim() || it.deviceType.trim() || (Number(it.price) || 0) > 0);
   const emptySlip = !newBudget.clientName && !newBudget.clientDni && filledReceiptItems.length === 0;
+  const pct = newBudget.taxRatePorct || 0;
+  const hasTaxedItem = filledReceiptItems.some((it) => it.aplicaPorcentaje);
+  const itemPrice = (it: BudgetItem) =>
+    (Number(it.price) || 0) * (it.aplicaPorcentaje && pct > 0 ? 1 + pct / 100 : 1);
 
   const receiptHeader = [
     { label: 'Cliente', value: newBudget.clientName, show: Boolean(newBudget.clientName) },
@@ -145,6 +151,11 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
       label: 'Dispositivo',
       value: `${newBudget.deviceType ? `${newBudget.deviceType} · ` : ''}${newBudget.device}`,
       show: Boolean(newBudget.device),
+    },
+    {
+      label: 'Aseguradora',
+      value: newBudget.aseguradoraNombre,
+      show: newBudget.esAseguradora && Boolean(newBudget.aseguradoraNombre),
     },
   ];
 
@@ -320,6 +331,58 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
           </motion.div>
 
           <motion.div variants={sectionVariants}>
+            <Section eyebrow="Modalidad">
+              <div className="space-y-3">
+                <label
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background/40 p-3.5 transition-colors hover:bg-muted/40"
+                >
+                  <Checkbox
+                    id="bc-sumaTotal"
+                    className="mt-0.5"
+                    checked={!newBudget.sumaTotal}
+                    onCheckedChange={(checked) => onBudgetChange('sumaTotal', !checked)}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">Cotización con varias opciones</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      No suma el total: cada servicio muestra su precio y el cliente elige cuál realizar.
+                    </span>
+                  </span>
+                </label>
+                <label
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background/40 p-3.5 transition-colors hover:bg-muted/40"
+                >
+                  <Checkbox
+                    id="bc-esAseguradora"
+                    className="mt-0.5"
+                    checked={newBudget.esAseguradora}
+                    onCheckedChange={(checked) => onBudgetChange('esAseguradora', Boolean(checked))}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">Va dirigido a una aseguradora</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      El PDF muestra solo el precio final y el nombre de la aseguradora.
+                    </span>
+                  </span>
+                </label>
+                {newBudget.esAseguradora && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bc-aseguradora">Nombre de la aseguradora</Label>
+                    <Input
+                      id="bc-aseguradora"
+                      value={newBudget.aseguradoraNombre}
+                      onChange={(e) => onBudgetChange('aseguradoraNombre', e.target.value)}
+                      placeholder="Ej. Sancor Seguros, La Caja..."
+                      leftIcon={<MdStorefront size={18} />}
+                      error={errors.aseguradoraNombre}
+                    />
+                  </div>
+                )}
+              </div>
+            </Section>
+          </motion.div>
+
+          <motion.div variants={sectionVariants}>
             <Section eyebrow="Productos">
               {!hasTipo ? (
                 <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
@@ -340,7 +403,7 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="grid grid-cols-1 gap-2 md:grid-cols-[8.5rem_1fr_8.5rem_2.5rem] md:items-start"
+                        className="grid grid-cols-1 gap-2 md:grid-cols-[8.5rem_1fr_8.5rem_8.5rem_2.5rem] md:items-start"
                       >
                         <div className="space-y-1.5">
                           <Label htmlFor={`bc-itm-type-${item.id}`} className="sr-only">
@@ -385,6 +448,35 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                             step={0.01}
                             rightIcon={<span className="font-mono text-muted-foreground">$</span>}
                           />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`bc-itm-pct-${item.id}`} className="sr-only">
+                            Aplicar porcentaje
+                          </Label>
+                          {newBudget.taxRatePorct > 0 ? (
+                            <button
+                              type="button"
+                              id={`bc-itm-pct-${item.id}`}
+                              onClick={() => onItemChange(item.id, 'aplicaPorcentaje', !item.aplicaPorcentaje)}
+                              aria-pressed={item.aplicaPorcentaje}
+                              className={cn(
+                                'flex h-10 w-full items-center justify-center gap-1.5 rounded border px-2 font-mono text-xs transition-colors',
+                                item.aplicaPorcentaje
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-input text-muted-foreground hover:bg-muted'
+                              )}
+                              title="Aplicar el porcentaje a este ítem"
+                            >
+                              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border border-current">
+                                {item.aplicaPorcentaje && <MdCheck size={11} />}
+                              </span>
+                              +{newBudget.taxRatePorct}%
+                            </button>
+                          ) : (
+                            <div className="flex h-10 items-center justify-center rounded border border-dashed border-border font-mono text-[11px] text-muted-foreground">
+                              Sin %
+                            </div>
+                          )}
                         </div>
                         <Button
                           type="button"
@@ -525,7 +617,11 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                     OVELIX
                   </div>
                   <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    Presupuesto de servicio
+                    {newBudget.sumaTotal
+                      ? newBudget.esAseguradora
+                        ? 'Presupuesto para aseguradora'
+                        : 'Presupuesto de servicio'
+                      : 'Cotización con opciones'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -589,7 +685,7 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                               {it.device || (it.deviceType ? `${it.deviceType} (sin nombre)` : 'Producto')}
                             </dt>
                             <dd className="shrink-0 font-mono text-sm tabular-nums text-foreground">
-                              {(Number(it.price) || 0) > 0 ? formatCurrency(it.price) : '—'}
+                              {(Number(it.price) || 0) > 0 ? formatCurrency(itemPrice(it)) : '—'}
                             </dd>
                           </motion.div>
                         ))}
@@ -600,7 +696,25 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
               )}
 
               <AnimatePresence>
-                {hasAmount && (
+                {!newBudget.sumaTotal && filledReceiptItems.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 rounded-lg border border-dashed border-border/70 bg-background/40 px-4 py-3 text-center">
+                      <p className="font-mono text-[11px] leading-snug text-muted-foreground">
+                        Cotización con opciones —<br />
+                        el cliente elige un servicio.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {newBudget.sumaTotal && hasAmount && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -612,9 +726,9 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                         <span className="text-muted-foreground">Subtotal</span>
                         <span className="tabular-nums text-foreground">{formatCurrency(newBudget.baseTotal)}</span>
                       </div>
-                      {(newBudget.taxRatePorct ?? 0) > 0 && (
+                      {hasTaxedItem && pct > 0 && (
                         <div className="mt-1 flex items-end justify-between font-mono text-sm">
-                          <span className="text-muted-foreground">Recargo ({newBudget.taxRatePorct}%)</span>
+                          <span className="text-muted-foreground">Recargo ({pct}%)</span>
                           <span className="tabular-nums text-muted-foreground">
                             {formatCurrency(newBudget.total - newBudget.baseTotal)}
                           </span>
@@ -648,7 +762,11 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                 </span>
               </div>
               <p className="mt-1.5 font-mono text-[10px] leading-snug text-muted-foreground/70">
-                Al aprobar, el precio queda fijo y pasa a reparaciones.
+                {!newBudget.sumaTotal
+                  ? 'El cliente elige una de las opciones y se define el total.'
+                  : newBudget.esAseguradora && newBudget.aseguradoraNombre
+                    ? `Presupuesto para ${newBudget.aseguradoraNombre}.`
+                    : 'Al aprobar, el precio queda fijo y pasa a reparaciones.'}
               </p>
             </div>
           </div>

@@ -237,6 +237,49 @@ describe('StandaloneBudgetsService', () => {
     it('should throw BadRequestException when user has no company', async () => {
       await expect(service.create(createDto as any, devUser)).rejects.toThrow(BadRequestException);
     });
+
+    it('should set total 0 when suma_total is false (options mode)', async () => {
+      prisma.standaloneBudget.findFirst.mockResolvedValue(null);
+      prisma.standaloneBudget.create.mockResolvedValue(budget);
+
+      await service.create(
+        {
+          ...createDto,
+          suma_total: false,
+          items: [
+            { device: 'Pantalla LCD', price: 15 },
+            { device: 'Pantalla horizontal', price: 84 },
+          ],
+        } as any,
+        userEmp1,
+      );
+
+      const data = prisma.standaloneBudget.create.mock.calls[0][0].data;
+      expect(data.suma_total).toBe(false);
+      expect(data.base_total).toBe(99);
+      expect(data.total).toBe(0);
+    });
+
+    it('should apply percentage only to items marked aplica_porcentaje', async () => {
+      prisma.standaloneBudget.findFirst.mockResolvedValue(null);
+      prisma.standaloneBudget.create.mockResolvedValue(budget);
+
+      await service.create(
+        {
+          ...createDto,
+          tax_rate_porct: 10,
+          items: [
+            { device: 'Pantalla LCD', price: 100, aplica_porcentaje: true },
+            { device: 'Pantalla horizontal', price: 200, aplica_porcentaje: false },
+          ],
+        } as any,
+        userEmp1,
+      );
+
+      const data = prisma.standaloneBudget.create.mock.calls[0][0].data;
+      expect(data.base_total).toBe(300);
+      expect(data.total).toBe(310);
+    });
   });
 
   describe('update', () => {
@@ -346,6 +389,12 @@ describe('StandaloneBudgetsService', () => {
 
     it('should throw BadRequestException when budget is not PENDING', async () => {
       prisma.standaloneBudget.findUnique.mockResolvedValue({ ...budget, estado: 'APPROVED' });
+
+      await expect(service.approve('budget-1', userEmp1)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when budget is options mode (suma_total false)', async () => {
+      prisma.standaloneBudget.findUnique.mockResolvedValue({ ...budget, suma_total: false });
 
       await expect(service.approve('budget-1', userEmp1)).rejects.toThrow(BadRequestException);
     });

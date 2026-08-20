@@ -16,6 +16,7 @@ export interface StandaloneBudgetItemDTO {
   deviceType?: string | null;
   device?: string | null;
   price?: number | null;
+  aplica_porcentaje?: boolean | null;
 }
 
 export interface StandaloneBudgetDTO {
@@ -40,6 +41,9 @@ export interface StandaloneBudgetDTO {
   vigencia_dias: number;
   fecha_vencimiento: string | null;
   repair_id: string | null;
+  suma_total: boolean;
+  es_aseguradora: boolean;
+  aseguradora_nombre: string | null;
   items: StandaloneBudgetItemDTO[];
   notas: string | null;
   fecha_envio: string;
@@ -69,6 +73,9 @@ export interface CreateStandaloneBudgetPayload {
   tax_rate_porct?: number;
   base_total: number;
   total: number;
+  suma_total?: boolean;
+  es_aseguradora?: boolean;
+  aseguradora_nombre?: string;
   vigencia_dias?: number;
   items?: StandaloneBudgetItemDTO[];
   notas?: string;
@@ -106,6 +113,9 @@ export const dtoToBudget = (dto: StandaloneBudgetDTO): Budget => ({
   fechaVencimiento: dto.fecha_vencimiento ? new Date(dto.fecha_vencimiento) : null,
   repairId: dto.repair_id ?? undefined,
   repairNumber: dto.repair?.numero_reparacion ?? undefined,
+  sumaTotal: dto.suma_total ?? true,
+  esAseguradora: dto.es_aseguradora ?? false,
+  aseguradoraNombre: dto.aseguradora_nombre ?? '',
   items: Array.isArray(dto.items)
     ? dto.items
         .filter((it) => it && (it.device || it.deviceType || (it.price ?? 0) > 0))
@@ -114,6 +124,7 @@ export const dtoToBudget = (dto: StandaloneBudgetDTO): Budget => ({
           deviceType: it.deviceType ?? '',
           device: it.device ?? '',
           price: Number(it.price ?? 0),
+          aplicaPorcentaje: Boolean(it.aplica_porcentaje),
         }))
     : [],
 });
@@ -137,11 +148,15 @@ export const newBudgetToPayload = (nb: NewBudget): CreateStandaloneBudgetPayload
     tax_rate_porct: Number(nb.taxRatePorct) || 0,
     base_total: nb.baseTotal,
     total: nb.total,
+    suma_total: nb.sumaTotal,
+    es_aseguradora: nb.esAseguradora,
+    aseguradora_nombre: nb.esAseguradora ? nb.aseguradoraNombre.trim() : undefined,
     vigencia_dias: nb.vigenciaDias || 7,
     items: filledItems.map((it) => ({
       deviceType: it.deviceType,
       device: it.device,
       price: it.price,
+      aplica_porcentaje: it.aplicaPorcentaje,
     })),
   };
 };
@@ -162,6 +177,9 @@ export const budgetToNewBudget = (b: Budget): NewBudget => ({
   taxRatePorct: b.taxRatePorct ?? 0,
   baseTotal: b.baseTotal ?? b.total,
   vigenciaDias: b.vigenciaDias ?? 7,
+  sumaTotal: b.sumaTotal ?? true,
+  esAseguradora: b.esAseguradora ?? false,
+  aseguradoraNombre: b.aseguradoraNombre ?? '',
   items: b.items && b.items.length > 0 ? b.items : [],
 });
 

@@ -25,7 +25,21 @@ export function generateBudgetPDF(budget: Budget): jsPDF {
   const numero = budget.numero || budget.id;
   const items = budget.items ?? [];
   const total = budget.total ?? 0;
+  const baseTotal = budget.baseTotal ?? total;
+  const pct = budget.taxRatePorct ?? 0;
   const vigencia = budget.vigenciaDias ?? 7;
+  const sumaTotal = budget.sumaTotal ?? true;
+  const esAseguradora = budget.esAseguradora ?? false;
+  const aseguradoraNombre = budget.aseguradoraNombre || '';
+  const itemsList = items as Array<{
+    device?: string;
+    deviceType?: string;
+    price?: number;
+    aplica_porcentaje?: boolean;
+  }>;
+  const anyTaxed = itemsList.some((it) => Boolean(it.aplica_porcentaje) && pct > 0);
+  const itemEffPrice = (it: { price?: number; aplica_porcentaje?: boolean }) =>
+    (Number(it.price) || 0) * (Boolean(it.aplica_porcentaje) && pct > 0 ? 1 + pct / 100 : 1);
 
   pdf.setProperties({
     title: `Presupuesto ${numero}`,
@@ -72,6 +86,16 @@ export function generateBudgetPDF(budget: Budget): jsPDF {
   value(pdf, `${budget.clientDni ? `DNI: ${budget.clientDni} · ` : ''}Tel: ${budget.clientPhone}`, pageWidth - margin - 4, y + 12, { size: 8, color: colors.gray, align: 'right' }, colors);
   y += infoBoxH + 5;
 
+  // ASEGURADORA
+  if (esAseguradora && aseguradoraNombre) {
+    const asgBoxH = 11;
+    pdf.setFillColor(254, 243, 199);
+    pdf.roundedRect(margin, y, contentWidth, asgBoxH, 2, 2, 'F');
+    label(pdf, 'ASEGURADORA', margin + 4, y + 5.5, 'left', colors);
+    value(pdf, aseguradoraNombre, margin + 4, y + 10, { size: 9.5, bold: true }, colors);
+    y += asgBoxH + 5;
+  }
+
   // DISPOSITIVO
   card(pdf, margin, y, contentWidth, 14);
   label(pdf, 'DISPOSITIVO', margin + 4, y + 6, 'left', colors);
@@ -99,7 +123,7 @@ export function generateBudgetPDF(budget: Budget): jsPDF {
   y += tableHeaderH;
 
   const rowH = 7;
-  const visibleItems: Array<{ device?: string; deviceType?: string; price?: number }> =
+  const visibleItems: Array<{ device?: string; deviceType?: string; price?: number; aplica_porcentaje?: boolean }> =
     items.length > 0 ? items : [{ device: budget.device, price: total }];
   for (const it of visibleItems) {
     const labelText = it.device || it.deviceType || 'Servicio';
@@ -108,20 +132,39 @@ export function generateBudgetPDF(budget: Budget): jsPDF {
     const itemH = Math.max(rowH, linesCount * 3.6 + 2.4);
     const rowY = y + itemH - 2.5;
     value(pdf, labelText, margin + 3, rowY, { size: 8.5 }, colors);
-    value(pdf, formatCurrency(it.price ?? 0), pageWidth - margin - 3, rowY, { size: 8.5, bold: true, align: 'right' }, colors);
+    const shownPrice = sumaTotal ? (Number(it.price) || 0) : itemEffPrice(it);
+    value(pdf, formatCurrency(shownPrice), pageWidth - margin - 3, rowY, { size: 8.5, bold: true, align: 'right' }, colors);
     pdf.setDrawColor(...colors.border);
     pdf.line(margin, y + itemH, pageWidth - margin, y + itemH);
     y += itemH;
   }
   y += 2;
 
-  // TOTAL A PAGAR
-  y += 2;
-  pdf.setFillColor(219, 234, 254);
-  pdf.roundedRect(margin, y, contentWidth, 14, 2, 2, 'F');
-  label(pdf, 'TOTAL A PAGAR', margin + 6, y + 9.5, 'left', colors);
-  value(pdf, formatCurrency(total), pageWidth - margin - 6, y + 9.5, { size: 16, bold: true, color: colors.primary, align: 'right' }, colors);
-  y += 20;
+  // TOTALES
+  if (!sumaTotal) {
+    const noteBoxH = 12;
+    card(pdf, margin, y, contentWidth, noteBoxH);
+    label(pdf, 'COTIZACIÓN CON OPCIONES', margin + 4, y + 6, 'left', colors);
+    value(pdf, 'El cliente elige cuál de los servicios listados realizar.', margin + 4, y + 10.5, { size: 8.5, bold: true }, colors);
+    y += noteBoxH + 5;
+  } else {
+    if (!esAseguradora) {
+      value(pdf, 'Subtotal', margin + 3, y, { size: 9, color: colors.gray }, colors);
+      value(pdf, formatCurrency(baseTotal), pageWidth - margin - 3, y, { size: 9, align: 'right' }, colors);
+      y += 6;
+      if (anyTaxed) {
+        value(pdf, `Recargo (${pct}%)`, margin + 3, y, { size: 9, color: colors.gray }, colors);
+        value(pdf, formatCurrency(total - baseTotal), pageWidth - margin - 3, y, { size: 9, align: 'right' }, colors);
+        y += 6;
+      }
+      y += 2;
+    }
+    pdf.setFillColor(219, 234, 254);
+    pdf.roundedRect(margin, y, contentWidth, 14, 2, 2, 'F');
+    label(pdf, 'TOTAL A PAGAR', margin + 6, y + 9.5, 'left', colors);
+    value(pdf, formatCurrency(total), pageWidth - margin - 6, y + 9.5, { size: 16, bold: true, color: colors.primary, align: 'right' }, colors);
+    y += 20;
+  }
 
   // VIGENCIA
   const vigenciaBoxH = 22;

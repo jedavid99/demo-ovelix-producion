@@ -101,11 +101,25 @@ export const BudgetDetail: React.FC<BudgetDetailProps> = ({
               )}
               {budget.tipo && <Row label="Tipo">{budget.tipo === 'venta' ? 'Venta' : 'Reparación'}</Row>}
               {budget.category && <Row label="Categoría">{budget.category}</Row>}
+              {budget.esAseguradora && (
+                <Row label="Aseguradora">{budget.aseguradoraNombre || '—'}</Row>
+              )}
               <Row label="Emitido">
                 {format(budget.date, 'dd/MM/yyyy HH:mm', { locale: es })}
               </Row>
             </dl>
           </div>
+
+          {budget.sumaTotal === false && (
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Modalidad
+              </p>
+              <p className="mt-1 text-sm text-foreground">
+                Cotización con varias opciones: cada servicio tiene su precio y el cliente elige cuál realizar.
+              </p>
+            </div>
+          )}
 
           {items.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-4">
@@ -131,22 +145,28 @@ export const BudgetDetail: React.FC<BudgetDetailProps> = ({
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Totales
             </p>
-            <dl className="space-y-2">
-              <Row label="Subtotal">{formatCurrency(budget.baseTotal ?? budget.total)}</Row>
-              {(budget.taxRatePorct ?? 0) > 0 && (
-                <Row label={`Recargo (${budget.taxRatePorct}%)`}>
-                  {formatCurrency(budget.total - (budget.baseTotal ?? budget.total))}
-                </Row>
-              )}
-              <div className="flex items-baseline justify-between gap-4 pt-1">
-                <dt className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
-                  Total a pagar
-                </dt>
-                <dd className="font-mono text-2xl font-bold tabular-nums text-primary">
-                  {formatCurrency(budget.total)}
-                </dd>
-              </div>
-            </dl>
+            {budget.sumaTotal === false ? (
+              <p className="text-sm text-muted-foreground">
+                Sin total definido — cotización con opciones.
+              </p>
+            ) : (
+              <dl className="space-y-2">
+                <Row label="Subtotal">{formatCurrency(budget.baseTotal ?? budget.total)}</Row>
+                {(budget.taxRatePorct ?? 0) > 0 && (
+                  <Row label={`Recargo (${budget.taxRatePorct}%)`}>
+                    {formatCurrency(budget.total - (budget.baseTotal ?? budget.total))}
+                  </Row>
+                )}
+                <div className="flex items-baseline justify-between gap-4 pt-1">
+                  <dt className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
+                    Total a pagar
+                  </dt>
+                  <dd className="font-mono text-2xl font-bold tabular-nums text-primary">
+                    {formatCurrency(budget.total)}
+                  </dd>
+                </div>
+              </dl>
+            )}
           </div>
 
           <div className="rounded-xl border border-border bg-card p-4">
@@ -193,7 +213,7 @@ export const BudgetDetail: React.FC<BudgetDetailProps> = ({
               Imprimir PDF
             </Button>
           )}
-          {editable && onApprove && (
+          {editable && budget.sumaTotal !== false && onApprove && (
             <Button
               onClick={() => onApprove?.(budget.id)}
               className="gap-1.5 bg-green-600 hover:bg-green-700"

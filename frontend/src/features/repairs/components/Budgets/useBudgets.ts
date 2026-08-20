@@ -162,30 +162,35 @@ export const useBudgets = () => {
     fetchBudgets();
   }, [fetchBudgets]);
 
+  // Helper puro para recalcular totales
+  const recalcFromItems = (items: NewBudget['items'], taxRatePorct: number, sumaTotal: boolean) => {
+    const baseTotal = items.reduce((sum, it) => sum + (Number(it.price) || 0), 0);
+    if (!sumaTotal) return { baseTotal, total: 0 };
+    const pct = Number(taxRatePorct) || 0;
+    const total = items.reduce((sum, it) => {
+      const price = Number(it.price) || 0;
+      return sum + price * (it.aplicaPorcentaje && pct > 0 ? 1 + pct / 100 : 1);
+    }, 0);
+    return { baseTotal, total };
+  };
+
   // Manejadores del modal
   const handleNewBudgetChange = useCallback(
-    (field: string, value: string | number) => {
+    (field: string, value: string | number | boolean) => {
       setNewBudget((prev) => {
-        const next = { ...prev, [field]: value };
-
-        // Al cambiar el total base, recalcular el total con el porcentaje actual
-        if (field === 'baseTotal') {
-          next.baseTotal = Number(value) || 0;
-          next.total = next.baseTotal * (1 + next.taxRatePorct / 100);
-        }
+        const next = { ...prev, [field]: value } as NewBudget;
 
         // Al elegir el tipo, si no hay líneas, iniciar una primera línea de producto
         if (field === 'tipo' && value && next.items.length === 0) {
           next.items = [newBudgetItem()];
         }
 
-        // Al elegir un porcentaje, aplicar su valor al total
+        // Al elegir un porcentaje, guardar su valor
         if (field === 'taxRateId') {
           const rate = taxRates.find((r) => r.id === value);
           next.taxRateId = String(value);
           next.taxRateName = rate?.nombre || '';
           next.taxRatePorct = Number(rate?.porcentaje) || 0;
-          next.total = next.baseTotal * (1 + (rate?.porcentaje || 0) / 100);
         }
 
         // Vigencia en días (1-365)
@@ -193,6 +198,15 @@ export const useBudgets = () => {
           const parsed = Math.max(1, Math.min(365, Math.floor(Number(value)) || 7));
           next.vigenciaDias = parsed;
         }
+
+        if (field === 'sumaTotal') {
+          next.sumaTotal = Boolean(value);
+        }
+
+        // Recalcular totales siempre (respetando porcentaje por ítem y modo opciones)
+        const totals = recalcFromItems(next.items, next.taxRatePorct, next.sumaTotal);
+        next.baseTotal = totals.baseTotal;
+        next.total = totals.total;
 
         return next;
       });
@@ -203,20 +217,15 @@ export const useBudgets = () => {
     [errors, taxRates]
   );
 
-  const recalcFromItems = (items: NewBudget['items'], taxRatePorct: number) => {
-    const baseTotal = items.reduce((sum, it) => sum + (Number(it.price) || 0), 0);
-    return { baseTotal, total: baseTotal * (1 + taxRatePorct / 100) };
-  };
-
   const handleItemChange = useCallback(
-    (id: string, field: 'deviceType' | 'device' | 'price', value: string | number) => {
+    (id: string, field: 'deviceType' | 'device' | 'price' | 'aplicaPorcentaje', value: string | number | boolean) => {
       setNewBudget((prev) => {
         const items = prev.items.map((it) =>
           it.id === id
             ? { ...it, [field]: field === 'price' ? Number(value) || 0 : value }
             : it
         );
-        const { baseTotal, total } = recalcFromItems(items, prev.taxRatePorct);
+        const { baseTotal, total } = recalcFromItems(items, prev.taxRatePorct, prev.sumaTotal);
         return { ...prev, items, baseTotal, total };
       });
     },
@@ -230,7 +239,7 @@ export const useBudgets = () => {
   const handleRemoveItem = useCallback((id: string) => {
     setNewBudget((prev) => {
       const items = prev.items.filter((it) => it.id !== id);
-      const { baseTotal, total } = recalcFromItems(items, prev.taxRatePorct);
+      const { baseTotal, total } = recalcFromItems(items, prev.taxRatePorct, prev.sumaTotal);
       return { ...prev, items, baseTotal, total };
     });
   }, []);
@@ -252,7 +261,10 @@ export const useBudgets = () => {
     }
     if (newBudget.tipo === 'reparacion' && !newBudget.issue.trim())
       newErrors.issue = 'El problema es obligatorio';
-    if (!newBudget.total || newBudget.total <= 0) newErrors.total = 'El total debe ser mayor a 0';
+    if (newBudget.sumaTotal && (!newBudget.total || newBudget.total <= 0))
+      newErrors.total = 'El total debe ser mayor a 0';
+    if (newBudget.esAseguradora && !newBudget.aseguradoraNombre.trim())
+      newErrors.aseguradoraNombre = 'Ingresá el nombre de la aseguradora';
     const vigencia = Number(newBudget.vigenciaDias);
     if (!Number.isInteger(vigencia) || vigencia < 1 || vigencia > 365)
       newErrors.vigenciaDias = 'La vigencia debe ser entre 1 y 365 días';

@@ -123,7 +123,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
                       </Badge>
                     </td>
                     <td className="whitespace-nowrap py-3 pl-6 pr-8 text-right font-mono text-sm font-semibold tabular-nums">
-                      {formatCurrency(budget.total)}
+                      {budget.sumaTotal === false ? '—' : formatCurrency(budget.total)}
                     </td>
                     <td className="py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
@@ -147,7 +147,7 @@ export const BudgetsTable: React.FC<BudgetsTableProps> = ({
                             <MdPrint size={16} />
                           </Button>
                         )}
-                        {editable && onApprove && (
+                        {editable && budget.sumaTotal !== false && onApprove && (
                           <Button
                             variant="ghost"
                             size="icon-sm"

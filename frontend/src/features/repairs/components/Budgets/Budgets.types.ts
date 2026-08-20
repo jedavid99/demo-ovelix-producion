@@ -4,6 +4,8 @@ export interface BudgetItem {
   deviceType: string;
   device: string;
   price: number;
+  /** Si el porcentaje (impuesto/recargo) aplica a este ítem. */
+  aplicaPorcentaje: boolean;
 }
 
 export interface Budget {
@@ -35,6 +37,11 @@ export interface Budget {
   /** ID de la reparación creada al aprobarse. */
   repairId?: string;
   repairNumber?: string;
+  /** Modo cotización con varias opciones (no suma el total). */
+  sumaTotal?: boolean;
+  /** Si el presupuesto va dirigido a una aseguradora. */
+  esAseguradora?: boolean;
+  aseguradoraNombre?: string;
 }
 
 export interface NewBudget {
@@ -60,6 +67,11 @@ export interface NewBudget {
   items: BudgetItem[];
   /** Días de vigencia del presupuesto (1-365). */
   vigenciaDias: number;
+  /** Modo cotización con varias opciones (no suma el total). */
+  sumaTotal: boolean;
+  /** Si el presupuesto va dirigido a una aseguradora. */
+  esAseguradora: boolean;
+  aseguradoraNombre: string;
 }
 
 export interface BudgetErrors {
@@ -76,6 +88,7 @@ export interface BudgetErrors {
   taxRateId?: string;
   items?: string;
   vigenciaDias?: string;
+  aseguradoraNombre?: string;
 }
 
 // Constantes
@@ -127,6 +140,9 @@ export const initialNewBudget: NewBudget = {
   baseTotal: 0,
   items: [],
   vigenciaDias: 7,
+  sumaTotal: true,
+  esAseguradora: false,
+  aseguradoraNombre: '',
 };
 
 export const newBudgetItem = (): BudgetItem => ({
@@ -134,4 +150,5 @@ export const newBudgetItem = (): BudgetItem => ({
   deviceType: '',
   device: '',
   price: 0,
+  aplicaPorcentaje: false,
 });

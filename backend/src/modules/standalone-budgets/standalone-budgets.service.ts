@@ -174,8 +174,8 @@ export class StandaloneBudgetsService {
     }
 
     if (data.items !== undefined || data.tax_rate_porct !== undefined || data.suma_total !== undefined) {
-      const itemsList =
-        data.items !== undefined ? data.items : Array.isArray(budget.items) ? budget.items : [];
+      const itemsList: Array<{ price?: number; aplica_porcentaje?: boolean }> =
+        data.items !== undefined ? data.items : Array.isArray(budget.items) ? (budget.items as any) : [];
       const pct = data.tax_rate_porct !== undefined ? data.tax_rate_porct : Number(budget.tax_rate_porct) || 0;
       const sumaTotal = data.suma_total !== undefined ? data.suma_total : (budget.suma_total ?? true);
       const totals = this.computeTotals(itemsList, pct, sumaTotal);
@@ -193,6 +193,12 @@ export class StandaloneBudgetsService {
   async approve(id: string, currentUser: any) {
     const budget = await this.findOne(id, currentUser);
     this.assertEditable(budget);
+
+    if (budget.suma_total === false) {
+      throw new BadRequestException(
+        'Este presupuesto es una cotización con varias opciones. Elegí la opción que se realizará y sumá el total antes de aprobar.',
+      );
+    }
 
     return this.prisma.$transaction(async (tx) => {
       // Buscar o crear el cliente por teléfono dentro de la misma empresa
