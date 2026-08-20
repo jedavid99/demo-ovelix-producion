@@ -17,13 +17,14 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { formatCurrency } from './Budgets.types';
+import { formatCurrency, DEVICE_TYPES } from './Budgets.types';
 import type { NewBudget, BudgetErrors, BudgetItem } from './Budgets.types';
 import type { TaxRate } from '@/features/settings/types/settings.types';
 import { cn } from '@/shared/lib/utils';
 
 interface BudgetCreateProps {
   onClose: () => void;
+  isEditing?: boolean;
   newBudget: NewBudget;
   onBudgetChange: (field: string, value: string | number) => void;
   onSave: () => void;
@@ -104,6 +105,7 @@ function useCountUp(value: number, duration = 360) {
 
 export const BudgetCreate: React.FC<BudgetCreateProps> = ({
   onClose,
+  isEditing = false,
   newBudget,
   onBudgetChange,
   onSave,
@@ -139,25 +141,35 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
     { label: 'Cliente', value: newBudget.clientName, show: Boolean(newBudget.clientName) },
     { label: 'DNI', value: newBudget.clientDni, show: Boolean(newBudget.clientDni) },
     { label: 'Teléfono', value: newBudget.clientPhone, show: Boolean(newBudget.clientPhone) },
+    {
+      label: 'Dispositivo',
+      value: `${newBudget.deviceType ? `${newBudget.deviceType} · ` : ''}${newBudget.device}`,
+      show: Boolean(newBudget.device),
+    },
   ];
 
   return (
     <motion.div variants={createStagger} initial="hidden" animate="show" className="mx-auto w-full max-w-6xl px-1">
       {/* Cabecera */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <motion.div variants={receiptLineVariants}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="gap-2 px-2" aria-label="Volver a presupuestos">
+            <MdArrowBack size={18} />
+            Presupuestos
+          </Button>
+        </motion.div>
         <div className="flex items-center gap-3">
-          <motion.div variants={receiptLineVariants}>
-            <Button variant="ghost" size="sm" onClick={onClose} className="gap-2 px-2" aria-label="Volver a presupuestos">
-              <MdArrowBack size={18} />
-              Presupuestos
-            </Button>
-          </motion.div>
-        </div>
-        <div className="text-right">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Presupuesto · Borrador
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Nuevo presupuesto</h1>
+          <div className="text-right">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Cotización · {isEditing ? 'Edición' : 'Borrador'}
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {isEditing ? 'Editar presupuesto' : 'Nuevo presupuesto'}
+            </h1>
+          </div>
+          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-600">
+            {isEditing ? 'Editando' : 'Pendiente'}
+          </span>
         </div>
       </div>
 
@@ -203,6 +215,40 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                       error={errors.clientPhone}
                     />
                   </div>
+                </div>
+              </div>
+            </Section>
+          </motion.div>
+
+          <motion.div variants={sectionVariants}>
+            <Section eyebrow="Dispositivo">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_11rem]">
+                <div className="space-y-2">
+                  <Label htmlFor="bc-device">Dispositivo</Label>
+                  <Input
+                    id="bc-device"
+                    value={newBudget.device}
+                    onChange={(e) => onBudgetChange('device', e.target.value)}
+                    placeholder="Ej. iPhone 12, Samsung A54, Notebook HP..."
+                    leftIcon={<MdDevices size={18} />}
+                    error={errors.device}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bc-deviceType">Tipo</Label>
+                  <select
+                    id="bc-deviceType"
+                    value={newBudget.deviceType}
+                    onChange={(e) => onBudgetChange('deviceType', e.target.value)}
+                    className={cn(selectClass, 'h-10')}
+                  >
+                    <option value="">Tipo</option>
+                    {DEVICE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </Section>
@@ -279,8 +325,8 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                 <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
                   <MdDevices className="mx-auto mb-2 text-muted-foreground" size={22} />
                   <p className="text-sm text-muted-foreground">
-                    Elegí primero si es <span className="font-medium text-foreground">venta</span> o{' '}
-                    <span className="font-medium text-foreground">reparación</span> para cargar productos.
+                    Seleccioná si es <span className="font-medium text-foreground">venta</span> o{' '}
+                    <span className="font-medium text-foreground">reparación</span> para agregar productos y servicios.
                   </p>
                 </div>
               ) : (
@@ -390,72 +436,120 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
 
           <motion.div variants={sectionVariants}>
             <Section eyebrow="Precio">
-              <div className="space-y-2">
-                <Label htmlFor="bc-taxRate">Porcentaje (admin)</Label>
-                <select
-                  id="bc-taxRate"
-                  value={newBudget.taxRateId}
-                  onChange={(e) => onBudgetChange('taxRateId', e.target.value)}
-                  disabled={!hasTipo}
-                  className={cn(selectClass, hasTipo ? '' : 'text-muted-foreground')}
-                >
-                  <option value="">
-                    {!hasTipo ? 'Elegí el tipo primero' : 'Seleccionar...'}
-                  </option>
-                  {visibleTaxRates.map((rate) => (
-                    <option key={rate.id} value={rate.id}>
-                      {rate.nombre} · {Number(rate.porcentaje)}%
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="bc-taxRate">Recargo / impuesto</Label>
+                  <select
+                    id="bc-taxRate"
+                    value={newBudget.taxRateId}
+                    onChange={(e) => onBudgetChange('taxRateId', e.target.value)}
+                    disabled={!hasTipo}
+                    className={cn(selectClass, hasTipo ? '' : 'text-muted-foreground')}
+                  >
+                    <option value="">
+                      {!hasTipo ? 'Elegí el tipo primero' : 'Seleccionar...'}
                     </option>
-                  ))}
-                  {hasTipo && visibleTaxRates.length === 0 && (
-                    <option value="" disabled>
-                      Sin porcentajes activos para este tipo
-                    </option>
+                    {visibleTaxRates.map((rate) => (
+                      <option key={rate.id} value={rate.id}>
+                        {rate.nombre} · {Number(rate.porcentaje)}%
+                      </option>
+                    ))}
+                    {hasTipo && visibleTaxRates.length === 0 && (
+                      <option value="" disabled>
+                        Sin porcentajes activos para este tipo
+                      </option>
+                    )}
+                  </select>
+                  {newBudget.taxRateName && (
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {newBudget.taxRateName} · +{newBudget.taxRatePorct}%
+                    </p>
                   )}
-                </select>
-                {newBudget.taxRateName && (
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bc-vigencia">Vigencia</Label>
+                  <Input
+                    id="bc-vigencia"
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={newBudget.vigenciaDias}
+                    onChange={(e) => onBudgetChange('vigenciaDias', e.target.value)}
+                    placeholder="7"
+                    rightIcon={<span className="font-mono text-muted-foreground">días</span>}
+                    error={errors.vigenciaDias}
+                  />
                   <p className="font-mono text-xs text-muted-foreground">
-                    {newBudget.taxRateName} · +{newBudget.taxRatePorct}%
+                    Vence el{' '}
+                    {(() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + (Number(newBudget.vigenciaDias) || 7));
+                      return d.toLocaleDateString('es-AR');
+                    })()}
+                    . Si vence sin aprobarse, queda bloqueado.
                   </p>
-                )}
+                </div>
               </div>
             </Section>
           </motion.div>
 
-          <div className="flex justify-end gap-3 pt-1">
-            <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="min-w-[9rem]">
-              Cancelar
-            </Button>
-            <Button onClick={onSave} disabled={isSubmitting} className="gap-2">
-              {isSubmitting ? 'Guardando...' : (
-                <>
-                  <MdSave className="h-4 w-4" />
-                  Guardar presupuesto
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-mono text-xs text-muted-foreground">
+              {isEditing ? 'Los cambios afectan al presupuesto pendiente.' : 'Guardalo para generar el número y compartirlo.'}
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="min-w-[9rem]">
+                Cancelar
+              </Button>
+              <Button onClick={onSave} disabled={isSubmitting} className="min-w-[11rem] gap-2">
+                {isSubmitting ? 'Guardando...' : (
+                  <>
+                    <MdSave className="h-4 w-4" />
+                    {isEditing ? 'Guardar cambios' : 'Guardar presupuesto'}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Recibo (el slip de presupuesto en vivo) */}
+        {/* Comprobante (recibo en vivo) */}
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="relative overflow-hidden rounded-xl border border-border shadow-sm bg-[#FDFBF7] dark:bg-[#191C22]">
-            <div className="flex items-center justify-between border-b border-dashed p-5">
-              <div className="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight text-foreground">
-                <MdReceiptLong size={18} className="text-primary" />
-                OVELIX
-              </div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Cotización
-              </span>
-            </div>
-
+          <div className="relative overflow-hidden rounded-xl border border-border bg-[#FDFBF7] shadow-[0_1px_0_0_rgba(0,0,0,0.04)] dark:bg-[#191C22]">
             <div className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 font-mono text-sm font-bold tracking-tight text-foreground">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary font-mono text-sm text-primary-foreground">O</span>
+                    OVELIX
+                  </div>
+                  <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Presupuesto de servicio
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">Cotización</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                    {new Date().toLocaleDateString('es-AR')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-4 flex items-center gap-2 text-muted-foreground/50" aria-hidden="true">
+                <span className="h-px flex-1 border-t border-dashed" />
+                <span className="font-mono text-[10px]">✂</span>
+                <span className="h-px flex-1 border-t border-dashed" />
+              </div>
+
               {emptySlip ? (
-                <p className="font-mono text-xs leading-relaxed text-muted-foreground">
-                  El recibo se completa mientras escribís.<br />
-                  Tipeá el nombre y cargá productos para verlo aquí.
-                </p>
+                <div className="rounded-lg border border-dashed border-border/70 bg-background/40 px-4 py-6 text-center">
+                  <MdReceiptLong className="mx-auto mb-2 text-muted-foreground/60" size={20} />
+                  <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+                    El comprobante se arma mientras completás el formulario.<br />
+                    Empezá por el cliente y los productos.
+                  </p>
+                </div>
               ) : (
                 <>
                   <dl className="space-y-3">
@@ -466,12 +560,12 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                           variants={receiptLineVariants}
                           initial="hidden"
                           animate="show"
-                          className="flex items-baseline justify-between gap-4 border-b border-dashed border-border pb-1.5"
+                          className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/70 pb-1.5"
                         >
-                          <dt className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                          <dt className="shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                             {line.label}
                           </dt>
-                          <dd className="truncate font-mono text-sm text-foreground">{line.value}</dd>
+                          <dd className="truncate text-right font-mono text-sm text-foreground">{line.value}</dd>
                         </motion.div>
                       ) : null
                     )}
@@ -480,7 +574,7 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                   {filledReceiptItems.length > 0 && (
                     <div className="mt-4">
                       <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {filledReceiptItems.length} {filledReceiptItems.length === 1 ? 'producto' : 'productos'}
+                        {filledReceiptItems.length} {filledReceiptItems.length === 1 ? 'línea' : 'líneas'}
                       </p>
                       <dl className="space-y-1.5">
                         {filledReceiptItems.map((it) => (
@@ -513,30 +607,49 @@ export const BudgetCreate: React.FC<BudgetCreateProps> = ({
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-4 flex items-end justify-between font-mono text-sm">
-                      <span className="text-muted-foreground">Base</span>
-                      <span className="tabular-nums text-foreground">{formatCurrency(newBudget.baseTotal)}</span>
-                    </div>
-                    <div className="mt-1 flex items-end justify-between font-mono text-sm">
-                      <span className="text-muted-foreground">Recargo ({newBudget.taxRatePorct}%)</span>
-                      <span className="tabular-nums text-muted-foreground">
-                        {newBudget.taxRatePorct > 0
-                          ? formatCurrency(newBudget.total - newBudget.baseTotal)
-                          : '—'}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 border-t-2 border-dashed pt-3">
-                      <div className="flex items-baseline justify-between text-primary">
-                        <span className="font-mono text-[11px] uppercase tracking-[0.18em]">A pagar</span>
-                        <span className="font-mono text-3xl font-bold leading-none tabular-nums">
-                          {formatCurrency(animatedTotal)}
-                        </span>
+                    <div className="mt-5">
+                      <div className="flex items-end justify-between font-mono text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span className="tabular-nums text-foreground">{formatCurrency(newBudget.baseTotal)}</span>
+                      </div>
+                      {(newBudget.taxRatePorct ?? 0) > 0 && (
+                        <div className="mt-1 flex items-end justify-between font-mono text-sm">
+                          <span className="text-muted-foreground">Recargo ({newBudget.taxRatePorct}%)</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {formatCurrency(newBudget.total - newBudget.baseTotal)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="mt-4 border-t-2 border-dashed pt-3">
+                        <div className="flex items-baseline justify-between gap-3 text-primary">
+                          <span className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">A pagar</span>
+                          <span className="font-mono text-3xl font-bold leading-none tabular-nums">
+                            {formatCurrency(animatedTotal)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Pie del comprobante */}
+            <div className="border-t border-dashed bg-background/40 px-5 py-3.5">
+              <div className="flex items-center justify-between gap-3 font-mono text-[11px]">
+                <span className="text-muted-foreground">Vigencia: {newBudget.vigenciaDias || 7} días</span>
+                <span className="text-right text-muted-foreground">
+                  vence{' '}
+                  {(() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + (Number(newBudget.vigenciaDias) || 7));
+                    return d.toLocaleDateString('es-AR');
+                  })()}
+                </span>
+              </div>
+              <p className="mt-1.5 font-mono text-[10px] leading-snug text-muted-foreground/70">
+                Al aprobar, el precio queda fijo y pasa a reparaciones.
+              </p>
             </div>
           </div>
         </div>

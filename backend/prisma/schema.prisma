@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Role {
@@ -57,6 +58,7 @@ model Company {
   tenantPage          TenantPage?
   repairCosts         RepairCost[]
   bookings            Booking[]
+  standaloneBudgets   StandaloneBudget[]
 
   @@index([codigo_empresa])
   @@index([activo])
@@ -192,6 +194,7 @@ model Repair {
   partsUsed               RepairPart[]
   estado_historial        RepairStateHistory[]
   budgetRequest           BudgetRequest?
+  standaloneBudget        StandaloneBudget?
 
   @@index([empresa_id])
   @@index([cliente_id])
@@ -230,6 +233,53 @@ model Budget {
 
   @@index([reparacion_id])
   @@index([estado])
+}
+
+model StandaloneBudget {
+  id               String                  @id @default(uuid())
+  numero           String                  @unique
+  empresa_id       String
+  cliente_nombre   String
+  cliente_dni      String?
+  cliente_telefono String
+  dispositivo      String
+  tipo_dispositivo String?
+  problema         String?
+  tecnico          String
+  tipo             String?
+  categoria        String?
+  tax_rate_id      String?
+  tax_rate_name    String?
+  tax_rate_porct   Decimal                 @default(0) @db.Decimal(10, 2)
+  base_total       Decimal                 @db.Decimal(10, 2)
+  total            Decimal                 @db.Decimal(10, 2)
+  estado           StandaloneBudgetStatus  @default(PENDING)
+  vigencia_dias    Int                     @default(7)
+  fecha_vencimiento DateTime?
+  items            Json
+  notas            String?
+  es_aseguradora   Boolean                 @default(false)
+  aseguradora_nombre String?
+  suma_total       Boolean                 @default(true)
+  fecha_envio      DateTime                @default(now())
+  fecha_respuesta  DateTime?
+  repair_id        String?                 @unique
+  repair           Repair?                 @relation(fields: [repair_id], references: [id], onDelete: SetNull)
+  created_at       DateTime                @default(now())
+  updated_at       DateTime                @updatedAt
+  empresa          Company                 @relation(fields: [empresa_id], references: [id])
+
+  @@index([empresa_id])
+  @@index([estado])
+  @@index([fecha_vencimiento])
+}
+
+enum StandaloneBudgetStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  EXPIRED
 }
 
 model RepairPart {

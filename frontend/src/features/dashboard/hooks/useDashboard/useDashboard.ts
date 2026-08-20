@@ -1,53 +1,39 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useListCache } from '@/shared/hooks/useListCache';
 import { useDashboardState } from './useDashboardState';
 import { loadDashboardData } from './dashboardDataLoader';
 
 export function useDashboard() {
   const state = useDashboardState();
-  const mountedRef = useRef(true);
+  const { data, loading, error, refresh } = useListCache(
+    `dashboard:by-date:${state.selectedDate}`,
+    () => loadDashboardData(state.selectedDate),
+  );
 
-  const fetchDashboardData = useCallback(async () => {
-    state.setError(null);
-    state.setLoading(true);
-    try {
-      const result = await loadDashboardData(state.selectedDate);
-      if (!mountedRef.current) return;
-      state.setStats(result.stats);
-      state.setKpiTrends(result.kpiTrends);
-      state.setTopDevices(result.topDevices);
-      state.setSalesBreakdown(result.salesBreakdown);
-      state.setRepairStatesData(result.repairStatesData);
-      state.setRepairs(result.repairs);
-      state.setSalesData(result.salesData);
-      state.setPendingDeliveries(result.pendingDeliveries);
-      state.setStockAlerts(result.stockAlerts);
-      state.setRecentClients(result.recentClients);
-      state.setDailyActivities(result.dailyActivities);
-      state.setLastUpdated(new Date());
-    } catch (error) {
-      if (!mountedRef.current) return;
-      console.error('Error fetching dashboard data:', error);
-      state.setError('No se pudieron cargar los datos. Verificá tu conexión e intentá de nuevo.');
-    } finally {
-      if (mountedRef.current) {
-        state.setLoading(false);
-      }
-    }
-  }, [state.selectedDate]);
-
+  // Sincronizar datos del caché al estado local cuando cambian
   useEffect(() => {
-    mountedRef.current = true;
-    fetchDashboardData();
-    return () => { mountedRef.current = false; };
-  }, [fetchDashboardData]);
+    if (!data) return;
+    state.setStats(data.stats);
+    state.setKpiTrends(data.kpiTrends);
+    state.setTopDevices(data.topDevices);
+    state.setSalesBreakdown(data.salesBreakdown);
+    state.setRepairStatesData(data.repairStatesData);
+    state.setRepairs(data.repairs);
+    state.setSalesData(data.salesData);
+    state.setPendingDeliveries(data.pendingDeliveries);
+    state.setStockAlerts(data.stockAlerts);
+    state.setRecentClients(data.recentClients);
+    state.setDailyActivities(data.dailyActivities);
+    state.setLastUpdated(new Date());
+  }, [data]);
 
   return {
     isModalOpen: state.isModalOpen,
     setIsModalOpen: state.setIsModalOpen,
     isStatesModalOpen: state.isStatesModalOpen,
     setIsStatesModalOpen: state.setIsStatesModalOpen,
-    loading: state.loading,
-    error: state.error,
+    loading: loading,
+    error: error,
     lastUpdated: state.lastUpdated,
     selectedDate: state.selectedDate,
     setSelectedDate: state.setSelectedDate,
@@ -62,6 +48,6 @@ export function useDashboard() {
     kpiTrends: state.kpiTrends,
     stats: state.stats,
     salesBreakdown: state.salesBreakdown,
-    refreshData: fetchDashboardData,
+    refreshData: refresh,
   };
 }

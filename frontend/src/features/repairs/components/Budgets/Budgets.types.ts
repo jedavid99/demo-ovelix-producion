@@ -8,6 +8,7 @@ export interface BudgetItem {
 
 export interface Budget {
   id: string;
+  numero?: string;
   clientName: string;
   clientDni?: string;
   clientPhone: string;
@@ -15,7 +16,7 @@ export interface Budget {
   deviceType: string;
   issue: string;
   total: number;
-  status: 'Pendiente' | 'Aprobado' | 'Rechazado' | 'Completado';
+  status: 'Pendiente' | 'Aprobado' | 'Rechazado' | 'Completado' | 'Vencido';
   date: Date;
   technician: string;
   /** venta | reparacion | '' */
@@ -24,8 +25,16 @@ export interface Budget {
   taxRateId?: string;
   taxRateName?: string;
   taxRatePercent?: number;
+  taxRatePorct?: number;
   baseTotal?: number;
   items?: BudgetItem[];
+  /** Días de vigencia del presupuesto (configurados por el admin). */
+  vigenciaDias?: number;
+  /** Fecha límite de aprobación. */
+  fechaVencimiento?: Date | null;
+  /** ID de la reparación creada al aprobarse. */
+  repairId?: string;
+  repairNumber?: string;
 }
 
 export interface NewBudget {
@@ -49,6 +58,8 @@ export interface NewBudget {
   baseTotal: number;
   /** Líneas de producto / servicio cargadas. */
   items: BudgetItem[];
+  /** Días de vigencia del presupuesto (1-365). */
+  vigenciaDias: number;
 }
 
 export interface BudgetErrors {
@@ -64,6 +75,7 @@ export interface BudgetErrors {
   category?: string;
   taxRateId?: string;
   items?: string;
+  vigenciaDias?: string;
 }
 
 // Constantes
@@ -71,14 +83,15 @@ export const STATUS_COLORS = {
   Pendiente: '#f59e0b', // amber
   Aprobado: '#10b981', // green
   Rechazado: '#ef4444', // red
-  Completado: '#3b82f6', // blue,
+  Completado: '#3b82f6', // blue
+  Vencido: '#6b7280', // gray
 };
 
 export const ITEMS_PER_PAGE = 10;
 
 export const DEVICE_TYPES = ['Celular', 'Tablet', 'Portátil', 'Consola', 'Smartwatch', 'Otro'] as const;
 export const TECHNICIANS = ['Carlos López', 'Ana Martínez', 'Pedro Sánchez', 'Laura Díaz'] as const;
-export const STATUS_FILTERS = ['all', 'Pendiente', 'Aprobado', 'Rechazado', 'Completado'] as const;
+export const STATUS_FILTERS = ['all', 'Pendiente', 'Aprobado', 'Rechazado', 'Completado', 'Vencido'] as const;
 
 // Funciones auxiliares
 export const formatCurrency = (value: number): string => {
@@ -91,8 +104,9 @@ export const getStatusBadge = (status: Budget['status']) => {
     Aprobado: 'success',
     Rechazado: 'destructive',
     Completado: 'default',
+    Vencido: 'secondary',
   };
-  return variants[status] as 'warning' | 'success' | 'destructive' | 'default';
+  return variants[status] as 'warning' | 'success' | 'destructive' | 'default' | 'secondary';
 };
 
 // Estado inicial del formulario nuevo
@@ -112,6 +126,7 @@ export const initialNewBudget: NewBudget = {
   taxRatePorct: 0,
   baseTotal: 0,
   items: [],
+  vigenciaDias: 7,
 };
 
 export const newBudgetItem = (): BudgetItem => ({

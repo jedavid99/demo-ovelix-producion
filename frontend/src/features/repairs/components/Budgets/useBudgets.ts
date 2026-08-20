@@ -2,10 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { exportToCSV } from '@/shared/lib/export';
+import { toast } from '@/shared/components/ui/use-toast';
 import { settingsApi } from '@/features/settings/services/settingsApi';
 import type { TaxRate } from '@/features/settings/types/settings.types';
 import type { Budget, NewBudget, BudgetErrors } from './Budgets.types';
-import { initialNewBudget, ITEMS_PER_PAGE, STATUS_FILTERS, newBudgetItem } from './Budgets.types';
+import { initialNewBudget, ITEMS_PER_PAGE, newBudgetItem } from './Budgets.types';
+import { budgetsApi, dtoToBudget, newBudgetToPayload, budgetToNewBudget } from './budgetsApi';
+
+const getErrorMessage = (err: unknown): string => {
+  if (typeof err === 'object' && err !== null) {
+    const e = err as { response?: { data?: { message?: unknown } }; message?: unknown };
+    const m = e.response?.data?.message ?? e.message;
+    if (typeof m === 'string') return m;
+  }
+  return '';
+};
+
+const LIST_LIMIT = 500;
 
 export const useBudgets = () => {
   const [loading, setLoading] = useState(true);
@@ -21,18 +34,46 @@ export const useBudgets = () => {
 
   // Estado del modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
   const [newBudget, setNewBudget] = useState<NewBudget>(initialNewBudget);
   const [errors, setErrors] = useState<BudgetErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Cargar datos
-  useEffect(() => {
-    // 🔌 Conectar con API real:
-    // api.get('/budgets').then(res => setBudgets(res.data)).catch(() => setError(true)).finally(() => setLoading(false))
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
+  const loadBudgets = useCallback(async (): Promise<Budget[]> => {
+    const res = await budgetsApi.list({ page: 1, limit: LIST_LIMIT });
+    return res.data.map(dtoToBudget);
   }, []);
+
+  const fetchBudgets = useCallback(async () => {
+    try {
+      setBudgets(await loadBudgets());
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadBudgets]);
+
+  // Cargar presupuestos
+  useEffect(() => {
+    let active = true;
+    loadBudgets()
+      .then((data) => {
+        if (!active) return;
+        setBudgets(data);
+        setError(false);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setError(true);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadBudgets]);
 
   // Cargar porcentajes y categorías del admin al montar
   useEffect(() => {
@@ -64,7 +105,7 @@ export const useBudgets = () => {
     const matchesSearch =
       budget.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       budget.device.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      budget.id.toLowerCase().includes(searchQuery.toLowerCase());
+      (budget.numero || budget.id).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || budget.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -87,6 +128,10 @@ export const useBudgets = () => {
       name: 'Completado',
       value: filteredBudgets.filter((b) => b.status === 'Completado').length,
     },
+    {
+      name: 'Vencido',
+      value: filteredBudgets.filter((b) => b.status === 'Vencido').length,
+    },
   ].filter((d) => d.value > 0);
 
   // Paginación
@@ -99,7 +144,7 @@ export const useBudgets = () => {
   // Exportar CSV
   const handleExport = useCallback(() => {
     const csvData = filteredBudgets.map((budget) => ({
-      ID: budget.id,
+      ID: budget.numero || budget.id,
       Cliente: budget.clientName,
       Teléfono: budget.clientPhone,
       Dispositivo: budget.device,
@@ -107,7 +152,6 @@ export const useBudgets = () => {
       Total: budget.total,
       Estado: budget.status,
       Fecha: format(budget.date, 'dd/MM/yyyy', { locale: es }),
-      Técnico: budget.technician,
     }));
     exportToCSV(csvData, 'presupuestos');
   }, [filteredBudgets]);
@@ -115,9 +159,8 @@ export const useBudgets = () => {
   const handleRetry = useCallback(() => {
     setError(false);
     setLoading(true);
-    // api.get('/budgets').then(...)
-    setLoading(false);
-  }, []);
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   // Manejadores del modal
   const handleNewBudgetChange = useCallback(
@@ -141,8 +184,14 @@ export const useBudgets = () => {
           const rate = taxRates.find((r) => r.id === value);
           next.taxRateId = String(value);
           next.taxRateName = rate?.nombre || '';
-          next.taxRatePorct = rate?.porcentaje || 0;
+          next.taxRatePorct = Number(rate?.porcentaje) || 0;
           next.total = next.baseTotal * (1 + (rate?.porcentaje || 0) / 100);
+        }
+
+        // Vigencia en días (1-365)
+        if (field === 'vigenciaDias') {
+          const parsed = Math.max(1, Math.min(365, Math.floor(Number(value)) || 7));
+          next.vigenciaDias = parsed;
         }
 
         return next;
@@ -193,6 +242,7 @@ export const useBudgets = () => {
     if (!newBudget.clientPhone.trim()) newErrors.clientPhone = 'El teléfono es obligatorio';
     if (!newBudget.tipo) newErrors.tipo = 'Seleccioná si es para venta o reparación';
     if (!newBudget.category.trim()) newErrors.category = 'Seleccioná la categoría del presupuesto';
+    if (!newBudget.device.trim()) newErrors.device = 'Ingresá el dispositivo del presupuesto';
     if (newBudget.items.length === 0) {
       newErrors.items = 'Agregá al menos un producto';
     } else {
@@ -203,35 +253,63 @@ export const useBudgets = () => {
     if (newBudget.tipo === 'reparacion' && !newBudget.issue.trim())
       newErrors.issue = 'El problema es obligatorio';
     if (!newBudget.total || newBudget.total <= 0) newErrors.total = 'El total debe ser mayor a 0';
-    if (!newBudget.technician.trim()) newErrors.technician = 'El técnico es obligatorio';
+    const vigencia = Number(newBudget.vigenciaDias);
+    if (!Number.isInteger(vigencia) || vigencia < 1 || vigencia > 365)
+      newErrors.vigenciaDias = 'La vigencia debe ser entre 1 y 365 días';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [newBudget]);
 
   const handleSaveBudget = useCallback(async () => {
-    if (!validateNewBudget()) return;
+    if (!validateNewBudget()) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Completá los campos marcados en rojo para poder guardar el presupuesto.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSubmitting(true);
 
-    // Simular llamada a la API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const payload = newBudgetToPayload(newBudget);
+      if (editingBudgetId) {
+        const updated = await budgetsApi.update(editingBudgetId, payload);
+        const mapped = dtoToBudget(updated);
+        setBudgets((prev) => prev.map((b) => (b.id === editingBudgetId ? mapped : b)));
+        toast({ title: 'Éxito', description: 'Presupuesto actualizado correctamente.' });
+      } else {
+        const created = await budgetsApi.create(payload);
+        setBudgets((prev) => [dtoToBudget(created), ...prev]);
+        toast({ title: 'Éxito', description: 'Presupuesto creado correctamente.' });
+      }
+      setIsModalOpen(false);
+      setNewBudget(initialNewBudget);
+      setEditingBudgetId(null);
+      setErrors({});
+    } catch (err) {
+      const message = getErrorMessage(err);
+      toast({
+        title: 'Error',
+        description: message || 'No se pudo guardar el presupuesto. Verificá la conexión e intentá de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [newBudget, validateNewBudget, editingBudgetId]);
 
-    const filledItems = newBudget.items.filter((it) => it.device.trim() || it.deviceType.trim());
-    const budget: Budget = {
-      id: `BUD-${Date.now()}`,
-      ...newBudget,
-      device: filledItems.map((it) => it.device.trim()).filter(Boolean).join(' · ') || newBudget.device,
-      deviceType: filledItems[0]?.deviceType || newBudget.deviceType,
-      items: filledItems,
-      status: 'Pendiente',
-      date: new Date(),
-    };
-
-    setBudgets((prev) => [budget, ...prev]);
-    setIsModalOpen(false);
-    setNewBudget(initialNewBudget);
-    setErrors({});
-    setIsSubmitting(false);
-  }, [newBudget, validateNewBudget]);
+  const handleEditBudget = useCallback(
+    (id: string) => {
+      const budget = budgets.find((b) => b.id === id);
+      if (!budget) return;
+      setNewBudget(budgetToNewBudget(budget));
+      setEditingBudgetId(id);
+      setErrors({});
+      setIsModalOpen(true);
+    },
+    [budgets]
+  );
 
   const clearFilters = useCallback(() => {
     setSearchQuery('');
@@ -259,6 +337,8 @@ export const useBudgets = () => {
     statusData,
     isModalOpen,
     setIsModalOpen,
+    editingBudgetId,
+    setEditingBudgetId,
     newBudget,
     setNewBudget,
     errors,
@@ -268,6 +348,7 @@ export const useBudgets = () => {
     handleRetry,
     handleNewBudgetChange,
     handleSaveBudget,
+    handleEditBudget,
     handleItemChange,
     handleAddItem,
     handleRemoveItem,
