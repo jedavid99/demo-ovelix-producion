@@ -140,17 +140,23 @@ export class StandaloneBudgetsService {
     const numero = await this.generateBudgetNumber(currentUser.empresa_id);
     const vigenciaDias = data.vigencia_dias ?? DEFAULT_VIGENCIA_DIAS;
     const fechaVencimiento = this.calculateExpiration(vigenciaDias);
+    const itemsList = data.items ?? [];
+    const sumaTotal = data.suma_total !== false;
+    const totals = this.computeTotals(itemsList, data.tax_rate_porct ?? 0, sumaTotal);
 
     const budget = await this.prisma.standaloneBudget.create({
       data: {
         ...data,
+        base_total: totals.base_total,
+        total: totals.total,
+        suma_total: sumaTotal,
         numero,
         empresa_id: currentUser.empresa_id,
         estado: 'PENDING',
         vigencia_dias: vigenciaDias,
         fecha_vencimiento: fechaVencimiento,
         tecnico: data.tecnico ?? '',
-        items: data.items ?? [],
+        items: itemsList,
       } as any,
     });
 
@@ -165,6 +171,16 @@ export class StandaloneBudgetsService {
 
     if (data.vigencia_dias !== undefined && data.vigencia_dias !== budget.vigencia_dias) {
       updateData.fecha_vencimiento = this.calculateExpiration(data.vigencia_dias);
+    }
+
+    if (data.items !== undefined || data.tax_rate_porct !== undefined || data.suma_total !== undefined) {
+      const itemsList =
+        data.items !== undefined ? data.items : Array.isArray(budget.items) ? budget.items : [];
+      const pct = data.tax_rate_porct !== undefined ? data.tax_rate_porct : Number(budget.tax_rate_porct) || 0;
+      const sumaTotal = data.suma_total !== undefined ? data.suma_total : (budget.suma_total ?? true);
+      const totals = this.computeTotals(itemsList, pct, sumaTotal);
+      updateData.base_total = totals.base_total;
+      updateData.total = totals.total;
     }
 
     return this.prisma.standaloneBudget.update({
