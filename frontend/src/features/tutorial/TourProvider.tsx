@@ -9,12 +9,13 @@ import type { TutorialSection } from './types'
 
 export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth()
-  const { hasSeen, openTourForRoute } = useTutorial()
+  const { hasSeen, openTourForRoute, isDisabled } = useTutorial()
   const location = useLocation()
   const prevAuthRef = useRef(isAuthenticated)
 
   // Primer login: abre el tutorial de la sección que aún no fue visto
   useEffect(() => {
+    if (isDisabled) return
     if (isAuthenticated && !prevAuthRef.current) {
       const unseenList = TUTORIAL_SECTIONS.filter((s) => !hasSeen(s.id))
       if (unseenList.length > 0) {
@@ -23,13 +24,13 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     prevAuthRef.current = isAuthenticated
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated])
+  }, [isAuthenticated, hasSeen, openTourForRoute, isDisabled])
 
   return <>{children}</>
 }
 
 export const TutorialHelpPage: React.FC = () => {
-  const { openTour, requestTour, hasSeen } = useTutorial()
+  const { openTour, requestTour, hasSeen, isDisabled, setDisabled } = useTutorial()
   const navigate = useNavigate()
 
   const handleOpen = (section: TutorialSection) => {
@@ -47,10 +48,25 @@ export const TutorialHelpPage: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div data-tour="content" className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <MousePointerClick size={22} className="text-primary" />
-          Tutoriales interactivos
-        </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <MousePointerClick size={22} className="text-primary" />
+              Tutoriales interactivos
+            </h1>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isDisabled}
+              onChange={(e) => setDisabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <span className="text-sm text-muted-foreground">
+              {isDisabled ? 'Desactivado' : 'Activado'} — Mostrar recorridos al entrar
+            </span>
+          </label>
+        </div>
         <p className="text-muted-foreground">
           Elegí una sección para ver un recorrido guiado paso a paso sobre cómo funciona. También podés
           pulsar el botón flotante de ayuda (esquina inferior derecha) en cualquier pantalla.

@@ -94,8 +94,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           currentUser.permissions = decodedToken.permissions;
         }
         
-        setUser(currentUser);
-        localStorage.setItem('user_data', JSON.stringify(currentUser));
+        // Preservar nombre/apellido del cache local si el backend no los trae
+        const cached = localStorage.getItem('user_data');
+        let cachedUser: User | null = null;
+        if (cached) {
+          try { cachedUser = JSON.parse(cached); } catch {}
+        }
+        
+        const mergedUser = {
+          ...currentUser,
+          nombre: currentUser.nombre ?? cachedUser?.nombre,
+          apellido: currentUser.apellido ?? cachedUser?.apellido,
+          email: currentUser.email ?? cachedUser?.email,
+          empresa_id: currentUser.empresa_id ?? cachedUser?.empresa_id,
+          rol: currentUser.rol ?? cachedUser?.rol,
+        };
+        
+        setUser(mergedUser);
+        localStorage.setItem('user_data', JSON.stringify(mergedUser));
         setIsAuthenticated(true);
       } catch (error) {
         logger.error('Error al obtener usuario en initAuth:', error);
@@ -138,15 +154,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // El usuario viene en response.data.data.user
-      const usuario = response?.data?.data?.user || response?.data?.user || response?.user;
-      
-      // Agregar permisos del token al usuario
-      if (decodedToken.permissions && usuario) {
-        usuario.permissions = decodedToken.permissions;
-      }
-      
-      setUser(usuario);
-      localStorage.setItem('user_data', JSON.stringify(usuario));
+const usuario = response?.data?.data?.user || response?.data?.user || response?.user;
+       
+       // Agregar permisos del token al usuario
+       if (decodedToken.permissions && usuario) {
+         usuario.permissions = decodedToken.permissions;
+       }
+       
+       // Preservar nombre/apellido del cache anterior si el login no los trae
+       const prevCached = localStorage.getItem('user_data');
+       let prevUser: User | null = null;
+       if (prevCached) {
+         try { prevUser = JSON.parse(prevCached); } catch {}
+       }
+       
+       const mergedUser = {
+         ...usuario,
+         nombre: usuario.nombre ?? prevUser?.nombre,
+         apellido: usuario.apellido ?? prevUser?.apellido,
+         email: usuario.email ?? prevUser?.email,
+         empresa_id: usuario.empresa_id ?? prevUser?.empresa_id,
+         rol: usuario.rol ?? prevUser?.rol,
+       };
+       
+       setUser(mergedUser);
+       localStorage.setItem('user_data', JSON.stringify(mergedUser));
       setIsAuthenticated(true);
     } else {
       logger.error('No se recibió token en la respuesta');

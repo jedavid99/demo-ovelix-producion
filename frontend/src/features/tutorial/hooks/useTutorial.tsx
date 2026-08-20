@@ -13,11 +13,14 @@ interface TutorialContextType {
   closeTour: () => void
   hasSeen: (sectionId: string) => boolean
   markSeen: (sectionId: string) => void
+  isDisabled: boolean
+  setDisabled: (disabled: boolean) => void
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
 
 const STORAGE_KEY = 'ovelix_tutorial_seen'
+const DISABLED_KEY = 'ovelix_tutorial_disabled'
 
 const getSeen = (): string[] => {
   try {
@@ -28,15 +31,29 @@ const getSeen = (): string[] => {
   }
 }
 
+const getDisabled = (): boolean => {
+  try {
+    return localStorage.getItem(DISABLED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
 export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [section, setSection] = useState<TutorialSection | null>(null)
   const [pendingSection, setPendingSection] = useState<TutorialSection | null>(null)
+  const [disabled, setDisabledState] = useState(() => getDisabled())
 
   const openTour = useCallback((s: TutorialSection) => {
     setPendingSection(null)
     setSection(s)
     setIsOpen(true)
+  }, [])
+
+  const setDisabled = useCallback((value: boolean) => {
+    setDisabledState(value)
+    localStorage.setItem(DISABLED_KEY, value.toString())
   }, [])
 
   /** Solicita abrir el tour de una sección luego de navegar a su ruta. */
@@ -79,6 +96,8 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         closeTour,
         hasSeen,
         markSeen,
+        isDisabled: disabled,
+        setDisabled,
       }}
     >
       {children}
