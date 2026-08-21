@@ -66,15 +66,49 @@ const DEFAULT_THEME: TenantPageConfig['theme'] = {
   secondaryHover: '#3c517d',
 };
 
-export const TenantPageSection: React.FC = () => {
+const DEFAULT_CONFIG: TenantPageConfig = {
+  slug: '',
+  enabled: false,
+  brand: { name: '', logoText: '', tagline: '' },
+  theme: DEFAULT_THEME,
+  contact: { phone: '', email: '', address: '', whatsapp: '' },
+  schedule: [],
+  nav: [],
+  hero: { eyebrow: '', headline1: '', headlineAccent: '', description: '', cta1: '', cta2: '', image: '' },
+  about: { title: '', description: '', features: [], badgeTitle: '', badgeText: '', image: '' },
+  services: { eyebrow: '', title: '', description: '', items: [] },
+  cta: { title: '', accent: '', description: '', button: '' },
+  footer: { legalPages: [], rights: '' },
+  valuation: { title: '', placeholder: '', suggestions: [], resultsTitle: '', resultsSubtitle: '', badgeLabel: '', selectLabel: '', results: [], helpTitle: '', helpDescription: '', helpButtons: [] },
+  tracking: { statusLabel: '', orderCode: '', deviceName: '', clientName: '', messageButton: '', reportButton: '', steps: [], progressTitle: '', progressPercent: 0, progressNote: '', labLabel: '', labLocation: '', image: '', imageAlt: '', componentsTitle: '', components: [], completionTitle: '', completionDate: '', completionTime: '', completionNote: '' },
+  booking: { title: '', description: '', devices: [], days: [], monthLabel: '', slots: [], serviceMap: {}, priceMap: {}, step1Title: '', step2Title: '', step3Title: '', formLabels: [], slotsLabel: '', summaryLabel: '', summaryRows: [], quoteLabel: '', summerTime: '', disclaimer: '', errorInvalid: '', submit: '', submitting: '', confirmed: '', guaranteeTitle: '', guaranteeText: '' },
+  checkout: { deliveryCost: 0, cbu: '', alias: '', accountNumber: '' },
+};
+
+interface TenantPageSectionProps {
+  initialConfig: TenantPageConfig | null;
+  initialEnabled: boolean;
+  initialCompany: { id: string; slug: string; razon_social: string } | null;
+  onConfigChange: (config: TenantPageConfig) => void;
+  onEnabledChange: (enabled: boolean) => void;
+  onCompanyChange: (company: { id: string; slug: string; razon_social: string } | null) => void;
+}
+
+export const TenantPageSection: React.FC<TenantPageSectionProps> = ({
+  initialConfig,
+  initialEnabled,
+  initialCompany,
+  onConfigChange,
+  onEnabledChange,
+  onCompanyChange,
+}) => {
   const meta = getSectionMeta('tenantPage');
   const { user } = useAuth();
   const isGlobalDev = user?.rol === 'DESARROLLADOR' && !user?.empresa_id;
-  const [loading, setLoading] = useState(() => Boolean(user?.empresa_id));
   const [saving, setSaving] = useState(false);
-  const [config, setConfig] = useState<TenantPageConfig | null>(null);
-  const [enabled, setEnabled] = useState(false);
-  const [company, setCompany] = useState<TenantPageResponse['company'] | null>(null);
+  const [config, setConfig] = useState<TenantPageConfig>(initialConfig || DEFAULT_CONFIG);
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [company, setCompany] = useState(initialCompany);
   const [copied, setCopied] = useState(false);
   const [companies, setCompanies] = useState<{ id: string; codigo_empresa: string; razon_social: string }[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(() => Boolean(user?.rol === 'DESARROLLADOR' && !user?.empresa_id));
@@ -106,30 +140,35 @@ export const TenantPageSection: React.FC = () => {
       .get(isGlobalDev ? selectedEmpresaId : undefined)
       .then((res) => {
         if (!mounted) return;
-        setConfig(JSON.parse(JSON.stringify(res.config)));
+        const newConfig = JSON.parse(JSON.stringify(res.config));
+        setConfig(newConfig);
         setEnabled(!!res.enabled);
         setCompany(res.company);
+        onConfigChange(newConfig);
+        onEnabledChange(!!res.enabled);
+        onCompanyChange(res.company);
       })
       .catch(() => {
         if (!mounted) return;
         toast({ title: 'Error', description: 'No se pudo cargar la configuración de la página', variant: 'destructive' });
-      })
-      .finally(() => mounted && setLoading(false));
+      });
     return () => {
       mounted = false;
     };
   }, [selectedEmpresaId, isGlobalDev]);
 
   const save = async () => {
-    if (!config) return;
     setSaving(true);
     try {
       const saved = await tenantPagesApi.update(
         { config, enabled },
         isGlobalDev ? selectedEmpresaId : undefined,
       );
+      const newConfig = JSON.parse(JSON.stringify(saved.config));
       setEnabled(!!saved.enabled);
-      setConfig(JSON.parse(JSON.stringify(saved.config)));
+      setConfig(newConfig);
+      onConfigChange(newConfig);
+      onEnabledChange(!!saved.enabled);
       toast({ title: 'Éxito', description: 'Página de presupuesto actualizada' });
     } catch {
       toast({ title: 'Error', description: 'No se pudo guardar. Revisá que los campos estén completos.', variant: 'destructive' });
@@ -137,25 +176,6 @@ export const TenantPageSection: React.FC = () => {
       setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm">Cargando configuración...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!config) {
-    return (
-      <div className="bg-card rounded-xl border border-border p-10 text-center text-muted-foreground">
-        No hay configuración disponible.
-      </div>
-    );
-  }
 
   const setField = (section: keyof TenantPageConfig, key: string, value: unknown) => {
     setConfig((prev) => (prev ? { ...prev, [section]: { ...prev[section], [key]: value } } : prev));
@@ -337,9 +357,8 @@ export const TenantPageSection: React.FC = () => {
             value={selectedEmpresaId}
             onChange={(e) => {
               setSelectedEmpresaId(e.target.value);
-              setConfig(null);
+              setConfig(DEFAULT_CONFIG);
               setCompany(null);
-              setLoading(!!e.target.value);
             }}
             disabled={loadingCompanies}
             className="w-full md:w-96 rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"

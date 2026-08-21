@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useBusinessInfo, useBusinessInfoMutations } from '@/hooks/useBusinessInfo';
 import { settingsApi } from '../services/settingsApi';
+import { tenantPagesApi } from '../services/tenantPagesApi';
 import type {
   PaymentMethod,
   TaxRate,
@@ -11,6 +12,7 @@ import type {
   RepairStateRequest,
   StockCategory,
 } from '../types/settings.types';
+import type { TenantPageConfig, TenantPageResponse } from '../types/tenantPage/tenantPage.types';
 
 const PROFILE_REQUESTS = [
   settingsApi.getRepairStates,
@@ -35,6 +37,9 @@ export function useSettings() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [plan, setPlan] = useState<PlanSubscription | null>(null);
   const [categories, setCategories] = useState<StockCategory[]>([]);
+  const [tenantPageConfig, setTenantPageConfig] = useState<TenantPageConfig | null>(null);
+  const [tenantPageEnabled, setTenantPageEnabled] = useState(false);
+  const [tenantPageCompany, setTenantPageCompany] = useState<TenantPageResponse['company'] | null>(null);
 
   const [sectionLoading, setSectionLoading] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
@@ -120,6 +125,17 @@ export function useSettings() {
     }
   }, []);
 
+  const loadTenantPage = useCallback(async () => {
+    try {
+      const res = await tenantPagesApi.get();
+      setTenantPageConfig(res.config);
+      setTenantPageEnabled(!!res.enabled);
+      setTenantPageCompany(res.company);
+    } catch {
+      // TenantPageSection maneja sus propios errores
+    }
+  }, []);
+
   const sectionLoaders: Record<string, () => Promise<void>> = {
     business: loadProfile,
     Categoria: loadCategories,
@@ -127,15 +143,26 @@ export function useSettings() {
     notificationes: loadNotifications,
     api: loadApi,
     plan: loadPlan,
+    tenantPage: loadTenantPage,
   };
 
-  // Carga inicial: datos del perfil + plan (tarjeta lateral)
+  // Carga inicial: todas las secciones en paralelo
   useEffect(() => {
     loadProfile();
     loadPlan();
+    loadTenantPage();
+    loadCategories();
+    loadTaxes();
+    loadNotifications();
+    loadApi();
     loadedSections.current.add('business');
     loadedSections.current.add('plan');
-  }, [loadProfile, loadPlan]);
+    loadedSections.current.add('tenantPage');
+    loadedSections.current.add('Categoria');
+    loadedSections.current.add('taxes');
+    loadedSections.current.add('notificationes');
+    loadedSections.current.add('api');
+  }, [loadProfile, loadPlan, loadTenantPage, loadCategories, loadTaxes, loadNotifications, loadApi]);
 
   // Cambio de sección: carga perezosa solo si no se cargó antes
   useEffect(() => {
@@ -190,5 +217,11 @@ export function useSettings() {
     setPlan,
     categories,
     setCategories,
+    tenantPageConfig,
+    setTenantPageConfig,
+    tenantPageEnabled,
+    setTenantPageEnabled,
+    tenantPageCompany,
+    setTenantPageCompany,
   };
 }

@@ -47,6 +47,7 @@ export const GuidedTour: React.FC = () => {
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
+    if (location.pathname.startsWith('/developer')) return
     if (pendingSection) {
       // Se pidió un tour puntual: abrirlo cuando la ruta llegue a la sección destino
       const current = getTutorialByRoute(location.pathname)

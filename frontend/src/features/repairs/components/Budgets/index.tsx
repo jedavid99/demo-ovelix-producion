@@ -171,14 +171,6 @@ export default function Budgets() {
     }
   };
 
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  if (error) {
-    return <ErrorState onRetry={handleRetry} />;
-  }
-
   if (isModalOpen) {
     return (
       <BudgetCreate
@@ -239,25 +231,31 @@ export default function Budgets() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tabla de presupuestos (ocupa 2 columnas) */}
         <div className="lg:col-span-2">
-          <BudgetsTable
-            budgets={paginatedBudgets}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            itemsPerPage={ITEMS_PER_PAGE}
-            totalFiltered={totalBudgets}
-            onView={setDetailBudgetId}
-            onEdit={handleEditBudget}
-            onDelete={handleDeleteBudget}
-            onApprove={handleApproveBudget}
-            onReject={handleRejectBudget}
-            onPrint={handlePrint}
-          />
+          {loading ? (
+            <LoadingState label="Cargando presupuestos..." />
+          ) : error ? (
+            <ErrorState message={error} onRetry={handleRetry} />
+          ) : (
+            <BudgetsTable
+              budgets={paginatedBudgets}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={ITEMS_PER_PAGE}
+              totalFiltered={totalBudgets}
+              onView={setDetailBudgetId}
+              onEdit={handleEditBudget}
+              onDelete={handleDeleteBudget}
+              onApprove={handleApproveBudget}
+              onReject={handleRejectBudget}
+              onPrint={handlePrint}
+            />
+          )}
         </div>
 
         {/* Gráfico de distribución por estado */}
         <div>
-          <BudgetsChart statusData={statusData} />
+          {!loading && !error && <BudgetsChart statusData={statusData} />}
         </div>
       </div>
 

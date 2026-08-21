@@ -16,6 +16,7 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Primer login: abre el tutorial de la sección que aún no fue visto
   useEffect(() => {
     if (isDisabled) return
+    if (location.pathname.startsWith('/developer')) return
     if (isAuthenticated && !prevAuthRef.current) {
       const unseenList = TUTORIAL_SECTIONS.filter((s) => !hasSeen(s.id))
       if (unseenList.length > 0) {

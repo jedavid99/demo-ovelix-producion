@@ -112,7 +112,7 @@ export default function SettingsPage() {
     section, setSection,
     isEditingBusiness, setIsEditingBusiness, businessInfo,
     loading, error, mutationLoading, handleBusinessEdit,
-    sectionLoading, configError, reloadCurrent,
+    configError, reloadCurrent,
     repairStates, stateRequests, setStateRequests,
     paymentMethods, setPaymentMethods,
     taxRates, setTaxRates,
@@ -121,6 +121,9 @@ export default function SettingsPage() {
     integrations, setIntegrations,
     plan, setPlan,
     categories, setCategories,
+    tenantPageConfig, setTenantPageConfig,
+    tenantPageEnabled, setTenantPageEnabled,
+    tenantPageCompany, setTenantPageCompany,
   } = useSettings();
 
   const { user: rawUser } = useAuth();
@@ -133,7 +136,7 @@ export default function SettingsPage() {
       <LeftNav current={section} onChange={setSection} plan={plan} />
       <main className="min-w-0 flex-1">
         <MobileSectionNav current={section} onChange={setSection} />
-        {configError && !sectionLoading && (
+        {configError && (
           <div
             role="alert"
             className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-destructive"
@@ -147,15 +150,7 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-        {sectionLoading && section !== 'pdf' && (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span className="text-sm">Cargando...</span>
-            </div>
-          </div>
-        )}
-        {!sectionLoading && section === 'business' && (
+        {section === 'business' && (
           <BusinessSection
             loading={loading} error={error} businessInfo={businessInfo}
             isEditingBusiness={isEditingBusiness} setIsEditingBusiness={setIsEditingBusiness}
@@ -164,12 +159,21 @@ export default function SettingsPage() {
             paymentMethods={paymentMethods} setPaymentMethods={setPaymentMethods}
           />
         )}
-        {!sectionLoading && section === 'tenantPage' && <TenantPageSection />}
-        {!sectionLoading && section === 'Categoria' && <CategoriaSection categories={categories} setCategories={setCategories} />}
-        {!sectionLoading && section === 'taxes' && <TaxesSection taxRates={taxRates} setTaxRates={setTaxRates} bankAccounts={bankAccounts} setBankAccounts={setBankAccounts} />}
-        {!sectionLoading && section === 'notificationes' && <NotificationsSection notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} />}
-        {!sectionLoading && section === 'api' && <ApiSection integrations={integrations} setIntegrations={setIntegrations} />}
-        {!sectionLoading && section === 'plan' && <PlanSection plan={plan} setPlan={setPlan} isDeveloper={isDeveloper} />}
+        {section === 'tenantPage' && (
+          <TenantPageSection
+            initialConfig={tenantPageConfig}
+            initialEnabled={tenantPageEnabled}
+            initialCompany={tenantPageCompany}
+            onConfigChange={setTenantPageConfig}
+            onEnabledChange={setTenantPageEnabled}
+            onCompanyChange={setTenantPageCompany}
+          />
+        )}
+        {section === 'Categoria' && <CategoriaSection categories={categories} setCategories={setCategories} />}
+        {section === 'taxes' && <TaxesSection taxRates={taxRates} setTaxRates={setTaxRates} bankAccounts={bankAccounts} setBankAccounts={setBankAccounts} />}
+        {section === 'notificationes' && <NotificationsSection notificationPrefs={notificationPrefs} setNotificationPrefs={setNotificationPrefs} />}
+        {section === 'api' && <ApiSection integrations={integrations} setIntegrations={setIntegrations} />}
+        {section === 'plan' && <PlanSection plan={plan} setPlan={setPlan} isDeveloper={isDeveloper} />}
         {section === 'pdf' && <PDFSection />}
       </main>
     </div>
