@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../database/prisma.service';
 import { PermissionsService } from '../permissions/permissions.service';
+import { CompaniesService } from '../companies/companies.service';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
@@ -18,6 +19,7 @@ describe('AuthService', () => {
   let jwtService: any;
   let configService: any;
   let permissionsService: any;
+  let companiesService: any;
 
   const mockUser = {
     id: 'user-1',
@@ -66,19 +68,24 @@ describe('AuthService', () => {
       }),
     };
 
-    permissionsService = {
-      getUserPermissions: jest.fn().mockResolvedValue(['dashboard.view']),
-    };
+permissionsService = {
+    getUserPermissions: jest.fn().mockResolvedValue(['dashboard.view']),
+  };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: PrismaService, useValue: prisma },
-        { provide: JwtService, useValue: jwtService },
-        { provide: ConfigService, useValue: configService },
-        { provide: PermissionsService, useValue: permissionsService },
-      ],
-    }).compile();
+  companiesService = {
+    seedCompanyDefaults: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const module: TestingModule = await Test.createTestingModule({
+    providers: [
+      AuthService,
+      { provide: PrismaService, useValue: prisma },
+      { provide: JwtService, useValue: jwtService },
+      { provide: ConfigService, useValue: configService },
+      { provide: PermissionsService, useValue: permissionsService },
+      { provide: CompaniesService, useValue: companiesService },
+    ],
+  }).compile();
 
     service = module.get<AuthService>(AuthService);
   });

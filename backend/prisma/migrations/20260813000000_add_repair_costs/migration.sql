@@ -10,6 +10,7 @@ CREATE TABLE "RepairCost" (
     "activo" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "empresa_id" TEXT NOT NULL,
 
     CONSTRAINT "RepairCost_pkey" PRIMARY KEY ("id")
 );

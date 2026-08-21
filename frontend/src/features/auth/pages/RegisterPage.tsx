@@ -41,6 +41,7 @@ export default function RegisterPage() {
             errors={registerState.errors}
             isSubmitting={registerState.isSubmitting}
             copied={registerState.copied}
+            registeredCompanyCode={registerState.registeredCompanyCode}
             onNextStep={registerState.handleNextStep}
             onPreviousStep={registerState.handlePreviousStep}
             onActivationSubmit={registerState.handleActivationSubmit}

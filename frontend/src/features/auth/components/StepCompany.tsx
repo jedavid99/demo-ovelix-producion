@@ -114,15 +114,16 @@ export const StepCompany: React.FC<StepCompanyProps> = ({
             error={errors.email}
           />
         </div>
-        {/* NIF opcional */}
+        {/* CUIT/CUIL obligatorio */}
         <div className="space-y-1.5">
-          <Label htmlFor="companyNif">NIF/CIF (opcional)</Label>
+          <Label htmlFor="companyCuit">CUIT/CUIL <span className="text-destructive">*</span></Label>
           <Input
-            id="companyNif"
-            placeholder="Ej: B12345678"
-            value={companyData.nif}
-            onChange={(e) => setCompanyData({ ...companyData, nif: e.target.value })}
+            id="companyCuit"
+            placeholder="Ej: 20-12345678-9"
+            value={companyData.cuit}
+            onChange={(e) => setCompanyData({ ...companyData, cuit: e.target.value })}
             leftIcon={<FileText className="w-5 h-5" />}
+            error={errors.cuit}
           />
         </div>
         <div className="flex gap-3 pt-4">

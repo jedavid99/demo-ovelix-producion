@@ -1,22 +1,41 @@
 import { MdInfo } from 'react-icons/md';
-import { MapPin, Calendar } from 'lucide-react';
-import { FaRegAddressCard, FaEnvelope, FaPhone, FaBuilding, FaHashtag, FaCircleUser } from "react-icons/fa6";
+import { Calendar, Building2, Hash, User, Mail, Phone, MapPin as LucideMapPin, Badge, LucideIcon } from 'lucide-react';
 import { EditableField } from './EditableField';
 import { updateSelf } from '@/services/users.service';
 
-interface InformationSectionProps {
-  user: any;
-  onUserUpdate?: (updated: any) => void;
+interface UserProfile {
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  dni?: string;
+  telefono?: string;
+  rol?: { name: string };
+  empresa?: { razon_social: string; codigo_empresa: string; direccion?: string; ciudad?: string; provincia?: string };
+  created_at?: string;
+  updated_at?: string;
 }
 
-const Field = ({ icon: Icon, label, value }: { icon: any; label: string; value: string | null | undefined }) => (
+interface InformationSectionProps {
+  user: UserProfile;
+  onUserUpdate?: (updated: Partial<UserProfile>) => void;
+}
+
+const StaticField = ({ icon: Icon, label, value, href }: { icon: LucideIcon; label: string; value: string | null | undefined; href?: string }) => (
   <div className="flex items-start gap-3">
-    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-      <Icon size={16} className="text-primary" />
+    <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+      <Icon size={16} className="text-muted-foreground" />
     </div>
     <div className="min-w-0">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="mt-0.5 text-foreground font-medium truncate">{value || '\u2014'}</p>
+      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="mt-0.5 text-foreground font-medium truncate">
+        {href ? (
+          <a href={href} className="hover:underline text-primary" target="_blank" rel="noopener noreferrer">
+            {value || '\u2014'}
+          </a>
+        ) : (
+          value || '\u2014'
+        )}
+      </p>
     </div>
   </div>
 );
@@ -31,8 +50,8 @@ export const InformationSection = ({ user, onUserUpdate }: InformationSectionPro
     ? new Date(user.updated_at).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
 
-  const saveField = async (field: 'nombre' | 'email' | 'dni' | 'telefono') => async (newValue: string) => {
-    const payload: any = {};
+  const saveField = (field: 'nombre' | 'email' | 'dni' | 'telefono') => async (newValue: string) => {
+    const payload: Partial<UserProfile> = {};
     if (field === 'nombre') {
       const parts = newValue.split(/\s+/);
       payload.nombre = parts[0] || '';
@@ -49,24 +68,36 @@ export const InformationSection = ({ user, onUserUpdate }: InformationSectionPro
   };
 
   return (
-    <div className="bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md">
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-          <MdInfo size={12} className="text-primary" />
+    <div className="bg-card border border-border rounded-xl">
+      <div className="px-6 py-5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+            <MdInfo size={12} className="text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Información Personal</h2>
         </div>
-        <h2 className="text-lg font-semibold text-foreground">Información Personal</h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <EditableField label="Nombre completo" value={fullName} icon={FaCircleUser} onSave={saveField('nombre')} placeholder="Nombre y apellido" />
-        <EditableField label="Email" value={user?.email || ''} icon={FaEnvelope} onSave={saveField('email')} type="email" placeholder="correo@ejemplo.com" />
-        <EditableField label="Teléfono" value={user?.telefono || ''} icon={FaPhone} onSave={saveField('telefono')} placeholder="Número de teléfono" />
-        <EditableField label="DNI" value={user?.dni || ''} icon={FaRegAddressCard} onSave={saveField('dni')} placeholder="Número de DNI" />
-        <Field icon={FaBuilding} label="Rol" value={user?.rol?.name} />
-        <Field icon={FaHashtag} label="Código empresa" value={empresa?.codigo_empresa} />
-        <Field icon={FaBuilding} label="Empresa" value={empresa?.razon_social} />
-        <Field icon={MapPin} label="Dirección" value={[empresa?.direccion, empresa?.ciudad, empresa?.provincia].filter(Boolean).join(', ')} />
-        <Field icon={Calendar} label="Fecha de registro" value={createdDate} />
-        <Field icon={Calendar} label="Última actualización" value={updatedDate} />
+
+      <div className="p-6 space-y-6">
+        {/* Editable fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <EditableField label="Nombre completo" value={fullName} icon={User} onSave={saveField('nombre')} placeholder="Nombre y apellido" />
+          <EditableField label="Email" value={user?.email || ''} icon={Mail} onSave={saveField('email')} type="email" placeholder="correo@ejemplo.com" />
+          <EditableField label="Teléfono" value={user?.telefono || ''} icon={Phone} onSave={saveField('telefono')} placeholder="Número de teléfono" />
+          <EditableField label="DNI" value={user?.dni || ''} icon={Badge} onSave={saveField('dni')} placeholder="Número de DNI" />
+        </div>
+
+        <div className="border-t border-border my-4" />
+
+        {/* Static fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <StaticField icon={Building2} label="Rol" value={user?.rol?.name} />
+          <StaticField icon={Hash} label="Código empresa" value={empresa?.codigo_empresa} />
+          <StaticField icon={Building2} label="Empresa" value={empresa?.razon_social} />
+          <StaticField icon={LucideMapPin} label="Dirección" value={[empresa?.direccion, empresa?.ciudad, empresa?.provincia].filter(Boolean).join(', ')} />
+          <StaticField icon={Calendar} label="Fecha de registro" value={createdDate} />
+          <StaticField icon={Calendar} label="Última actualización" value={updatedDate} />
+        </div>
       </div>
     </div>
   );

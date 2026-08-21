@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CompanyData, UserData } from '../types/auth.types';
-import { INITIAL_COMPANY_DATA, INITIAL_USER_DATA } from '../constants/auth.constants';
+import { CompanyData, UserData, ActivationCode } from '../types/auth.types';
+import { INITIAL_COMPANY_DATA, INITIAL_USER_DATA, INITIAL_ACTIVATION_CODE } from '../constants/auth.constants';
 import {
   validateActivationCodeService,
-  saveCompanyService,
   registerUserService,
+  loadCodesFromStorage,
 } from '../services/authApi';
 
 export function useRegister() {
@@ -13,6 +13,7 @@ export function useRegister() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const [activationCode, setActivationCode] = useState('');
+  const [activationCodes, setActivationCodes] = useState<ActivationCode[]>([]);
   const [activationError, setActivationError] = useState('');
   const [hasCompanyRegistered, setHasCompanyRegistered] = useState(false);
   const [existingCompanyData, setExistingCompanyData] = useState<CompanyData | null>(null);
@@ -21,6 +22,8 @@ export function useRegister() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [developerMode, setDeveloperMode] = useState(false);
+  const [registeredCompanyCode, setRegisteredCompanyCode] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -30,16 +33,26 @@ export function useRegister() {
     }
   }, [navigate]);
 
+  // Cargar códigos de activación desde localStorage al iniciar
+  useEffect(() => {
+    const codes = loadCodesFromStorage();
+    if (codes) {
+      setActivationCodes(codes);
+    }
+  }, []);
+
+  // Cargar modo developer desde localStorage
+  useEffect(() => {
+    const mode = localStorage.getItem('developerMode');
+    if (mode) {
+      setDeveloperMode(mode === 'true');
+    }
+  }, []);
+
   // Funciones de validación
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone: string) =>
     /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
-
-  const generateCompanyCode = (name: string) => {
-    const prefix = name.substring(0, 3).toUpperCase();
-    const random = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}-${random}`;
-  };
 
   const validateActivationCode = () => {
     const result = validateActivationCodeService(activationCode);
@@ -63,6 +76,7 @@ export function useRegister() {
     else if (!validatePhone(companyData.phone)) newErrors.phone = 'Teléfono inválido';
     if (!companyData.email.trim()) newErrors.email = 'El email es obligatorio';
     else if (!validateEmail(companyData.email)) newErrors.email = 'Email inválido';
+    if (!companyData.cuit.trim()) newErrors.cuit = 'El CUIT/CUIL es obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -70,7 +84,8 @@ export function useRegister() {
 
   const validateUserForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!userData.fullName.trim()) newErrors.fullName = 'El nombre completo es obligatorio';
+    if (!userData.nombreUsuario?.trim()) newErrors.nombreUsuario = 'El nombre es obligatorio';
+    if (!userData.apellidoUsuario?.trim()) newErrors.apellidoUsuario = 'El apellido es obligatorio';
     if (!userData.email.trim()) newErrors.email = 'El email es obligatorio';
     else if (!validateEmail(userData.email)) newErrors.email = 'Email inválido';
     if (!userData.phone.trim()) newErrors.phone = 'El teléfono es obligatorio';
@@ -98,29 +113,18 @@ export function useRegister() {
   };
 
   const handlePreviousStep = () => {
+    if (step === 0) {
+      navigate('/');
+      return;
+    }
     setDirection(-1);
     setStep((prev) => prev - 1);
-  };
-
-  const handleActivationSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateActivationCode()) {
-      if (hasCompanyRegistered) {
-        setStep(2); // Ir directamente a usuario
-      } else {
-        handleNextStep(); // Ir a empresa
-      }
-    }
   };
 
   const handleCompanySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateCompanyForm()) {
-      const codigo = generateCompanyCode(companyData.nombreFantasia);
-      const updatedCompany = { ...companyData, codigoEmpresa: codigo };
-      setCompanyData(updatedCompany);
-      saveCompanyService(updatedCompany, codigo);
-      setStep(3); // Ir a usuario
+      setStep(1);
     }
   };
 
@@ -129,13 +133,14 @@ export function useRegister() {
     if (validateUserForm()) {
       setIsSubmitting(true);
       try {
-        await registerUserService({
-          activationCode,
+        const result = await registerUserService({
+          activationCode: '',
           userData,
           companyData,
-          hasCompanyRegistered,
-          existingCompanyData,
+          hasCompanyRegistered: false,
+          existingCompanyData: null,
         });
+        setRegisteredCompanyCode(result.codigo_empresa);
         setIsSubmitting(false);
         handleNextStep();
       } catch (err) {
@@ -171,9 +176,10 @@ export function useRegister() {
     errors,
     isSubmitting,
     copied,
+    activationCodes,
+    registeredCompanyCode,
     handleNextStep,
     handlePreviousStep,
-    handleActivationSubmit,
     handleCompanySubmit,
     handleUserSubmit,
     handleGoToLogin,

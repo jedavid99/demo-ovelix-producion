@@ -26,6 +26,13 @@ export class UsersController {
     );
   }
 
+  @ApiOperation({ summary: 'Listar solicitudes de usuarios pendientes de aprobación' })
+  @Get('pending')
+  @Roles('DESARROLLADOR', 'ADMIN')
+  async findPending(@Request() req) {
+    return this.usersService.findPending(req.user);
+  }
+
   @ApiOperation({ summary: 'Obtener un usuario por ID' })
   @Get(':id')
   @Roles('DESARROLLADOR', 'ADMIN')
@@ -72,5 +79,16 @@ export class UsersController {
   @Roles('DESARROLLADOR', 'ADMIN', 'TECNICO', 'RECEPCIONISTA', 'VENTAS')
   async changePassword(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body(new ZodValidationPipe(changePasswordSchema)) changePasswordDto: ChangePasswordDto, @Request() req) {
     return this.usersService.changePassword(id, changePasswordDto, req.user);
+  }
+
+  @ApiOperation({ summary: 'Actualizar el estado de aprobación de un usuario' })
+  @Patch(':id/status')
+  @Roles('DESARROLLADOR', 'ADMIN')
+  async updateStatus(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body('status') status: 'ACTIVE' | 'REJECTED',
+    @Request() req,
+  ) {
+    return this.usersService.updateStatus(id, status, req.user);
   }
 }

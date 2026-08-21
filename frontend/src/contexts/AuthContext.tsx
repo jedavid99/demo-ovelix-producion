@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login as loginService, getMe } from '../services/auth.service';
 import { clearAuthToken, isPublicPage } from '../services/api';
 import { logger } from '@/utils/logger';
@@ -14,8 +15,13 @@ interface User {
   apellido?: string;
   activo?: boolean;
   empresa_id?: string;
-  rol?: string;
+  rol?: { name: string } | string;
   permissions?: string[];
+  empresa?: { razon_social: string; codigo_empresa: string; direccion?: string; ciudad?: string; provincia?: string };
+  created_at?: string;
+  updated_at?: string;
+  dni?: string;
+  telefono?: string;
   [key: string]: unknown;
 }
 interface DecodedToken {
@@ -33,6 +39,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export { AuthContext };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(() => {
     const cached = localStorage.getItem('user_data');
     if (!cached) return null;
@@ -189,8 +196,8 @@ const usuario = response?.data?.data?.user || response?.data?.user || response?.
     localStorage.removeItem('user_data');
     setUser(null);
     setIsAuthenticated(false);
-    window.location.href = '/login';
-  }, []);
+    navigate('/login');
+  }, [navigate]);
 
   // Auto-logout por inactividad: se cierra la sesión tras 2 minutos sin actividad
   useEffect(() => {

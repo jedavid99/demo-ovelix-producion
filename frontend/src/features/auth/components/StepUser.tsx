@@ -84,14 +84,25 @@ export const StepUser: React.FC<StepUserProps> = ({
       <form onSubmit={onSubmit} className="space-y-4">
         {/* Nombre completo */}
         <div className="space-y-1.5">
-          <Label htmlFor="fullName">Nombre completo *</Label>
+          <Label htmlFor="nombreUsuario">Nombre *</Label>
           <Input
-            id="fullName"
-            placeholder="Ej: Juan Pérez"
-            value={userData.fullName}
-            onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
+            id="nombreUsuario"
+            placeholder="Ej: Juan"
+            value={userData.nombreUsuario || userData.fullName.split(' ')[0] || ''}
+            onChange={(e) => setUserData({ ...userData, nombreUsuario: e.target.value })}
             leftIcon={<UserPlus className="w-5 h-5" />}
-            error={errors.fullName}
+            error={errors.nombreUsuario}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="apellidoUsuario">Apellido *</Label>
+          <Input
+            id="apellidoUsuario"
+            placeholder="Ej: Pérez"
+            value={userData.apellidoUsuario || ''}
+            onChange={(e) => setUserData({ ...userData, apellidoUsuario: e.target.value })}
+            leftIcon={<Key className="w-5 h-5" />}
+            error={errors.apellidoUsuario}
           />
         </div>
 

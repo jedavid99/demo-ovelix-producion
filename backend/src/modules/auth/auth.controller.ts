@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDeveloperDto } from './dto/register-developer.dto';
+import { RegisterCompanyDto } from './dto/register-company.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 @ApiTags('Autenticación')
@@ -34,6 +35,14 @@ export class AuthController {
   async logout(@Request() req) {
     await this.authService.logout(req.user.id);
     return { message: 'Logout exitoso' };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 registros por minuto
+  @ApiOperation({ summary: 'Registrar una nueva empresa con su primer administrador' })
+  @Post('register-company')
+  async registerCompany(@Body() registerCompanyDto: RegisterCompanyDto) {
+    return this.authService.registerCompany(registerCompanyDto);
   }
 
   @Public()

@@ -23,6 +23,7 @@ interface RegisterFormProps {
   errors: Record<string, string>;
   isSubmitting: boolean;
   copied: boolean;
+  registeredCompanyCode: string;
   onNextStep: () => void;
   onPreviousStep: () => void;
   onActivationSubmit: (e: React.FormEvent) => void;
@@ -48,9 +49,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   errors,
   isSubmitting,
   copied,
+  registeredCompanyCode,
   onNextStep,
   onPreviousStep,
-  onActivationSubmit,
   onCompanySubmit,
   onUserSubmit,
   onGoToLogin,
@@ -61,24 +62,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       <Stepper step={step} hasCompanyRegistered={hasCompanyRegistered} />
       <AnimatePresence mode="wait" initial={false}>
         {step === 0 && (
-          <StepRequestCode
-            direction={direction}
-            onNextStep={onNextStep}
-            onGoToLogin={onGoToLogin}
-          />
-        )}
-        {step === 1 && (
-          <StepActivation
-            direction={direction}
-            activationCode={activationCode}
-            setActivationCode={setActivationCode}
-            activationError={activationError}
-            setActivationError={setActivationError}
-            onSubmit={onActivationSubmit}
-            onGoToLogin={onGoToLogin}
-          />
-        )}
-        {step === 2 && !hasCompanyRegistered && (
           <StepCompany
             direction={direction}
             companyData={companyData}
@@ -88,7 +71,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             onSubmit={onCompanySubmit}
           />
         )}
-        {step === 3 && (
+        {step === 1 && (
           <StepUser
             direction={direction}
             userData={userData}
@@ -102,13 +85,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             onSubmit={onUserSubmit}
           />
         )}
-        {step === 4 && (
+        {step === 2 && (
           <StepConfirmation
             direction={direction}
             hasCompanyRegistered={hasCompanyRegistered}
             userData={userData}
             companyData={companyData}
             existingCompanyData={existingCompanyData}
+            registeredCompanyCode={registeredCompanyCode}
             copied={copied}
             onCopyCode={onCopyCode}
             onGoToLogin={onGoToLogin}

@@ -46,18 +46,14 @@ export const STEP_VARIANTS = {
 };
 
 export const STEPS_HAS_COMPANY: StepItem[] = [
-  { number: 1, label: 'Solicitar' },
-  { number: 2, label: 'Activación' },
-  { number: 3, label: 'Usuario' },
-  { number: 4, label: 'Confirmación' },
+  { number: 1, label: 'Usuario' },
+  { number: 2, label: 'Esperando Aprobación' },
 ];
 
 export const STEPS_NEW_COMPANY: StepItem[] = [
-  { number: 1, label: 'Solicitar' },
-  { number: 2, label: 'Activación' },
-  { number: 3, label: 'Empresa' },
-  { number: 4, label: 'Usuario' },
-  { number: 5, label: 'Confirmación' },
+  { number: 1, label: 'Empresa' },
+  { number: 2, label: 'Usuario' },
+  { number: 3, label: 'Esperando Aprobación' },
 ];
 
 export const WHATSAPP_REQUEST_URL =
@@ -89,6 +85,8 @@ export const INITIAL_COMPANY_DATA: CompanyData = {
 
 export const INITIAL_USER_DATA: UserData = {
   fullName: '',
+  nombreUsuario: '',
+  apellidoUsuario: '',
   email: '',
   phone: '',
   password: '',

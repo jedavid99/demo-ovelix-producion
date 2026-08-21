@@ -143,7 +143,7 @@ export const HelpTourButton: React.FC = () => {
   const location = useLocation()
   const { isAuthenticated } = useAuth()
 
-  if (!isAuthenticated || isPublicPage(location.pathname)) {
+  if (!isAuthenticated || isPublicPage(location.pathname) || location.pathname.startsWith('/developer')) {
     return null
   }
 

@@ -1,6 +1,13 @@
-import { Users, UserPlus } from 'lucide-react';
+import { Users, UserPlus, UserX, Edit2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { AsyncState } from '@/shared/components/async/AsyncState';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 
 interface SystemUser {
   id: string;
@@ -27,14 +34,19 @@ const roleBadge = (roleName?: string) => {
   return 'bg-muted/50 text-muted-foreground';
 };
 
+const statusBadge = (activo: boolean) =>
+  activo
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-destructive';
+
 export const UsersSection = ({ users, loading, onAddUser }: UsersSectionProps) => {
   const displayUsers = Array.isArray(users) ? users : [];
 
   return (
-    <div className="bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card border border-border rounded-xl">
+      <div className="px-6 py-5 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Users size={20} />
+          <Users size={20} className="text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Usuarios del Sistema</h2>
           {!loading && (
             <span className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">{displayUsers.length}</span>
@@ -45,40 +57,70 @@ export const UsersSection = ({ users, loading, onAddUser }: UsersSectionProps) =
           Agregar Usuario
         </Button>
       </div>
+
       <AsyncState
         loading={!!loading}
         empty={!loading && displayUsers.length === 0}
         loadingLabel="Cargando usuarios..."
         emptyIcon={Users}
         emptyTitle="No hay usuarios registrados"
-        emptyDescription="Agrega usuarios para gestionar el acceso al sistema"
+        emptyDescription="Agregá usuarios para gestionar el acceso al sistema"
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
-              <tr className="border-b border-border-light dark:border-border-dark">
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">NOMBRE</th>
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">EMAIL</th>
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">ROL</th>
-                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">ESTADO</th>
+          <table className="w-full text-sm" role="grid">
+            <thead className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border">
+              <tr>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Usuario</th>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Email</th>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Rol</th>
+                <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Estado</th>
+                <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/50">
               {displayUsers.map((u) => {
                 const name = [u.nombre, u.apellido].filter(Boolean).join(' ');
                 return (
-                  <tr key={u.id} className="border-b border-border-light dark:divide-border-dark hover:bg-muted/50">
-                    <td className="py-3 px-4 font-medium text-foreground">{name}</td>
+                  <tr key={u.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{name}</p>
+                        </div>
+                      </div>
+                    </td>
                     <td className="py-3 px-4 text-muted-foreground">{u.email}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${roleBadge(u.rol?.name)}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold ${roleBadge(u.rol?.name)}`}>
                         {u.rol?.name || '\u2014'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.activo ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-destructive'}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusBadge(u.activo)}`}>
                         {u.activo ? 'Activo' : 'Inactivo'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" aria-label={`Opciones para ${name}`}>
+                            <MoreHorizontal size={18} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem className="flex items-center gap-2 text-muted-foreground">
+                            <Edit2 size={14} /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="flex items-center gap-2 text-destructive focus:text-destructive">
+                            <UserX size={14} />
+                            {u.activo ? 'Desactivar' : 'Activar'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );

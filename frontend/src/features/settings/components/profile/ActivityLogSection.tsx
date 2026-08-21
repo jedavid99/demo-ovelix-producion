@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { MdContentCopy } from 'react-icons/md';
+import { useEffect, useState, useCallback } from 'react';
+import { MdContentCopy, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import { getAuditLogs } from '@/services/audit.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { AsyncState } from '@/shared/components/async/AsyncState';
+import { Button } from '@/shared/components/ui/button';
 
 interface AuditEntry {
   id: string;
@@ -58,9 +59,12 @@ const actionLabel = (accion: string): string => {
   return accion;
 };
 
+const userLabel = (u?: { nombre: string; apellido: string } | null) =>
+  u ? [u.nombre, u.apellido].filter(Boolean).join(' ') : '\u2014';
+
 export const ActivityLogSection = ({ usuarioId }: ActivityLogSectionProps) => {
   const { user: rawUser } = useAuth();
-  const user = rawUser?.data ?? rawUser;
+  const user = (rawUser?.data ?? rawUser) as { rol?: { name: string } };
   const isAdmin = user?.rol?.name === 'ADMIN' || user?.rol?.name === 'DESARROLLADOR';
 
   const [logs, setLogs] = useState<AuditEntry[]>([]);
@@ -68,23 +72,30 @@ export const ActivityLogSection = ({ usuarioId }: ActivityLogSectionProps) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    setLoading(true);
-    getAuditLogs({ page, limit: 20, usuario_id: isAdmin ? undefined : usuarioId })
-      .then((res: any) => {
-        const d = res?.data ?? res ?? [];
-        setLogs(Array.isArray(d) ? d : []);
-        setTotalPages(res?.meta?.totalPages ?? 1);
-      })
-      .catch(() => setLogs([]))
-      .finally(() => setLoading(false));
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await getAuditLogs({ page, limit: 20, usuario_id: isAdmin ? undefined : usuarioId });
+      const d = res?.data ?? res ?? [];
+      setLogs(Array.isArray(d) ? d : []);
+      setTotalPages(res?.meta?.totalPages ?? 1);
+    } catch {
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
   }, [page, usuarioId, isAdmin]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+    setLoading(true);
+    fetchLogs();
+  }, [fetchLogs]);
+
   return (
-    <div className="bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card border border-border rounded-xl">
+      <div className="px-6 py-5 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MdContentCopy size={20} />
+          <MdContentCopy size={20} className="text-primary" />
           <div>
             <h2 className="text-lg font-semibold text-foreground">Registro de Actividad</h2>
             <p className="text-xs text-muted-foreground">
@@ -93,6 +104,7 @@ export const ActivityLogSection = ({ usuarioId }: ActivityLogSectionProps) => {
           </div>
         </div>
       </div>
+
       <AsyncState
         loading={loading}
         empty={!loading && logs.length === 0}
@@ -102,25 +114,25 @@ export const ActivityLogSection = ({ usuarioId }: ActivityLogSectionProps) => {
       >
         <>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
-                <tr className="border-b border-border-light dark:border-border-dark">
-                  {isAdmin && <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">USUARIO</th>}
-                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">ACCIÓN</th>
-                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">ENTIDAD</th>
-                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs">FECHA</th>
+            <table className="w-full text-sm font-mono" role="grid">
+              <thead className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border">
+                <tr>
+                  {isAdmin && <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Usuario</th>}
+                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Acción</th>
+                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Entidad</th>
+                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-[11px] uppercase tracking-wider">Fecha</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/50">
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border-light dark:divide-border-dark hover:bg-muted/50">
+                  <tr key={log.id} className="hover:bg-muted/40 transition-colors">
                     {isAdmin && (
-                      <td className="py-3 px-4 font-medium text-foreground">
-                        {log.usuario ? [log.usuario.nombre, log.usuario.apellido].filter(Boolean).join(' ') : '\u2014'}
+                      <td className="py-3 px-4 text-foreground font-medium">
+                        {userLabel(log.usuario)}
                       </td>
                     )}
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${typeBadge(log.entidad)}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold ${typeBadge(log.entidad)}`}>
                         {actionLabel(log.accion)}
                       </span>
                     </td>
@@ -144,24 +156,30 @@ export const ActivityLogSection = ({ usuarioId }: ActivityLogSectionProps) => {
             </table>
           </div>
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <button
+            <div className="px-6 py-4 border-t border-border flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="text-sm text-primary font-medium disabled:text-muted-foreground disabled:cursor-not-allowed hover:underline"
+                className="gap-1.5"
               >
-                ← Anterior
-              </button>
-              <span className="text-xs text-muted-foreground">
+                <MdChevronLeft size={14} />
+                Anterior
+              </Button>
+              <span className="text-xs font-mono text-muted-foreground px-2">
                 Pág. {page} de {totalPages}
               </span>
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="text-sm text-primary font-medium disabled:text-muted-foreground disabled:cursor-not-allowed hover:underline"
+                className="gap-1.5"
               >
-                Siguiente →
-              </button>
+                Siguiente
+                <MdChevronRight size={14} />
+              </Button>
             </div>
           )}
         </>

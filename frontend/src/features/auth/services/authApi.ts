@@ -1,5 +1,6 @@
 import { Company, CompanyData, UserData, StoredActivationCode, ActivationCode, CompanyDataEntry, SubscriptionPlanKey } from '../types/auth.types';
 import { SUBSCRIPTION_PLANS } from '../constants/auth.constants';
+import api from '@/services/api';
 
 export const getStoredActivationCodes = (): StoredActivationCode[] | null => {
   const storedCodes = localStorage.getItem('activation_codes');
@@ -71,46 +72,30 @@ export const registerUserService = async (params: {
   companyData: CompanyData;
   hasCompanyRegistered: boolean;
   existingCompanyData: CompanyData | null;
-}): Promise<void> => {
-  const { activationCode, userData, companyData, hasCompanyRegistered, existingCompanyData } = params;
+}): Promise<{ codigo_empresa: string }> => {
+  const { userData, companyData } = params;
 
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  const storedCodes = localStorage.getItem('activation_codes');
-  if (storedCodes) {
-    let codes: StoredActivationCode[] = [];
-    try {
-      codes = JSON.parse(storedCodes);
-    } catch {
-      localStorage.removeItem('activation_codes');
-    }
-    const updatedCodes = codes.map((c: StoredActivationCode) => {
-      if (c.code === activationCode) {
-        return {
-          ...c,
-          used: true,
-          usedAt: new Date().toISOString(),
-          userEmail: userData.email,
-          userName: userData.fullName,
-          userRole: userData.role,
-          companyDetails: hasCompanyRegistered
-            ? existingCompanyData
-            : { ...companyData, codigoEmpresa: companyData.codigoEmpresa },
-        };
-      }
-      return c;
-    });
-    localStorage.setItem('activation_codes', JSON.stringify(updatedCodes));
-  }
-
-  const registrationData = {
-    userData,
-    companyData: hasCompanyRegistered ? existingCompanyData : companyData,
-    registrationType: hasCompanyRegistered ? 'existing' : 'new',
-    activationCode,
-    timestamp: new Date().toISOString(),
+  const payload = {
+    razon_social: companyData.razonSocial,
+    nombre_fantasia: companyData.nombreFantasia,
+    email: companyData.email,
+    telefono: companyData.phone,
+    direccion: companyData.address,
+    ciudad: companyData.ciudad,
+    provincia: companyData.provincia,
+    codigo_postal: companyData.codigoPostal,
+    cuit: companyData.cuit,
+    admin_email: userData.email,
+    admin_password: userData.password,
+    admin_nombre: userData.nombreUsuario || userData.fullName.split(' ')[0],
+    admin_apellido: userData.apellidoUsuario || userData.nombreUsuario,
+    admin_telefono: userData.phone,
+    admin_dni: userData.dni || '',
   };
-  localStorage.setItem('registrationData', JSON.stringify(registrationData));
+
+  const response = await api.post('/auth/register-company', payload);
+  const data = response.data.data;
+  return { codigo_empresa: data.company.codigo_empresa };
 };
 
 // --- Code Generator API ---
@@ -187,4 +172,34 @@ export const sendGmailReminder = (code: ActivationCode): void => {
     subject
   )}&body=${encodeURIComponent(body)}`;
   window.open(gmailUrl, '_blank');
+};
+
+export interface RegisterCompanyPayload {
+  razon_social: string;
+  nombre_fantasia: string;
+  email: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  provincia?: string;
+  codigo_postal?: string;
+  cuit?: string;
+  admin_email: string;
+  admin_password: string;
+  admin_nombre: string;
+  admin_apellido: string;
+  admin_dni?: string;
+  admin_telefono?: string;
+}
+
+export interface RegisterCompanyResponse {
+  message: string;
+  company: { id: string; codigo_empresa: string; razon_social: string; slug: string };
+  admin: { id: string; email: string; nombre: string; apellido: string; rol: { name: string } };
+}
+
+export const registerCompanyService = async (payload: RegisterCompanyPayload): Promise<RegisterCompanyResponse> => {
+  const response = await api.post('/auth/register-company', payload);
+  const { data } = response.data;
+  return data;
 };

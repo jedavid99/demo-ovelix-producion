@@ -8,13 +8,13 @@ const CreateCompanyModal: React.FC<any> = ({ onClose, onSubmit, nextCode }) => {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  const generatedCode = `ovelix-${String(nextCode).padStart(4, '0')}`
+  const generatedCode = `ovelix-${String(nextCode).padStart(2, '0')}`
 
   const [formData, setFormData] = useState({ ...EMPTY_FORM_DATA, codigo_empresa: generatedCode })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    setFormData((prev) => ({ ...prev, codigo_empresa: `ovelix-${String(nextCode).padStart(4, '0')}` }))
+    setFormData((prev) => ({ ...prev, codigo_empresa: `ovelix-${String(nextCode).padStart(2, '0')}` }))
   }, [nextCode])
 
   const validateForm = () => {

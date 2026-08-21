@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -7,7 +7,14 @@ import { PrismaService } from '../../database/prisma.service';
 import { loginSchema, LoginDto } from './dto/login.dto';
 import { refreshSchema, RefreshDto } from './dto/refresh.dto';
 import { registerDeveloperSchema, RegisterDeveloperDto } from './dto/register-developer.dto';
+import { registerCompanySchema, RegisterCompanyDto } from './dto/register-company.dto';
 import { PermissionsService } from '../permissions/permissions.service';
+import { CompaniesService } from '../companies/companies.service';
+
+// Función interna para generar código de activación
+function generateActivationCode(): string {
+  return 'ovelix-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 @Injectable()
 export class AuthService {
@@ -18,6 +25,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private permissionsService: PermissionsService,
+    private companiesService: CompaniesService,
   ) {}
 
   async login(data: LoginDto) {
@@ -64,6 +72,10 @@ export class AuthService {
 
       if (!user.activo) {
         throw new UnauthorizedException('Usuario inactivo');
+      }
+
+      if (user.rol.name !== 'DESARROLLADOR' && user.status !== 'ACTIVE') {
+        throw new UnauthorizedException('Tu cuenta está pendiente de aprobación por un administrador');
       }
 
       // Verificar contraseña
@@ -117,11 +129,16 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token expirado');
     }
 
-    if (!refreshToken.usuario.activo) {
-      throw new UnauthorizedException('Usuario inactivo');
-    }
+      if (!refreshToken.usuario.activo) {
+        throw new UnauthorizedException('Usuario inactivo');
+      }
 
-    // Rotar refresh token (eliminar actual y crear nuevo)
+      if (refreshToken.usuario.rol.name !== 'DESARROLLADOR' && refreshToken.usuario.status !== 'ACTIVE') {
+        throw new UnauthorizedException('Tu cuenta está pendiente de aprobación por un administrador');
+      }
+
+      // Rotar refresh token (eliminar actual y crear nuevo)
+
     await this.prisma.refreshToken.delete({ where: { id: refreshToken.id } });
 
     // Obtener permisos del usuario
@@ -222,6 +239,114 @@ export class AuthService {
     return {
       message: 'Desarrollador registrado exitosamente',
       developer,
+    };
+  }
+
+  async registerCompany(data: RegisterCompanyDto & { activationCode?: string }) {
+    const validatedData = registerCompanySchema.parse(data);
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: validatedData.admin_email as string },
+    });
+    if (existingUser) {
+      throw new ConflictException('Ya existe un usuario registrado con ese email');
+    }
+
+    // Generar código de empresa con formato ovelix-XX
+    const companyCount = await this.prisma.company.count();
+    let nextNumber = companyCount + 1;
+    let codigoEmpresa = `ovelix-${String(nextNumber).padStart(2, '0')}`;
+    let existingCompany = await this.prisma.company.findUnique({
+      where: { codigo_empresa: codigoEmpresa },
+    });
+    while (existingCompany) {
+      nextNumber++;
+      codigoEmpresa = `ovelix-${String(nextNumber).padStart(2, '0')}`;
+      existingCompany = await this.prisma.company.findUnique({
+        where: { codigo_empresa: codigoEmpresa },
+      });
+    }
+
+    // Generar slug
+    const baseSlug = validatedData.razon_social
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    let slug = baseSlug;
+    let existingSlug = await this.prisma.company.findUnique({ where: { slug } });
+    let counter = 1;
+    while (existingSlug) {
+      slug = `${baseSlug}-${counter}`;
+      existingSlug = await this.prisma.company.findUnique({ where: { slug } });
+      counter++;
+    }
+
+    const hashedPassword = await bcrypt.hash(validatedData.admin_password, 12);
+
+    const adminRole = await this.prisma.role.findUnique({
+      where: { name: 'ADMIN' },
+    });
+
+    if (!adminRole) {
+      throw new ConflictException('Rol ADMIN no configurado en el sistema');
+    }
+
+    // El código de activación ya no es necesario para el registro inicial
+    // pero se mantiene la generación en la tabla Company por compatibilidad si fuera necesario
+    const activationCode = generateActivationCode();
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Crear empresa con todos los campos incluyendo slug y activationCode
+      const company = await tx.company.create({
+        data: {
+          codigo_empresa: codigoEmpresa,
+          slug,
+          razon_social: validatedData.razon_social,
+          email: validatedData.email,
+          telefono: validatedData.telefono || null,
+          direccion: validatedData.direccion || null,
+          ciudad: validatedData.ciudad || null,
+          provincia: validatedData.provincia || null,
+          codigo_postal: validatedData.codigo_postal || null,
+          activationCode,
+        },
+      });
+
+      const admin = await tx.user.create({
+        data: {
+          email: validatedData.admin_email,
+          password: hashedPassword,
+          nombre: validatedData.admin_nombre,
+          apellido: validatedData.admin_apellido,
+          dni: validatedData.admin_dni || null,
+          telefono: validatedData.admin_telefono || null,
+          rol_id: adminRole.id,
+          empresa_id: company.id,
+          activo: true,
+          status: 'PENDING',
+        },
+        select: {
+          id: true,
+          email: true,
+          nombre: true,
+          apellido: true,
+          rol: true,
+          activo: true,
+        },
+      });
+
+      await this.companiesService.seedCompanyDefaults(tx, company.id);
+
+      return { company, admin };
+    });
+
+    return {
+      message: 'Empresa registrada exitosamente',
+      company: result.company,
+      admin: result.admin,
+      activationCode,
     };
   }
 

@@ -21,6 +21,7 @@ export class UsersService {
     dni: true,
     telefono: true,
     activo: true,
+    status: true,
     empresa_id: true,
     rol_id: true,
     permissions: true,
@@ -38,6 +39,8 @@ export class UsersService {
       ? {} 
       : { empresa_id: currentUser.empresa_id };
 
+    // Para el panel de desarrollador, queremos resaltar los pendientes
+    // Podemos añadir un filtro opcional o simplemente devolverlos todos
     const orderBy = { created_at: 'desc' } as const;
 
     if (page && limit) {
@@ -62,6 +65,22 @@ export class UsersService {
     });
 
     return users;
+  }
+
+  async findPending(currentUser: any) {
+    if (currentUser.rol !== 'DESARROLLADOR' && currentUser.rol !== 'ADMIN') {
+      throw new ForbiddenException('No tienes permiso para ver solicitudes pendientes');
+    }
+
+    const where = currentUser.rol === 'DESARROLLADOR' 
+      ? { status: 'PENDING' } 
+      : { empresa_id: currentUser.empresa_id, status: 'PENDING' };
+
+    return this.prisma.user.findMany({
+      where: where as any,
+      select: this.safeUserSelect,
+      orderBy: { created_at: 'desc' },
+    });
   }
 
   async findOne(id: string, currentUser: any) {
@@ -252,5 +271,25 @@ export class UsersService {
     });
 
     return { message: 'Contraseña actualizada exitosamente' };
+  }
+
+  async updateStatus(id: string, status: 'ACTIVE' | 'REJECTED', currentUser: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (currentUser.rol !== 'DESARROLLADOR' && currentUser.rol !== 'ADMIN') {
+      throw new ForbiddenException('No tienes permiso para cambiar el estado del usuario');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { status },
+      select: this.safeUserSelect,
+    });
   }
 }

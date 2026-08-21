@@ -123,7 +123,7 @@ export default function DeveloperLayout({ children }: DeveloperLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header data-tour="dev-header" className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -301,9 +301,9 @@ export default function DeveloperLayout({ children }: DeveloperLayoutProps) {
         )}
       </header>
 
-      <main data-tour="dev-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

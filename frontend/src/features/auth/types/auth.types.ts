@@ -10,12 +10,15 @@ export interface Company {
 
 export interface UserData {
   fullName: string;
+  nombreUsuario: string;
+  apellidoUsuario: string;
   email: string;
   phone: string;
   password: string;
   confirmPassword: string;
   codigoEmpresa?: string;
   role?: string;
+  dni?: string;
 }
 
 export interface CompanyData {

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { MdCheck, MdClose } from 'react-icons/md';
-import { Pencil } from 'lucide-react';
+import { Pencil, LucideIcon } from 'lucide-react';
 import { Input } from '@/shared/components/ui/input';
 
 interface EditableFieldProps {
   label: string;
   value: string;
-  icon?: any;
+  icon?: LucideIcon;
   onSave: (newValue: string) => Promise<void>;
   type?: 'text' | 'email';
   placeholder?: string;

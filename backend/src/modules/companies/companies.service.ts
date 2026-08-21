@@ -210,7 +210,7 @@ export class CompaniesService {
     return updatedCompany;
   }
 
-  private async seedCompanyDefaults(tx: any, empresaId: string) {
+  async seedCompanyDefaults(tx: any, empresaId: string) {
     // Métodos de pago por defecto
     const defaultPaymentMethods = [
       { nombre: 'Efectivo', descripcion: 'Pagos estándar en mostrador' },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, Check, Copy, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Check, Copy, AlertTriangle, MessageCircle as WhatsAppIcon } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/button';
 import { UserData, CompanyData } from '../types/auth.types';
 import { STEP_VARIANTS } from '../constants/auth.constants';
@@ -11,6 +11,7 @@ interface StepConfirmationProps {
   userData: UserData;
   companyData: CompanyData;
   existingCompanyData: CompanyData | null;
+  registeredCompanyCode: string;
   copied: boolean;
   onCopyCode: (code: string) => void;
   onGoToLogin: () => void;
@@ -22,12 +23,21 @@ export const StepConfirmation: React.FC<StepConfirmationProps> = ({
   userData,
   companyData,
   existingCompanyData,
+  registeredCompanyCode,
   copied,
   onCopyCode,
   onGoToLogin,
 }) => {
   const companyDetails = hasCompanyRegistered ? existingCompanyData : companyData;
-  const accessCode = companyDetails?.codigoEmpresa || 'No disponible';
+  const accessCode = registeredCompanyCode || companyDetails?.codigoEmpresa || 'No disponible';
+
+  const handleWhatsAppRequest = () => {
+    const phone = '1234567890'; // REEMPLAZAR CON EL TELÉFONO DEL DESARROLLADOR
+    const message = encodeURIComponent(
+      `Hola ovelix! 👋\n\nAcabo de completar mi registro en el sistema y me gustaría solicitar la activación de mi cuenta.\n\n👤 *Nombre:* ${userData.nombreUsuario || ''} ${userData.apellidoUsuario || ''}\n📧 *Email:* ${userData.email}\n🏢 *Empresa:* ${companyDetails?.razonSocial || 'No especificada'}\n\n¡Quedo atento a la aprobación!`
+    );
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
 
   return (
     <motion.div
@@ -44,16 +54,31 @@ export const StepConfirmation: React.FC<StepConfirmationProps> = ({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', duration: 0.5 }}
-        className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
+        className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
       >
-        <CheckCircle2 className="w-16 h-16 text-success" />
+        <CheckCircle2 className="w-16 h-16 text-primary" />
       </motion.div>
       <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">
-        ¡Registro completado!
+        ¡Solicitud enviada!
       </h2>
       <p className="text-sm text-muted-foreground mb-8">
-        ¡Gracias por confiar en ovelix! Ahora eres parte de nuestra comunidad de talleres.
+        Tu registro ha sido procesado. Ahora solo falta que un administrador apruebe tu cuenta para que puedas ingresar al sistema.
       </p>
+
+      {/* Botón de WhatsApp - Elemento Firma */}
+      <div className="mb-8">
+        <Button 
+          onClick={handleWhatsAppRequest} 
+          className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold py-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-3 text-lg"
+          size="lg"
+        >
+          <WhatsAppIcon className="w-6 h-6" />
+          Notificar por WhatsApp
+        </Button>
+        <p className="text-xs text-muted-foreground mt-3 italic">
+          Haz clic para agilizar la aprobación de tu cuenta
+        </p>
+      </div>
 
       {/* Resumen del registro */}
       <div className="bg-primary/5 dark:bg-blue-900/30 rounded-lg p-4 mb-6 text-left">
@@ -63,7 +88,7 @@ export const StepConfirmation: React.FC<StepConfirmationProps> = ({
             <strong>Tipo:</strong> {hasCompanyRegistered ? 'Empresa existente' : 'Nueva empresa'}
           </p>
           <p>
-            <strong>Nombre:</strong> {userData.fullName}
+            <strong>Nombre:</strong> {userData.nombreUsuario} {userData.apellidoUsuario}
           </p>
           <p>
             <strong>Email:</strong> {userData.email}
@@ -110,9 +135,8 @@ export const StepConfirmation: React.FC<StepConfirmationProps> = ({
         </div>
       </div>
 
-      <Button onClick={onGoToLogin} className="w-full bg-primary hover:bg-primary/90" size="lg">
+      <Button onClick={onGoToLogin} variant="outline" className="w-full" size="lg">
         Ir al login
-        <ArrowRight className="w-5 h-5 ml-2" />
       </Button>
     </motion.div>
   );
