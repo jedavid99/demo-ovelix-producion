@@ -31,11 +31,6 @@ export function DiscrepancySummary({ discrepancy, hasDiscrepancy, onSaveProgress
               )}
             </div>
           </div>
-          <div className="h-12 w-px bg-border hidden md:block" />
-          <div className="hidden md:flex flex-col">
-            <span className="text-sm font-semibold text-muted-foreground uppercase">Cajero</span>
-            <span className="text-lg font-bold text-foreground">Alex Thompson</span>
-          </div>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <Button onClick={onSaveProgress} variant="outline" size="lg" className="w-full sm:w-auto">

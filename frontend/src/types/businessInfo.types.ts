@@ -26,8 +26,9 @@ export interface BusinessInfo {
   moneda: string;
   formato_fecha: string;
   zona_horaria: string;
+  hora_cierre_caja: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
 }
 
-export interface BusinessInfoUpdate extends Partial<Omit<BusinessInfo, 'id' | 'empresa_id' | 'fecha_creacion' | 'fecha_actualizacion'>> {}
+export type BusinessInfoUpdate = Partial<Omit<BusinessInfo, 'id' | 'empresa_id' | 'fecha_creacion' | 'fecha_actualizacion'>>;

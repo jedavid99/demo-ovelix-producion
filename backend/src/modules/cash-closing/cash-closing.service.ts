@@ -190,4 +190,62 @@ export class CashClosingService {
 
     return updatedClosing;
   }
+
+  async getDailySummary(date: string, currentUser: any) {
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const sales = await this.prisma.sale.findMany({
+      where: {
+        empresa_id: currentUser.empresa_id,
+        fecha: { gte: startOfDay, lte: endOfDay },
+        estado: 'completada',
+      },
+    });
+
+    let totalEfectivo = 0;
+    let totalTarjeta = 0;
+    let totalTransferencia = 0;
+
+    sales.forEach((sale) => {
+      if (sale.metodo_pago === 'efectivo') {
+        totalEfectivo += Number(sale.total);
+      } else if (sale.metodo_pago === 'tarjeta') {
+        totalTarjeta += Number(sale.total);
+      } else if (sale.metodo_pago === 'transferencia') {
+        totalTransferencia += Number(sale.total);
+      }
+    });
+
+    return {
+      date: startOfDay.toISOString().split('T')[0],
+      total_efectivo: totalEfectivo,
+      total_tarjeta: totalTarjeta,
+      total_transferencia: totalTransferencia,
+      total_ventas: totalEfectivo + totalTarjeta + totalTransferencia,
+      transactions_count: sales.length,
+    };
+  }
+
+  async checkClosingTime(currentUser: any) {
+    const businessInfo = await this.prisma.businessInfo.findUnique({
+      where: { empresa_id: currentUser.empresa_id },
+      select: { hora_cierre_caja: true },
+    });
+
+    const horaCierre = businessInfo?.hora_cierre_caja || '18:00';
+    const [h, m] = horaCierre.split(':').map(Number);
+    const now = new Date();
+    const closingMinutes = h * 60 + m;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const diffMinutes = closingMinutes - currentMinutes;
+
+    return {
+      hora_cierre: horaCierre,
+      is_closing_time: diffMinutes <= 0 && diffMinutes > -60,
+      is_past: diffMinutes <= -60,
+      diff_minutes: diffMinutes,
+    };
+  }
 }

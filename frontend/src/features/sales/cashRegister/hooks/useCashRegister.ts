@@ -1,9 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/use-toast';
 import { useCashClosingMutations, useCashClosingByDate } from '@/hooks/useCashClosing';
+import { cashClosingService } from '@/services/cashClosingService';
 import { CashClosingData } from '@/types/cashClosing.types';
 import type { CashForm } from '../types';
+
+interface DailySummary {
+  total_efectivo: number;
+  total_tarjeta: number;
+  total_transferencia: number;
+  total_ventas: number;
+  transactions_count: number;
+}
 
 export function useCashRegister() {
   const navigate = useNavigate();
@@ -16,12 +25,28 @@ export function useCashRegister() {
     bills5: '', bills1: '', other: '', notes: '',
   });
 
-  const [expectedBalance] = useState(1695.50);
-  const [transactions] = useState(42);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  const fetchSummary = useCallback(async () => {
+    setLoadingSummary(true);
+    try {
+      const data = await cashClosingService.getDailySummary(today);
+      setSummary(data);
+    } catch {
+      setSummary({ total_efectivo: 0, total_tarjeta: 0, total_transferencia: 0, total_ventas: 0, transactions_count: 0 });
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, [today]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
   useEffect(() => {
     if (existingClosing) {
       const bc = existingClosing.bills_count ?? {};
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCash({
         bills100: bc.bills100?.toString() ?? '',
         bills50: bc.bills50?.toString() ?? '',
@@ -34,6 +59,9 @@ export function useCashRegister() {
       });
     }
   }, [existingClosing]);
+
+  const expectedBalance = summary?.total_efectivo ?? 0;
+  const transactions = summary?.transactions_count ?? 0;
 
   const calculateActualTotal = () => {
     const b100 = (parseFloat(cash.bills100) || 0) * 100;
@@ -56,8 +84,8 @@ export function useCashRegister() {
 
   const buildClosingData = (): CashClosingData => ({
     date: today,
-    store_id: '104',
-    cashier: 'Alex Thompson',
+    store_id: '',
+    cashier: '',
     expected_balance: expectedBalance,
     actual_balance: actualTotal,
     discrepancy,
@@ -96,6 +124,7 @@ export function useCashRegister() {
 
   return {
     cash, expectedBalance, transactions, actualTotal, discrepancy, hasDiscrepancy,
+    summary, loadingSummary,
     handleChange, handleSaveProgress, handleFinalize,
   };
 }

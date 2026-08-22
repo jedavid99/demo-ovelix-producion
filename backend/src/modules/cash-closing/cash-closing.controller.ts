@@ -73,4 +73,18 @@ export class CashClosingController {
   async getByDate(@Param('date') date: string, @Request() req) {
     return this.cashClosingService.getByDate(date, req.user);
   }
+
+  @ApiOperation({ summary: 'Obtener resumen diario de ventas por método de pago' })
+  @Get('daily-summary/:date')
+  @Roles('DESARROLLADOR', 'ADMIN', 'RECEPCIONISTA')
+  async getDailySummary(@Param('date') date: string, @Request() req) {
+    return this.cashClosingService.getDailySummary(date, req.user);
+  }
+
+  @ApiOperation({ summary: 'Verificar si es hora de cerrar la caja' })
+  @Get('closing-time-check')
+  @Roles('DESARROLLADOR', 'ADMIN', 'RECEPCIONISTA')
+  async checkClosingTime(@Request() req) {
+    return this.cashClosingService.checkClosingTime(req.user);
+  }
 }

@@ -495,6 +495,7 @@ model BusinessInfo {
   moneda              String   @default("ARS")
   formato_fecha       String   @default("DD/MM/YYYY")
   zona_horaria        String   @default("America/Argentina/Buenos_Aires")
+  hora_cierre_caja    String   @default("18:00")
   fecha_creacion      DateTime @default(now())
   fecha_actualizacion DateTime @updatedAt
   empresa             Company  @relation(fields: [empresa_id], references: [id])

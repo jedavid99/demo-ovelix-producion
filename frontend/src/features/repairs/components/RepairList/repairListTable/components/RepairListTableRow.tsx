@@ -91,9 +91,9 @@ export function RepairListTableRow({
             <DropdownMenuItem onClick={() => onEdit(repair.id)}><Edit className="mr-2 h-3.5 w-3.5" /> Editar</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onPDF(repair.id)}><FileText className="mr-2 h-3.5 w-3.5" /> Generar PDF</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onThermalPrint(repair.id)}><Printer className="mr-2 h-3.5 w-3.5" /> Impresión térmica</DropdownMenuItem>
-            {repair.estado !== 'ENTREGADO_AL_CLIENTE' &&
-             repair.estado !== 'CANCELADO_POR_CLIENTE' &&
-             repair.estado !== 'ABANDONADO_POR_CLIENTE' && (
+            {(repair.estado === 'REPARADO_PENDIENTE_PAGO' ||
+              repair.estado === 'LISTO_PARA_RETIRAR' ||
+              repair.estado === 'IRREPARABLE_PARA_RETIRAR') && (
               <DropdownMenuItem onClick={() => onMarkDelivered(repair.id)}><Package className="mr-2 h-3.5 w-3.5" /> Marcar entregado</DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => onDelete(repair.id)} className="text-destructive focus:text-destructive">

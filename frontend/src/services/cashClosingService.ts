@@ -7,7 +7,7 @@ const API_URL = API_BASE;
 export const cashClosingService = {
   async list(filters?: CashClosingFilters) {
     const token = localStorage.getItem('access_token');
-    const response = await axios.get(`${API_URL}/cash-closings`, {
+    const response = await axios.get(`${API_URL}/cash-closing`, {
       headers: { Authorization: `Bearer ${token}` },
       params: filters
     });
@@ -17,7 +17,7 @@ export const cashClosingService = {
 
   async getById(id: string) {
     const token = localStorage.getItem('access_token');
-    const response = await axios.get(`${API_URL}/cash-closings/${id}`, {
+    const response = await axios.get(`${API_URL}/cash-closing/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data?.data?.data || response.data?.data || response.data;
@@ -25,7 +25,7 @@ export const cashClosingService = {
 
   async create(data: CashClosingData) {
     const token = localStorage.getItem('access_token');
-    const response = await axios.post(`${API_URL}/cash-closings`, data, {
+    const response = await axios.post(`${API_URL}/cash-closing`, data, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data?.data?.data || response.data?.data || response.data;
@@ -33,7 +33,7 @@ export const cashClosingService = {
 
   async update(id: string, data: Partial<CashClosingData>) {
     const token = localStorage.getItem('access_token');
-    const response = await axios.patch(`${API_URL}/cash-closings/${id}`, data, {
+    const response = await axios.patch(`${API_URL}/cash-closing/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data?.data?.data || response.data?.data || response.data;
@@ -41,14 +41,30 @@ export const cashClosingService = {
 
   async delete(id: string) {
     const token = localStorage.getItem('access_token');
-    await axios.delete(`${API_URL}/cash-closings/${id}`, {
+    await axios.delete(`${API_URL}/cash-closing/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
   },
 
   async getByDate(date: string) {
     const token = localStorage.getItem('access_token');
-    const response = await axios.get(`${API_URL}/cash-closings/by-date/${date}`, {
+    const response = await axios.get(`${API_URL}/cash-closing/by-date/${date}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data?.data?.data || response.data?.data || response.data;
+  },
+
+  async getDailySummary(date: string) {
+    const token = localStorage.getItem('access_token');
+    const response = await axios.get(`${API_URL}/cash-closing/daily-summary/${date}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data?.data?.data || response.data?.data || response.data;
+  },
+
+  async checkClosingTime() {
+    const token = localStorage.getItem('access_token');
+    const response = await axios.get(`${API_URL}/cash-closing/closing-time-check`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data?.data?.data || response.data?.data || response.data;

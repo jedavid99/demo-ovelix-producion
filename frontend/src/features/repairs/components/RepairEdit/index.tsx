@@ -15,7 +15,6 @@ import { EditStatusForm } from './EditStatusForm';
 import { EditPartsForm } from './EditPartsForm';
 import { EditCostsForm } from './EditCostsForm';
 import { EditAssignmentForm } from './EditAssignmentForm';
-import { EditPhotoEvidence } from './EditPhotoEvidence';
 import { EditNotesForm } from './EditNotesForm';
 import { EditPaymentForm } from './EditPaymentForm';
 import { EditSecurityForm } from './EditSecurityForm';
@@ -48,8 +47,6 @@ export default function RepairEdit() {
     repuestos,
     nuevoRepuesto,
     setNuevoRepuesto,
-    uploadingPhoto,
-    setUploadingPhoto,
     agregarRepuesto,
     eliminarRepuesto,
     handleSave,
@@ -134,9 +131,6 @@ export default function RepairEdit() {
               <EditAssignmentForm formData={formData} setFormData={setFormData} />
               <div className="border-t pt-6">
                 <EditNotesForm formData={formData} setFormData={setFormData} />
-              </div>
-              <div className="border-t pt-6">
-                <EditPhotoEvidence formData={formData} setFormData={setFormData} uploadingPhoto={uploadingPhoto} setUploadingPhoto={setUploadingPhoto} />
               </div>
               <div className="border-t pt-6">
                 <EditSecurityForm formData={formData} setFormData={setFormData} />

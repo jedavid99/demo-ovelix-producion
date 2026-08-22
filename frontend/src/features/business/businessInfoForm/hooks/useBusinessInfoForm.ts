@@ -20,6 +20,7 @@ export function useBusinessInfoForm(businessInfo: BusinessInfo, onSubmit: (data:
     moneda: businessInfo.moneda || 'ARS',
     formato_fecha: businessInfo.formato_fecha || 'DD/MM/YYYY',
     zona_horaria: businessInfo.zona_horaria || 'America/Argentina/Buenos_Aires',
+    hora_cierre_caja: businessInfo.hora_cierre_caja || '18:00',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});

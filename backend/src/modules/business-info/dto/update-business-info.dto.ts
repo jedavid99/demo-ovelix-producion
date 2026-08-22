@@ -16,6 +16,7 @@ export const updateBusinessInfoSchema = z.object({
   moneda: z.string().optional(),
   formato_fecha: z.string().optional(),
   zona_horaria: z.string().optional(),
+  hora_cierre_caja: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM').optional(),
 });
 
 export type UpdateBusinessInfoDto = z.infer<typeof updateBusinessInfoSchema>;
