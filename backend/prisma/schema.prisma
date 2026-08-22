@@ -311,6 +311,13 @@ model StockItem {
   categoria           String
   marca               String?
   modelo              String?
+  imagen_url          String?
+  proveedor_nombre    String?
+  tipo_producto       String          @default("repuesto") // venta | repuesto | ambos
+  tipo_precio         String          @default("minorista") // mayorista | minorista
+  canales_venta       Json            @default("[]")
+  es_por_encargo      Boolean         @default(false)
+  codigo_barra        String?
   stock_actual        Int             @default(0)
   stock_minimo        Int             @default(0)
   stock_maximo        Int?
@@ -495,6 +502,7 @@ model BusinessInfo {
   formato_fecha       String   @default("DD/MM/YYYY")
   zona_horaria        String   @default("America/Argentina/Buenos_Aires")
   hora_cierre_caja    String   @default("18:00")
+  margen_porcentaje   Json     @default("[10,20,30,50]")
   fecha_creacion      DateTime @default(now())
   fecha_actualizacion DateTime @updatedAt
   empresa             Company  @relation(fields: [empresa_id], references: [id])

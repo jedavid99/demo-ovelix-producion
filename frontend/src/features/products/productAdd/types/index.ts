@@ -1,24 +1,27 @@
 export interface ProductFormData {
-  itemName: string;
-  sku: string;
-  category: string;
-  brand: string;
-  initialQuantity: string;
-  minStockLevel: string;
-  storageLocation: string;
-  purchaseCost: string;
-  sellingPrice: string;
-  tax: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  categoria: string;
+  marca: string;
+  modelo: string;
+  imagen_url: string;
+  proveedor_nombre: string;
+  tipo_producto: string;
+  tipo_precio: string;
+  canales_venta: string[];
+  es_por_encargo: boolean;
+  codigo_barra: string;
+  stock_actual: string;
+  stock_minimo: string;
+  stock_maximo: string;
+  costo_unitario: string;
+  precio_venta: string;
+  ubicacion_almacen: string;
+  notas: string;
 }
 
 export interface ProductFormProps {
   form: ProductFormData;
-  compatibility: string[];
-  onChange: (field: string, value: string) => void;
-  setCompatibility: (value: string[]) => void;
-  addCompatibility: (device: string) => void;
-  removeCompatibility: (device: string) => void;
-  compatibilityInput: string;
-  setCompatibilityInput: (value: string) => void;
-  handleKeyPress: (e: React.KeyboardEvent) => void;
+  onChange: (field: keyof ProductFormData, value: any) => void;
 }

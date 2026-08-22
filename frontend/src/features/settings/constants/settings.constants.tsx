@@ -133,6 +133,8 @@ export const EMPTY_BUSINESS_INFO = {
   moneda: 'ARS',
   formato_fecha: 'DD/MM/YYYY',
   zona_horaria: 'America/Argentina/Buenos_Aires',
+  hora_cierre_caja: '18:00',
+  margen_porcentaje: [10, 20, 30, 50],
   fecha_creacion: new Date().toISOString(),
   fecha_actualizacion: new Date().toISOString(),
 };

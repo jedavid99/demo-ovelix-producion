@@ -10,14 +10,13 @@ const sectionVariants = {
 };
 
 interface FormSectionProps {
-  icon: ReactNode;
   title: string;
   index: number;
   children: ReactNode;
   className?: string;
 }
 
-export function FormSection({ icon, title, index, children, className }: FormSectionProps) {
+export function FormSection({ title, index, children, className }: FormSectionProps) {
   return (
     <motion.section
       variants={sectionVariants}
@@ -26,8 +25,7 @@ export function FormSection({ icon, title, index, children, className }: FormSec
       animate="visible"
       className="bg-card rounded-xl border border-border shadow-sm overflow-hidden"
     >
-      <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
-        {icon}
+      <div className="px-4 py-3 border-b border-border bg-muted/30">
         <h2 className="text-sm font-bold text-foreground">{title}</h2>
       </div>
       <div className={className || 'p-4'}>{children}</div>

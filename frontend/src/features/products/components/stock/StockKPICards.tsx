@@ -1,9 +1,8 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Package, Filter, AlertCircle, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/utils/currency';
-import { stockItems } from '../../constants/stock/stock.constants';
+import type { StockItem } from '@/types/stock.types';
 
 interface KpiCard {
   label: string;
@@ -25,17 +24,22 @@ const containerVariants = {
   visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
-export const StockKPICards = () => {
-  const totalItems = stockItems.length;
-  const totalCategories = new Set(stockItems.map((i) => i.category)).size;
-  const lowStockItems = stockItems.filter((i) => i.quantity < 5 && i.quantity > 0).length;
-  const totalValue = stockItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+interface Props {
+  items: StockItem[];
+  loading?: boolean;
+}
+
+export const StockKPICards = ({ items, loading }: Props) => {
+  const totalItems = items.length;
+  const totalCategories = new Set(items.map(i => i.categoria)).size;
+  const lowStockItems = items.filter(i => i.stock_actual > 0 && i.stock_actual <= i.stock_minimo).length;
+  const totalValue = items.reduce((sum, i) => sum + i.precio_venta * i.stock_actual, 0);
 
   const kpiData: KpiCard[] = [
-    { label: 'Productos totales', value: totalItems, icon: Package, trend: 'Sin datos', trendUp: false, color: 'text-primary' },
-    { label: 'Categorías', value: totalCategories, icon: Filter, trend: 'Sin datos', trendUp: false, color: 'text-indigo-600' },
-    { label: 'Stock bajo', value: lowStockItems, icon: AlertCircle, trend: 'Sin datos', trendUp: false, color: 'text-amber-600' },
-    { label: 'Valor total', value: formatCurrency(totalValue), icon: DollarSign, trend: 'Sin datos', trendUp: false, color: 'text-emerald-600' },
+    { label: 'Productos', value: loading ? '...' : totalItems, icon: Package, trend: 'Sin datos', trendUp: false, color: 'text-primary' },
+    { label: 'Categorías', value: loading ? '...' : totalCategories, icon: Filter, trend: 'Sin datos', trendUp: false, color: 'text-indigo-600' },
+    { label: 'Stock bajo', value: loading ? '...' : lowStockItems, icon: AlertCircle, trend: 'Sin datos', trendUp: false, color: 'text-amber-600' },
+    { label: 'Valor total', value: loading ? '...' : formatCurrency(totalValue), icon: DollarSign, trend: 'Sin datos', trendUp: false, color: 'text-emerald-600' },
   ];
 
   return (
@@ -54,15 +58,7 @@ export const StockKPICards = () => {
                   <div className={`p-2 rounded-lg bg-muted/50 ${kpi.color}`}><Icon size={20} /></div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-3 text-xs">
-                  {kpi.trend !== 'Sin datos' ? (
-                    kpi.trendUp ? (
-                      <><TrendingUp size={14} className="text-emerald-500" /><span className="text-emerald-600">{kpi.trend}</span></>
-                    ) : (
-                      <><TrendingDown size={14} className="text-muted-foreground" /><span className="text-muted-foreground">{kpi.trend}</span></>
-                    )
-                  ) : (
-                    <span className="text-muted-foreground/60 italic text-[10px]">Sin datos disponibles</span>
-                  )}
+                  <span className="text-muted-foreground/60 italic text-[10px]">Inventario actual</span>
                 </div>
               </CardContent>
             </Card>

@@ -21,6 +21,7 @@ export function useBusinessInfoForm(businessInfo: BusinessInfo, onSubmit: (data:
     formato_fecha: businessInfo.formato_fecha || 'DD/MM/YYYY',
     zona_horaria: businessInfo.zona_horaria || 'America/Argentina/Buenos_Aires',
     hora_cierre_caja: businessInfo.hora_cierre_caja || '18:00',
+    margen_porcentaje: Array.isArray(businessInfo.margen_porcentaje) ? businessInfo.margen_porcentaje : [10, 20, 30, 50],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});

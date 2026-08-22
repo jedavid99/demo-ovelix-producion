@@ -1,59 +1,39 @@
 import api from './api';
 import { StockItem, StockItemCreate, StockItemUpdate, StockFilters, PaginatedResponse, StockAdjustment, StockMovement } from '@/types/stock.types';
 
+const unwrap = <T>(res: any): T => res?.data?.data ?? res?.data ?? res;
+
 export const stockService = {
-  // Listar items de stock con paginación y filtros
-  list: (filters?: StockFilters): Promise<PaginatedResponse<StockItem>> => {
-    return api.get('/stock', { params: filters }).then(res => res.data);
-  },
+  list: (filters?: StockFilters): Promise<PaginatedResponse<StockItem>> =>
+    api.get('/stock', { params: filters }).then(res => unwrap(res)),
 
-  // Obtener un item por ID
-  getById: (id: string): Promise<StockItem> => {
-    return api.get(`/stock/${id}`).then(res => res.data);
-  },
+  getById: (id: string): Promise<StockItem> =>
+    api.get(`/stock/${id}`).then(res => unwrap(res)),
 
-  // Crear un nuevo item de stock
-  create: (data: StockItemCreate): Promise<StockItem> => {
-    return api.post('/stock', data).then(res => res.data);
-  },
+  create: (data: StockItemCreate): Promise<StockItem> =>
+    api.post('/stock', data).then(res => unwrap(res)),
 
-  // Actualizar un item de stock
-  update: (id: string, data: StockItemUpdate): Promise<StockItem> => {
-    return api.put(`/stock/${id}`, data).then(res => res.data);
-  },
+  update: (id: string, data: StockItemUpdate): Promise<StockItem> =>
+    api.put(`/stock/${id}`, data).then(res => unwrap(res)),
 
-  // Eliminar un item de stock
-  delete: (id: string): Promise<void> => {
-    return api.delete(`/stock/${id}`).then(res => res.data);
-  },
+  delete: (id: string): Promise<void> =>
+    api.delete(`/stock/${id}`).then(res => unwrap(res)),
 
-  // Ajustar stock (entrada/salida/ajuste)
-  adjust: (data: StockAdjustment): Promise<StockItem> => {
-    return api.post('/stock/adjust', data).then(res => res.data);
-  },
+  adjust: (data: StockAdjustment): Promise<StockItem> =>
+    api.post('/stock/adjust', data).then(res => unwrap(res)),
 
-  // Obtener items con stock bajo
-  getLowStock: (limit?: number): Promise<StockItem[]> => {
-    return api.get('/stock/low', { params: { limit } }).then(res => res.data);
-  },
+  getLowStock: (limit?: number): Promise<StockItem[]> =>
+    api.get('/stock/low', { params: { limit } }).then(res => unwrap(res)),
 
-  // Obtener movimientos de stock
-  getMovements: (item_id?: string, filters?: { page?: number; limit?: number }): Promise<PaginatedResponse<StockMovement>> => {
-    return api.get('/stock/movements', { params: { item_id, ...filters } }).then(res => res.data);
-  },
+  getMovements: (item_id?: string, filters?: { page?: number; limit?: number }): Promise<PaginatedResponse<StockMovement>> =>
+    api.get('/stock/movements', { params: { item_id, ...filters } }).then(res => unwrap(res)),
 
-  // Activar item
-  activate: (id: string): Promise<StockItem> => {
-    return api.patch(`/stock/${id}/activate`).then(res => res.data);
-  },
+  activate: (id: string): Promise<StockItem> =>
+    api.patch(`/stock/${id}/activate`).then(res => unwrap(res)),
 
-  // Desactivar item
-  deactivate: (id: string): Promise<StockItem> => {
-    return api.patch(`/stock/${id}/deactivate`).then(res => res.data);
-  },
+  deactivate: (id: string): Promise<StockItem> =>
+    api.patch(`/stock/${id}/deactivate`).then(res => unwrap(res)),
 
-  // Obtener categorías
-  getCategories: (): Promise<string[]> => {
-    return api.get('/stock/categories').then(res => res.data);
-  }
+  getCategories: (): Promise<string[]> =>
+    api.get('/stock/categories').then(res => unwrap(res)),
 };

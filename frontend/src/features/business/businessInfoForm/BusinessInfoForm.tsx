@@ -48,8 +48,10 @@ export const BusinessInfoForm: React.FC<BusinessInfoFormProps> = ({ businessInfo
         formato_fecha={formData.formato_fecha || 'DD/MM/YYYY'}
         zona_horaria={formData.zona_horaria || 'America/Argentina/Buenos_Aires'}
         hora_cierre_caja={formData.hora_cierre_caja || '18:00'}
+        margen_porcentaje={Array.isArray(formData.margen_porcentaje) ? formData.margen_porcentaje : [10, 20, 30, 50]}
         onChange={handleChange as (e: React.ChangeEvent<HTMLSelectElement>) => void}
         onInputChange={handleChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
+        onMargenChange={(val) => setField('margen_porcentaje', val)}
       />
       <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>Cancelar</Button>

@@ -27,6 +27,7 @@ export interface BusinessInfo {
   formato_fecha: string;
   zona_horaria: string;
   hora_cierre_caja: string;
+  margen_porcentaje: number[];
   fecha_creacion: string;
   fecha_actualizacion: string;
 }
