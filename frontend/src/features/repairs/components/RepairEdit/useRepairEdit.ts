@@ -57,7 +57,7 @@ export const useRepairEdit = (id: string | undefined) => {
         costo_mano_obra: orderData.costo_mano_obra || 0,
         total_reparacion: totalReparacionValue,
         notas: orderData.notas || '',
-        foto_evidencia: orderData.foto_evidencia || '',
+        fotos_antes: Array.isArray(orderData.fotos_antes) ? orderData.fotos_antes : [],
         tecnico_asignado_id: orderData.tecnico_asignado_id || '',
         fecha_estimada_entrega: orderData.fecha_estimada_entrega || '',
         categoria_dispositivo: orderData.categoria_dispositivo || '',
@@ -149,7 +149,7 @@ export const useRepairEdit = (id: string | undefined) => {
       if (formData.costo_piezas > 0) payload.costo_piezas = formData.costo_piezas;
       if (formData.costo_mano_obra > 0) payload.costo_mano_obra = formData.costo_mano_obra;
       if (formData.total_reparacion > 0) payload.total_reparacion = formData.total_reparacion;
-      if (formData.foto_evidencia) payload.foto_evidencia = formData.foto_evidencia;
+      if (formData.fotos_antes.length > 0) payload.fotos_antes = formData.fotos_antes;
       if (formData.tecnico_asignado_id) payload.tecnico_asignado_id = formData.tecnico_asignado_id;
       if (formData.fecha_estimada_entrega) payload.fecha_estimada_entrega = formData.fecha_estimada_entrega;
 

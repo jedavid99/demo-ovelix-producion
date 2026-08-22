@@ -86,6 +86,9 @@ export function useRepairSubmit(
         fecha_inicio_garantia: state.tieneGarantia && state.fechaInicioGarantia ? state.fechaInicioGarantia : undefined,
       };
 
+      console.log('[QuickRepair] repairData:', JSON.stringify(repairData, null, 2));
+      console.log('[QuickRepair] selectedClient:', JSON.stringify(selectedClient, null, 2));
+
       await createRepair(repairData);
       if (onSuccess) onSuccess();
       else navigate('/reparaciones/list');

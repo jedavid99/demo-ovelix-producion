@@ -24,7 +24,7 @@ export interface RepairData {
   fecha_estimada_entrega?: string;
   total_reparacion?: number | string;
   notas?: string;
-  foto_evidencia?: string;
+  fotos_antes?: string[];
   repuestos?: Array<{
     nombre: string;
     cantidad: number;

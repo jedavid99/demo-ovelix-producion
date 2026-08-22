@@ -1,51 +1,52 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
-import { Clock } from 'lucide-react';
+import { Calendar, Flag } from 'lucide-react';
 
-interface StatusCardProps {
-  title: string;
-  badgeVariant: 'warning' | 'default' | 'success' | 'destructive';
-  badgeLabel: string;
-}
-
-export function StatusCard({ title, badgeVariant, badgeLabel }: StatusCardProps) {
-  return (
-    <Card>
-      <CardHeader><CardTitle className="text-lg">{title}</CardTitle></CardHeader>
-      <CardContent>
-        <Badge variant={badgeVariant} size="sm">{badgeLabel}</Badge>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface DatesCardProps {
+interface StatusDatesCardsProps {
+  estado: string;
+  prioridad: string;
   fecha_ingreso: string;
   fecha_estimada_entrega?: string;
+  getStatusBadge: (s: string) => { variant: 'warning' | 'default' | 'success' | 'destructive'; label: string };
+  getPriorityBadge: (p: string) => { variant: 'default' | 'warning' | 'destructive'; label: string };
   formatDate: (d: string) => string;
 }
 
-export function DatesCard({ fecha_ingreso, fecha_estimada_entrega, formatDate }: DatesCardProps) {
+export function StatusDatesCards({
+  estado, prioridad, fecha_ingreso, fecha_estimada_entrega,
+  getStatusBadge, getPriorityBadge, formatDate,
+}: StatusDatesCardsProps) {
+  const status = getStatusBadge(estado);
+  const priority = getPriorityBadge(prioridad);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          Fechas
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Fecha de ingreso:</span>
-          <span className="font-medium">{formatDate(fecha_ingreso)}</span>
+    <div className="px-6 py-4">
+      {/* Badges row */}
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Estado</span>
+          <Badge variant={status.variant} size="sm">{status.label}</Badge>
+        </div>
+        <span className="text-border">|</span>
+        <div className="flex items-center gap-1.5">
+          <Flag className="h-3 w-3 text-muted-foreground" />
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prioridad</span>
+          <Badge variant={priority.variant} size="sm">{priority.label}</Badge>
+        </div>
+      </div>
+
+      {/* Dates row */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="h-3 w-3" />
+          <span>Ingreso: <span className="font-medium text-foreground">{formatDate(fecha_ingreso)}</span></span>
         </div>
         {fecha_estimada_entrega && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Fecha estimada de entrega:</span>
-            <span className="font-medium">{formatDate(fecha_estimada_entrega)}</span>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3 w-3" />
+            <span>Entrega estimada: <span className="font-medium text-foreground">{formatDate(fecha_estimada_entrega)}</span></span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

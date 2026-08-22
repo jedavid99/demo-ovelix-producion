@@ -32,7 +32,7 @@ export function useQuickRepairState() {
   const [selectedAccessories, setSelectedAccessories] = useState<string[]>([]);
 
   const [issue, setIssue] = useState('');
-  const [priority, setPriority] = useState('media');
+  const [priority, setPriority] = useState('medium');
   const [estimatedCost, setEstimatedCost] = useState('');
   const [deposit, setDeposit] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');

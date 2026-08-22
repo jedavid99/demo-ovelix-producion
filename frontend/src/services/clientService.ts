@@ -15,7 +15,8 @@ export const clientService = {
   // Crear un nuevo cliente
   create: (data: ClientCreate): Promise<Client> => {
     return api.post('/clients', data).then(res => {
-      return res.data;
+      const wrapped = res.data;
+      return wrapped?.data ?? wrapped;
     }).catch(err => {
       console.error('clientService.create - Error completo:', err);
       console.error('clientService.create - Response data:', err.response?.data);

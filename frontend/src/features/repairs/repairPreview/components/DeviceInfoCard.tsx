@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Smartphone } from 'lucide-react';
 
 interface DeviceInfo {
   dispositivo: string;
@@ -8,22 +8,25 @@ interface DeviceInfo {
 
 export function DeviceInfoCard({ dispositivo, marca, modelo }: DeviceInfo) {
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-lg">Información del Dispositivo</CardTitle></CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Dispositivo:</span>
-          <span className="font-medium">{dispositivo || '—'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Marca:</span>
-          <span className="font-medium">{marca || '—'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Modelo:</span>
-          <span className="font-medium">{modelo || '—'}</span>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="px-6 py-4 space-y-3">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <Smartphone className="h-3.5 w-3.5" />
+        Dispositivo
+      </div>
+      <div className="space-y-2.5">
+        <Field label="Tipo" value={dispositivo} />
+        <Field label="Marca" value={marca} />
+        <Field label="Modelo" value={modelo} />
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-sm font-medium text-right truncate">{value || '—'}</span>
+    </div>
   );
 }

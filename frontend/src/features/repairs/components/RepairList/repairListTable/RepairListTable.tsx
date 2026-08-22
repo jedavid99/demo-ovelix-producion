@@ -22,6 +22,7 @@ interface RepairListTableProps {
   onThermalPrint: (repairId: string) => void;
   onMarkDelivered: (repairId: string) => void;
   onDelete: (repairId: string) => void;
+  onEvidencias: (repairId: string) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -40,13 +41,14 @@ export function RepairListTable({
   onThermalPrint,
   onMarkDelivered,
   onDelete,
+  onEvidencias,
   onPageChange,
 }: RepairListTableProps) {
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={onRetry} />;
   if (paginatedRepairs.length === 0) return <EmptyState />;
 
-  const actions = { onPreview, onEdit, onEditStatus, onPDF, onThermalPrint, onMarkDelivered, onDelete };
+  const actions = { onPreview, onEdit, onEditStatus, onPDF, onThermalPrint, onMarkDelivered, onDelete, onEvidencias };
 
   return (
     <Card className="border shadow-sm">

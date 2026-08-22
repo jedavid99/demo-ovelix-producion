@@ -18,16 +18,14 @@ export const createRepair = async (repairData: any): Promise<void> => {
 
 export const searchClients = async (search: string): Promise<Client[]> => {
   const response: any = await clientService.list({ limit: 100 });
-  let clientesArray: any = response?.data?.data?.clientes ||
-    response?.data?.data?.data ||
-    response?.data?.data ||
-    response?.data ||
-    response;
 
-  if (clientesArray?.data?.clientes) {
+  const raw = response?.data ?? response;
+  let clientesArray: any = raw?.clientes ?? raw?.data ?? raw;
+
+  if (clientesArray?.clientes) {
+    clientesArray = clientesArray.clientes;
+  } else if (clientesArray?.data?.clientes) {
     clientesArray = clientesArray.data.clientes;
-  } else if (clientesArray?.data?.data) {
-    clientesArray = clientesArray.data.data;
   } else if (clientesArray?.data) {
     clientesArray = clientesArray.data;
   }

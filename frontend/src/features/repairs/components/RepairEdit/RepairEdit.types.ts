@@ -26,7 +26,7 @@ export interface RepairData {
   fecha_estimada_entrega?: string;
   total_reparacion?: number;
   notas?: string;
-  foto_evidencia?: string;
+  fotos_antes?: string[];
   repuestos?: RepairPart[];
 
 }
@@ -40,7 +40,7 @@ export interface FormData {
   costo_mano_obra: number;
   total_reparacion: number;
   notas: string;
-  foto_evidencia: string;
+  fotos_antes: string[];
   tecnico_asignado_id: string;
   fecha_estimada_entrega: string;
   categoria_dispositivo: string;
@@ -106,7 +106,7 @@ export const initialFormData: FormData = {
   costo_mano_obra: 0,
   total_reparacion: 0,
   notas: '',
-  foto_evidencia: '',
+  fotos_antes: [],
   tecnico_asignado_id: '',
   fecha_estimada_entrega: '',
   categoria_dispositivo: '',

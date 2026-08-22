@@ -86,10 +86,10 @@ export const SECURITY_LABELS: Record<string, string> = {
 };
 
 export const PRIORITY_OPTIONS = [
-  { value: 'baja', label: 'Baja', border: 'border-slate-400', bg: 'bg-slate-50', selectedBg: 'bg-slate-100' },
-  { value: 'media', label: 'Media', border: 'border-blue-400', bg: 'bg-blue-50', selectedBg: 'bg-blue-100' },
-  { value: 'alta', label: 'Alta', border: 'border-orange-400', bg: 'bg-orange-50', selectedBg: 'bg-orange-100' },
-  { value: 'urgente', label: 'Urgente', border: 'border-red-500', bg: 'bg-red-50', selectedBg: 'bg-red-100' },
+  { value: 'low', label: 'Baja', border: 'border-slate-400', bg: 'bg-slate-50', selectedBg: 'bg-slate-100' },
+  { value: 'medium', label: 'Media', border: 'border-blue-400', bg: 'bg-blue-50', selectedBg: 'bg-blue-100' },
+  { value: 'high', label: 'Alta', border: 'border-orange-400', bg: 'bg-orange-50', selectedBg: 'bg-orange-100' },
+  { value: 'critical', label: 'Urgente', border: 'border-red-500', bg: 'bg-red-50', selectedBg: 'bg-red-100' },
 ];
 
 export const PAYMENT_METHODS = [

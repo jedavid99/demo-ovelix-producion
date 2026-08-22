@@ -58,6 +58,10 @@ export interface Repair {
   
   // Repuestos
   repuestos_usados?: RepairPart[];
+
+  // Fotos
+  fotos_antes?: string[];
+  fotos_despues?: string[];
 }
 
 export interface RepairPart {

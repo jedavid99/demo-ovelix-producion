@@ -42,7 +42,7 @@ export default function RepairFlow() {
     aestheticCondition: '',
     accessories: [],
     issueDescription: '',
-    priority: 'Media',
+    priority: 'medium',
     estimatedDays: 3,
     
     // Step 2 data

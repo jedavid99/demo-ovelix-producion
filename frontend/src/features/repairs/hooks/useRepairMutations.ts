@@ -2,8 +2,9 @@ import { useRepairCRUD } from './useRepairCRUD';
 import { useRepairModals } from './useRepairModals';
 import { useRepairPDF } from './useRepairPDF';
 import { useRepairNavigation } from './useRepairNavigation';
+import type { Repair } from '../types/repairs.types';
 
-export function useRepairMutations(onSuccess: () => void, allRepairs: any[] = []) {
+export function useRepairMutations(onSuccess: () => void, allRepairs: Repair[] = []) {
   const crud = useRepairCRUD(onSuccess);
   const modals = useRepairModals(allRepairs);
   const pdf = useRepairPDF(modals.closeDropdown);
@@ -43,6 +44,10 @@ export function useRepairMutations(onSuccess: () => void, allRepairs: any[] = []
     openMarkDeliveredModal: modals.openMarkDeliveredModal,
     openEditStatusModal: modals.openEditStatusModal,
     openPreviewModal: modals.openPreviewModal,
+    openEvidenceModal: modals.openEvidenceModal,
+    isEvidenceModalOpen: modals.isEvidenceModalOpen,
+    setIsEvidenceModalOpen: modals.setIsEvidenceModalOpen,
+    selectedRepairIdForEvidence: modals.selectedRepairIdForEvidence,
     navigateToEdit: nav.navigateToEdit,
     navigateToPDF: pdf.navigateToPDF,
     navigateToThermalPrint: pdf.navigateToThermalPrint,

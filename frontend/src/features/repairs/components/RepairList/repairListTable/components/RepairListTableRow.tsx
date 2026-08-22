@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, Edit, FileText, Package, Trash2, RefreshCw, Printer, MoreHorizontal, AlertCircle } from 'lucide-react';
+import { Eye, Edit, FileText, Package, Trash2, RefreshCw, Printer, MoreHorizontal, AlertCircle, Camera } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import {
   DropdownMenu,
@@ -20,11 +20,12 @@ interface RepairListTableRowProps {
   onThermalPrint: (id: string) => void;
   onMarkDelivered: (id: string) => void;
   onDelete: (id: string) => void;
+  onEvidencias: (id: string) => void;
 }
 
 export function RepairListTableRow({
   repair,
-  onPreview, onEdit, onEditStatus, onPDF, onThermalPrint, onMarkDelivered, onDelete,
+  onPreview, onEdit, onEditStatus, onPDF, onThermalPrint, onMarkDelivered, onDelete, onEvidencias,
 }: RepairListTableRowProps) {
   const [open, setOpen] = useState(false);
   const config = getEstadoConfig(repair.estado);
@@ -85,6 +86,7 @@ export function RepairListTableRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 text-xs">
             <DropdownMenuItem onClick={() => onPreview(repair.id)}><Eye className="mr-2 h-3.5 w-3.5" /> Ver detalle</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEvidencias(repair.id)}><Camera className="mr-2 h-3.5 w-3.5" /> Evidencias</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEditStatus(repair.id)}><RefreshCw className="mr-2 h-3.5 w-3.5" /> Cambiar estado</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onEdit(repair.id)}><Edit className="mr-2 h-3.5 w-3.5" /> Editar</DropdownMenuItem>
             <DropdownMenuItem onClick={() => onPDF(repair.id)}><FileText className="mr-2 h-3.5 w-3.5" /> Generar PDF</DropdownMenuItem>

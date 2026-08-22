@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const createRepairSchema = z.object({
-  cliente_id: z.string().uuid('ID de cliente inválido'),
+  cliente_id: z.string().min(1, 'El cliente es requerido'),
   categoria_dispositivo: z.string().optional(),
   dispositivo: z.string().min(1, 'El dispositivo es requerido'),
   marca: z.string().optional(),

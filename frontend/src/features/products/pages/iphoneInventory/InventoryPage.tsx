@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { toast } from '@/shared/components/ui/use-toast';
+import { useUpload } from '@/shared/hooks/useUpload';
 import { DeviceSpecsSection } from '../../components/iphoneInventory/DeviceSpecsSection';
 import { IdentificationSection } from '../../components/iphoneInventory/IdentificationSection';
 import { SupplySection } from '../../components/iphoneInventory/SupplySection';
@@ -18,22 +19,20 @@ export default function InventoryPage() {
   const [autoSaveTime] = useState('14:24');
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { upload } = useUpload({ folder: 'inventory/iphone' });
 
   const handleInputChange = (field: keyof IPhoneFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) setUploadedPhotos((prev) => [...prev, ev.target!.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of Array.from(files)) {
+      const result = await upload(file);
+      if (result) setUploadedPhotos((prev) => [...prev, result.url]);
+    }
     e.target.value = '';
   };
 

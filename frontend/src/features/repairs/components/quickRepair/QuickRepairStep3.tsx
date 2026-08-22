@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { UseQuickRepairReturn } from '../../types/quickRepair/quickRepair.types';
 
 const PRIORITY_OPTIONS = [
-  { value: 'baja', label: 'Baja', border: 'border-border', bg: 'bg-muted', selectedBg: 'bg-muted' },
-  { value: 'media', label: 'Media', border: 'border-blue-400', bg: 'bg-primary/5', selectedBg: 'bg-primary/10' },
-  { value: 'alta', label: 'Alta', border: 'border-orange-400', bg: 'bg-orange-50', selectedBg: 'bg-orange-100' },
-  { value: 'urgente', label: 'Urgente', border: 'border-red-500', bg: 'bg-destructive/10', selectedBg: 'bg-red-100' },
+  { value: 'low', label: 'Baja', border: 'border-border', bg: 'bg-muted', selectedBg: 'bg-muted' },
+  { value: 'medium', label: 'Media', border: 'border-blue-400', bg: 'bg-primary/5', selectedBg: 'bg-primary/10' },
+  { value: 'high', label: 'Alta', border: 'border-orange-400', bg: 'bg-orange-50', selectedBg: 'bg-orange-100' },
+  { value: 'critical', label: 'Urgente', border: 'border-red-500', bg: 'bg-destructive/10', selectedBg: 'bg-red-100' },
 ];
 
 const QuickRepairStep3: React.FC<UseQuickRepairReturn> = ({

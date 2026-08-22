@@ -1,34 +1,29 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { DollarSign } from 'lucide-react';
 
 interface CostCardProps {
   total_reparacion: number | string;
   repuestosTotal: number;
   hasRepuestos: boolean;
-  formatCurrency: (v: any) => string;
+  formatCurrency: (v: number | string) => string;
 }
 
 export function CostCard({ total_reparacion, repuestosTotal, hasRepuestos, formatCurrency }: CostCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <DollarSign className="h-4 w-4" />
-          Costos
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        {hasRepuestos && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total repuestos:</span>
-            <span className="font-medium">{formatCurrency(repuestosTotal)}</span>
-          </div>
-        )}
-        <div className="flex justify-between font-bold text-lg pt-2 border-t">
-          <span>Total reparación:</span>
-          <span className="font-bold">{formatCurrency(total_reparacion)}</span>
+    <div className="px-6 py-4">
+      <div className="flex items-center gap-2 mb-3">
+        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Costo</span>
+      </div>
+      {hasRepuestos && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+          <span>Repuestos</span>
+          <span className="tabular-nums">{formatCurrency(repuestosTotal)}</span>
         </div>
-      </CardContent>
-    </Card>
+      )}
+      <div className="flex items-center justify-between pt-2 border-t border-border/60">
+        <span className="text-sm font-semibold">Total</span>
+        <span className="text-lg font-bold tabular-nums text-primary">{formatCurrency(total_reparacion)}</span>
+      </div>
+    </div>
   );
 }

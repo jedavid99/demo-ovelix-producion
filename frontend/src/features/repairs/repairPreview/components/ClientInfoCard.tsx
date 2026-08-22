@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { User } from 'lucide-react';
 
 interface ClientInfo {
   nombre_completo?: string;
@@ -8,22 +8,25 @@ interface ClientInfo {
 
 export function ClientInfoCard({ cliente }: { cliente?: ClientInfo }) {
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-lg">Información del Cliente</CardTitle></CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        <Row label="Nombre:" value={cliente?.nombre_completo} />
-        <Row label="Teléfono:" value={cliente?.telefono} />
-        <Row label="Email:" value={cliente?.email} />
-      </CardContent>
-    </Card>
+    <div className="px-6 py-4 space-y-3">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <User className="h-3.5 w-3.5" />
+        Cliente
+      </div>
+      <div className="space-y-2.5">
+        <Field label="Nombre" value={cliente?.nombre_completo} />
+        <Field label="Teléfono" value={cliente?.telefono} />
+        <Field label="Email" value={cliente?.email} />
+      </div>
+    </div>
   );
 }
 
-function Row({ label, value }: { label: string; value?: string }) {
+function Field({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value || '—'}</span>
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-sm font-medium text-right truncate">{value || '—'}</span>
     </div>
   );
 }

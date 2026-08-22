@@ -7,6 +7,7 @@ import { RepairListFilters } from './RepairListFilters';
 import { RepairListTable } from './RepairListTable';
 import { MarkDeliveredModal } from './MarkDeliveredModal';
 import { EditStatusModal } from './EditStatusModal';
+import { EvidenceModal } from './EvidenceModal';
 import RepairPreviewModal from '../../RepairPreviewModal';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 
@@ -21,13 +22,10 @@ export default function RepairsList() {
     setSearchQuery,
     loading,
     error,
-    activeDropdown,
-    setActiveDropdown,
     previewModalOpen,
     setPreviewModalOpen,
     selectedRepairId,
     setSelectedRepairId,
-    dropdownRefs,
     isMarkDeliveredModalOpen,
     setIsMarkDeliveredModalOpen,
     isMarkingDelivered,
@@ -52,15 +50,15 @@ export default function RepairsList() {
     openMarkDeliveredModal,
     openEditStatusModal,
     openPreviewModal,
+    openEvidenceModal,
+    isEvidenceModalOpen,
+    setIsEvidenceModalOpen,
+    selectedRepairIdForEvidence,
     navigateToEdit,
     navigateToPDF,
     navigateToThermalPrint,
     loadRepairs,
   } = useRepairList();
-
-  const handleDropdownToggle = (repairId: string) => {
-    setActiveDropdown(activeDropdown === repairId ? null : repairId);
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -96,9 +94,6 @@ export default function RepairsList() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalFiltered={totalFiltered}
-        activeDropdown={activeDropdown}
-        dropdownRefs={dropdownRefs}
-        onDropdownToggle={handleDropdownToggle}
         onPreview={openPreviewModal}
         onEdit={navigateToEdit}
         onEditStatus={openEditStatusModal}
@@ -106,6 +101,7 @@ export default function RepairsList() {
         onThermalPrint={navigateToThermalPrint}
         onMarkDelivered={openMarkDeliveredModal}
         onDelete={handleDelete}
+        onEvidencias={openEvidenceModal}
         onPageChange={handlePageChange}
       />
 
@@ -147,6 +143,18 @@ export default function RepairsList() {
             setSelectedRepairId(null);
           }}
           repairId={selectedRepairId}
+        />
+      )}
+
+      {/* Modal de evidencias */}
+      {selectedRepairIdForEvidence && (
+        <EvidenceModal
+          open={isEvidenceModalOpen}
+          onClose={() => {
+            setIsEvidenceModalOpen(false);
+          }}
+          repairId={selectedRepairIdForEvidence}
+          onUpdated={loadRepairs}
         />
       )}
 
